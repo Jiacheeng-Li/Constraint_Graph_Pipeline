@@ -1,5 +1,3 @@
-
-
 """
 step2_segmentation.py
 
@@ -43,14 +41,19 @@ import json
 import requests
 from typing import Dict, Any
 
+from .utils.parsing import extract_blocks
+
 _DEEPSEEK_API_KEY_DEFAULT = "sk-4bb3e24d26674a30b2cc7e2ff1bfc763"
 _DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
 _DEEPSEEK_MODEL = "deepseek-chat"
 
 
-def _call_deepseek_segmentation(response_text: str) -> Dict[str, Any]:
+def _call_deepseek_segmentation(response_text: str) -> str:
     """
     调用 DeepSeek 模型，请它把回答分块并标注 intent。
+
+    返回：LLM 原始输出字符串（可能是 JSON，也可能是包含解释+JSON）。
+    我们不会在这里解析，而是在上层用 extract_blocks() 做统一的宽松解析。
     """
 
     system_prompt = (
@@ -101,27 +104,10 @@ def _call_deepseek_segmentation(response_text: str) -> Dict[str, Any]:
         resp.raise_for_status()
         data = resp.json()
         content = data["choices"][0]["message"]["content"].strip()
-
-        # 提取 JSON
-        start = content.find("{")
-        end = content.rfind("}") + 1
-        json_str = content[start:end]
-        parsed = json.loads(json_str)
-
-        # 补充编号
-        for i, blk in enumerate(parsed.get("blocks", []), start=1):
-            blk["block_id"] = blk.get("block_id", f"B{i}")
-
-        parsed["order"] = [b["block_id"] for b in parsed.get("blocks", [])]
-        return parsed
-
+        return content
     except Exception:
-        # fallback: 简单按段落切
-        paras = [p.strip() for p in response_text.split("\n\n") if p.strip()]
-        blocks = []
-        for i, p in enumerate(paras, start=1):
-            blocks.append({"block_id": f"B{i}", "intent": "TBD", "text_span": p})
-        return {"blocks": blocks, "order": [b["block_id"] for b in blocks]}
+        # 兜底：直接返回原始 response_text，让上层 fallback
+        return "{}"
 
 
 def segment_response(response_text: str) -> Dict[str, Any]:
@@ -129,20 +115,54 @@ def segment_response(response_text: str) -> Dict[str, Any]:
     Step2 主函数：
     输入：完整回答文本
     输出：包含 blocks 列表和顺序的字典
+
+    逻辑：
+    1. 调用 DeepSeek 让它给出分块 JSON（原始字符串）。
+    2. 用 utils.parsing.extract_blocks() 解析该字符串。
+    3. 如果解析失败（extract_blocks 返回空 blocks），则本地用段落切分兜底。
     """
-    result = _call_deepseek_segmentation(response_text)
-    return result
+
+    raw_llm = _call_deepseek_segmentation(response_text)
+    parsed = extract_blocks(raw_llm)
+
+    # 如果 LLM 没给出可解析结果，则 fallback: 简单按段落切
+    if not parsed.get("blocks"):
+        paras = [p.strip() for p in response_text.split("\n\n") if p.strip()]
+        blocks = []
+        for i, p in enumerate(paras, start=1):
+            blocks.append({
+                "block_id": f"B{i}",
+                "intent": "TBD",
+                "text_span": p,
+                "order_index": i - 1,
+            })
+        parsed = {
+            "blocks": blocks,
+            "order": [b["block_id"] for b in blocks],
+        }
+
+    # 最后再确保 block_id / order_index 完整
+    for idx, blk in enumerate(parsed.get("blocks", [])):
+        if "block_id" not in blk:
+            blk["block_id"] = f"B{idx+1}"
+        if "order_index" not in blk:
+            blk["order_index"] = idx
+    if "order" not in parsed or not parsed["order"]:
+        parsed["order"] = [b["block_id"] for b in parsed.get("blocks", [])]
+
+    return parsed
 
 
 if __name__ == "__main__":
     demo_text = (
         "The modern space race represents not just a technological competition but a geopolitical one. "
         "In the opening decades of the 21st century, new players such as China and private companies entered the field. "
-        "\\n\\n"
+        "\n\n"
         "This essay first reviews the historical roots of space exploration, then evaluates how current missions "
         "affect global cooperation and rivalry. "
-        "\\n\\n"
+        "\n\n"
         "In conclusion, understanding the space race helps us grasp how nations project power and inspire innovation."
     )
 
-    print(json.dumps(segment_response(demo_text), indent=2, ensure_ascii=False))
+    result = segment_response(demo_text)
+    print(json.dumps(result, indent=2, ensure_ascii=False))

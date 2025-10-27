@@ -34,8 +34,6 @@ Step 6: 组装完整的 ConstraintGraph
 """
 
 from typing import Dict, Any, List
-import os
-import json as _json
 from .graph_schema import (
     ConstraintGraph,
     BlockSpec,
@@ -445,42 +443,6 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
     # 最终把所有 Mermaid 行合并
     return "\n".join(lines)
 
-# 保持 save_graph_outputs 函数定义完整且不变，移动到 make_mermaid 之后
-def save_graph_outputs(graph: ConstraintGraph, sample_id: str, base_dir: str = "data/graphs") -> Dict[str, str]:
-    """
-    将 Step6 的两个主要产物各自落盘：
-    - 结构化真相: serialize_graph(graph)  ->  <base_dir>/<sample_id>.graph.json
-    - Mermaid 可视化: make_mermaid(graph) ->  <base_dir>/<sample_id>.graph.mmd
-
-    返回一个 dict，告诉调用方两个文件的最终路径。
-    """
-    os.makedirs(base_dir, exist_ok=True)
-
-    graph_json_path = os.path.join(base_dir, f"{sample_id}.graph.json")
-    mermaid_path = os.path.join(base_dir, f"{sample_id}.graph.mmd")
-
-    # 写 graph.json
-    with open(graph_json_path, "w", encoding="utf-8") as f_json:
-        _json.dump(serialize_graph(graph), f_json, ensure_ascii=False, indent=2)
-
-    # 写 mermaid.mmd
-    with open(mermaid_path, "w", encoding="utf-8") as f_mmd:
-        f_mmd.write("%% Mermaid flowchart for sample `" + sample_id + "`\n")
-        f_mmd.write("%% Paste this into any Mermaid renderer to view the graph.\n\n")
-        f_mmd.write("flowchart LR\n")
-        # make_mermaid() 也会返回包含 "flowchart LR" 的首行；
-        # 我们不想重复两次，所以从第二行开始写入。
-        mermaid_full = make_mermaid(graph).splitlines()
-        # 如果第一行正好是 'flowchart LR', 跳过它
-        if mermaid_full and mermaid_full[0].strip().startswith("flowchart"):
-            mermaid_full = mermaid_full[1:]
-        for line in mermaid_full:
-            f_mmd.write(line + "\n")
-
-    return {
-        "graph_json": graph_json_path,
-        "mermaid_mmd": mermaid_path,
-    }
 
 
 if __name__ == "__main__":

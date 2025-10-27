@@ -159,6 +159,45 @@ Example output:
 
 ---
 
+### **Step 8. Scoring Runner (Evaluation Execution)**
+- Evaluate candidate model answers automatically based on the generated `eval_protocol`.
+- Read from:
+  - `data/reports/<sample_id>.eval.json` (protocol)
+  - `data/reports/<sample_id>.candidate.txt` (model answer)
+- Write to:
+  - `data/reports/<sample_id>.score.json` (scoring results)
+
+Example usage:
+```bash
+python -m src.scoring_runner --sample-id sample_0001
+```
+
+Example output:
+```json
+{
+  "sample_id": "sample_0001",
+  "summary": {
+    "global_pass_rate": 0.8,
+    "block_pass_rate": 0.7,
+    "branch_pass_rate": 0.6,
+    "overall_pass_rate": 0.72
+  },
+  "branch_choice": {
+    "SEL_B3": {"chosen": "branch_alt", "score_branch_real": 0.5, "score_branch_alt": 0.9}
+  }
+}
+```
+
+---
+
+### **Evaluation Workflow Summary**
+1. Run `pipeline_runner.py` to generate complex instruction and eval protocol.
+2. Let a target model produce an answer for the generated instruction.
+3. Save the model’s output to `data/reports/<sample_id>.candidate.txt`.
+4. Run `scoring_runner.py` to automatically evaluate constraint satisfaction.
+
+---
+
 ## 2. Metadata Enhancements
 
 | Field | Description | Added in Step |
@@ -189,6 +228,8 @@ These metadata fields ensure **traceability**, **evaluation consistency**, and *
 - **Evaluation** — Automatically score responses based on constraint satisfaction and correct branch selection.  
 - **Visualization** — Render constraint graphs for interpretability and debugging.  
 
+- **Automated Scoring** — Use the scoring runner module to execute evaluation protocols against candidate answers, producing detailed scoring reports for model performance analysis.
+
 ---
 
 ## 5. Index
@@ -210,6 +251,7 @@ Pipeline_10.25/
 │  ├─ step5_selection_augment.py    # Step 5: 伪分支生成与条件约束合成
 │  ├─ step6_graph_assembly.py       # Step 6: 约束图组装与元数据整合
 │  ├─ step7_instruction_synthesis.py# Step 7: 复杂指令生成
+│  ├─ scoring_runner.py             # Step 8: 评分执行与自动评估结果生成
 │  │
 │  ├─ utils/
 │  │   ├─ parsing.py                # 解析LLM输出，提取block与约束信息

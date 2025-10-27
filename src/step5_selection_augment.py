@@ -1,5 +1,3 @@
-
-
 """
 step5_selection_augment.py
 
@@ -77,6 +75,7 @@ import requests
 import random
 from typing import Dict, Any, List
 from .graph_schema import ConstraintNode, SelectionNode, SelectionBranch
+from .utils.text_clean import make_snippet, clip
 
 _DEEPSEEK_API_KEY_DEFAULT = "sk-4bb3e24d26674a30b2cc7e2ff1bfc763"
 _DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
@@ -207,30 +206,48 @@ def _call_deepseek_selection_aug(block_id: str,
       而不需要与当前 REAL BRANCH 在结构上严格对齐。
     """
 
+    # 规范 block_text，保持语义原样：仅清理空白，不做摘要
+    block_text_clean = make_snippet(block_text)
+    # 极端长文本才会硬截断，避免 prompt 过大；这是唯一可能丢信息的点
+    if len(block_text_clean) > 12000:
+        block_text_clean = clip(block_text_clean, 12000)
+
     system_prompt = (
         "You are generating a conditional alternative branch for evaluation.\n"
-        "We have a block of an answer that satisfies some constraints (REAL BRANCH).\n"
-        "We now want to create an ALTERNATIVE BRANCH that would apply under a different condition, "
-        "so that future instructions can say 'IF condition X, follow branch_alt instead of branch_real'.\n"
-        "This ALTERNATIVE BRANCH must:\n"
-        "- Stay on the same topic / intent as the original block.\n"
-        "- Meaningfully differ in style, stance, or obligation type.\n"
-        "- Be verifiable using our existing check functions.\n"
-        "- Not introduce unrelated tasks.\n\n"
-        "You MUST return ONLY valid JSON with this structure:\n"
+        "We have a specific block from an answer. That block ALREADY satisfies some constraints (REAL BRANCH).\n"
+        "Your job is to propose ONE ALTERNATIVE BRANCH for that SAME block.\n\n"
+        "CRITICAL RULES:\n"
+        "1. The alternative branch must stay on the SAME topic / role / rhetorical function as this block.\n"
+        "   - It must be realistic for this block's purpose (e.g., summary, recommendation, warning, critique).\n"
+        "   - You are NOT allowed to introduce obligations that would be off-topic or irrelevant.\n"
+        "   - You are NOT allowed to hallucinate a totally different subject matter (e.g. budget, legal risk) if it's not implied by this block.\n"
+        "2. The alternative branch MUST impose MEANINGFULLY DIFFERENT obligations from the REAL BRANCH.\n"
+        "   - Not just minor paraphrase.\n"
+        "   - Examples of meaningful difference: neutral analysis vs urgent critical escalation;\n"
+        "     descriptive overview vs step-by-step action plan;\n"
+        "     third-person analyst voice vs first-person eyewitness tone;\n"
+        "     calm assessment vs aggressive call-to-action.\n"
+        "3. The alternative branch must be VERIFIABLE.\n"
+        "   - Each requirement must map to a verifier {check,args}.\n"
+        "   - The condition should describe WHEN to use this alternative branch (e.g. 'If the situation is high-risk and urgent',\n"
+        "     'If the stance is openly critical/negative'), and it must be plausible for this same block.\n"
+        "4. Do NOT introduce unrelated tasks (no random new sections, no unrelated domains).\n"
+        "   The alternative branch should feel like a different mode/style of THIS SAME block, under a specific scenario.\n\n"
+        "OUTPUT FORMAT (MUST BE VALID JSON):\n"
         "{\n"
-        "  \"condition\": \"If ... (clear trigger condition)\",\n"
+        "  \"condition\": \"If ... (a realistic trigger condition for this same block)\",\n"
         "  \"alt_constraints\": [\n"
         "    {\n"
-        "      \"desc\": \"<new requirement>\",\n"
+        "      \"desc\": \"<new requirement that applies under that condition>\",\n"
         "      \"verifier\": {\n"
-        "          \"check\": \"<verifier name>\",\n"
-        "          \"args\": { <key-value args or empty> }\n"
+        "         \"check\": \"<verifier function name>\",\n"
+        "         \"args\": { }\n"
         "      }\n"
         "    }, ...\n"
         "  ]\n"
         "}\n\n"
-        "Use ONLY these verifier names:\n"
+        "ABOUT verifier.check:\n"
+        "- If one of these fits, you MAY use it:\n"
         "    tone_neutral_llm_judge\n"
         "    tone_negative_llm_judge\n"
         "    non_extremeness_judge\n"
@@ -247,19 +264,40 @@ def _call_deepseek_selection_aug(block_id: str,
         "    require_language\n"
         "    has_sections\n"
         "    must_end_with_template\n"
-        "Return ONLY the JSON. NO explanations."
+        "- OTHERWISE, you MUST create a NEW descriptive snake_case name that reflects the obligation, e.g.\n"
+        "    must_escalate_urgency\n"
+        "    first_person_witness_tone\n"
+        "    provide_step_by_step_plan\n"
+        "  This is allowed.\n"
+        "  Any new verifier.check MUST still describe a requirement that is plausible for THIS SAME BLOCK.\n"
+        "  You are NOT allowed to invent a requirement that would make no sense for this block's role.\n\n"
+        "RULES FOR NEW verifier.check NAMES:\n"
+        "- Use snake_case only [a-z0-9_].\n"
+        "- The name must clearly reflect the obligation in 'desc'.\n"
+        "- 'args' must be a JSON object (possibly empty), e.g. {\"min_items\": 3}.\n\n"
+        "RULES FOR 'desc':\n"
+        "- 'desc' must be English, imperative, concrete, and verifiable.\n"
+        "- 'desc' MUST describe what the alternative branch NOW REQUIRES under that condition.\n"
+        "- Do NOT mention block ids.\n"
+        "- Do NOT just restate the REAL BRANCH wording. It must impose a meaningfully different obligation.\n\n"
+        "FINAL RULE:\n"
+        "Return ONLY the JSON. NO explanations outside JSON.\n"
     )
 
     user_prompt = (
-        "OVERALL TASK (seed_task):\n" + seed_task.strip() + "\n\n"
+        "SEED TASK (overall assignment/user ask):\n" + seed_task.strip() + "\n\n"
         f"CURRENT BLOCK ID: {block_id}\n"
-        f"BLOCK INTENT: {block_intent}\n"
-        "BLOCK TEXT:\n" + block_text.strip() + "\n\n"
-        "REAL BRANCH CONSTRAINTS (what the block currently enforces):\n"
-        + real_constraints_for_llm + "\n\n"
-        "Now: propose ONE alternative branch for this same block that would apply under a different conditional trigger.\n"
-        "The alternative branch should not just restate the same constraints.\n"
-        "Return ONLY the JSON spec."
+        f"BLOCK INTENT / ROLE IN THE ANSWER: {block_intent}\n\n"
+        "BLOCK TEXT (actual content from the answer; keep topic consistent with this):\n"
+        f"{block_text_clean}\n\n"
+        "REAL BRANCH CONSTRAINTS (what this block currently enforces):\n"
+        f"{real_constraints_for_llm}\n\n"
+        "Now create ONE realistic ALTERNATIVE BRANCH for this SAME block:\n"
+        "- The alternative branch must apply under a clear conditional trigger ('If ...').\n"
+        "- It must impose meaningfully DIFFERENT obligations from the REAL BRANCH (not trivial paraphrase).\n"
+        "- It must stay on-topic and plausible for this block's role.\n"
+        "- You MAY create new verifier.check names in snake_case if needed, with JSON args.\n"
+        "Return ONLY the JSON spec described above.\n"
     )
 
     headers = {

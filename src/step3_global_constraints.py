@@ -1,4 +1,3 @@
-
 """
 step3_global_constraints.py
 
@@ -37,7 +36,10 @@ Step 3: 全局约束抽取 (Global Constraint Extraction)
 import json
 import requests
 from typing import List, Dict, Any
+
 from .graph_schema import ConstraintNode
+from .utils.parsing import extract_constraints
+from .utils.text_clean import make_snippet, summarize_blocks_outline, clip
 
 _DEEPSEEK_API_KEY_DEFAULT = "sk-4bb3e24d26674a30b2cc7e2ff1bfc763"
 _DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
@@ -186,56 +188,86 @@ def _build_hard_global_constraints(response_text: str,
 # LLM: 生成软性/语气/安全类全局约束
 # -------------------------------------------------
 
-def _summarize_blocks_for_prompt(segmentation: Dict[str, Any]) -> str:
-    lines = []
-    for blk in segmentation.get("blocks", []):
-        bid = blk.get("block_id", "?")
-        intent = blk.get("intent", "?")
-        lines.append(f"{bid}: {intent}")
-    return "\n".join(lines)
-
 
 def _call_deepseek_soft_constraints(response_text: str,
-                                    segmentation: Dict[str, Any]) -> List[Dict[str, Any]]:
+                                    segmentation: Dict[str, Any]) -> str:
     """
-    让 deepseek 只负责推断“语气 / 安全 / 立场 / 风格”类的全局约束，
-    并映射到我们已有的 soft verifiers，例如：
-      - tone_neutral_llm_judge
-      - non_extremeness_judge
-      - actionability_judge (如果全篇明显要给建议)
-      - role_consistency_judge (如果明显要求特定叙述身份)
+    调用 deepseek 让它给出“语气 / 安全 / 风格”类全局约束。
 
-    它输出一个 JSON list，每项形如：
-    {
-      "desc": "The answer must maintain a neutral, analytical tone without emotional or inflammatory language.",
-      "verifier": {
-          "check": "tone_neutral_llm_judge",
-          "args": {}
-      }
-    }
+    非常重要：
+    - 我们现在要求它只能根据回答本身已经呈现出来的风格/语气/姿态来提炼约束，
+      不能脑补“理想上应该是什么样”。
+    - 我们提供给它的 TEXT SNIPPET 是原文本身（仅做空白规整），
+      不摘要、不改写、不自动截断；只有在极端过长时才 clip() 以防 token 爆炸。
+    - outline 只是结构位置参考，不能用来发明没出现的要求。
+
+    期望 deepseek 输出：JSON list，每项类似：
+        {
+          "desc": "The answer must maintain a neutral, analytical tone.",
+          "verifier": {"check": "tone_neutral_llm_judge", "args": {}}
+        }
     """
 
-    block_outline = _summarize_blocks_for_prompt(segmentation)
+    # 处理原文：保持语义，去除多余空白，不默认截断
+    answer_clean = make_snippet(response_text)
+    if len(answer_clean) > 20000:
+        # 极端长文本才触发截断；这是显式的、可审计的内容丢失点
+        answer_clean = clip(answer_clean, 20000)
 
-    system_prompt = (
-        "You are an instruction analyst.\n"
-        "Infer ONLY global style/tone/safety requirements for the answer.\n"
-        "These are high-level constraints on tone, stance, safety, or narrative voice that apply to the ENTIRE answer.\n"
-        "Examples:\n"
-        "- The answer must maintain a neutral, analytical tone. -> tone_neutral_llm_judge\n"
-        "- The answer must avoid inflammatory or insulting language. -> non_extremeness_judge\n"
-        "- The answer should present concrete recommendations or next steps. -> actionability_judge\n"
-        "- The answer must keep a consistent third-person analyst voice. -> role_consistency_judge\n"
-        "Do NOT include word count, language, paragraph structure, or first-person bans here; those are handled elsewhere.\n"
-        "Return ONLY valid JSON: a list of objects with fields {desc, verifier:{check,args}}.\n"
-        "Use ONLY these verifier names: tone_neutral_llm_judge, non_extremeness_judge, actionability_judge, role_consistency_judge\n"
-        "If nothing applies, return an empty JSON list []."
-    )
+    outline_str = summarize_blocks_outline(segmentation)
+    
+    system_prompt = """You are an instruction analyst.
+Your job is to infer ONLY global style/tone/safety requirements that the FULL ANSWER is ALREADY FOLLOWING.
+You MUST base every requirement on observable evidence in the provided TEXT SNIPPET.
+Do NOT invent idealized rules that are not clearly demonstrated in that text.
+The OUTLINE is just structural context (which block does what), NOT evidence.
+If you cannot justify a requirement from the snippet, you must NOT output it.
+
+Soft global constraints are about tone, safety, stance, professional voice, neutrality, actionability, or analyst persona consistency across the entire answer.
+Do NOT restate local factual obligations (e.g. "must list three risks") that only apply to one block; those belong to local block constraints, not global style.  🔁
+
+Every constraint must be grounded in observable evidence in the TEXT SNIPPET.
+Do NOT invent requirements that do not clearly appear in the text.
+
+You must return ONLY valid JSON: a list of objects.
+Each object MUST have: {desc, verifier:{check,args}}.
+
+About verifier.check:
+- If one of these fits, use it:
+  tone_neutral_llm_judge
+  tone_negative_llm_judge
+  non_extremeness_judge
+  role_consistency_judge
+  actionability_judge
+- Otherwise, you MUST create a new descriptive snake_case name
+  that reflects the requirement, e.g. "must_include_case_studies", "balanced_argumentation", "risk_mitigation_guidance".
+  This is allowed.
+Any new verifier.check you create MUST still describe a requirement that is clearly exhibited by the TEXT SNIPPET. 🔁
+You are NOT allowed to invent a requirement that the snippet does not follow, just to create a new check name. 🔁
+
+Rules for new verifier names:
+- snake_case only [a-z0-9_]
+- It must reflect the obligation in desc.
+- args must be a JSON object (possibly empty) describing any parameters needed to check this rule, e.g. {"min_items": 3}.
+
+If nothing applies, return an empty JSON list [].
+
+Rules:
+- desc must be English, imperative, concrete, verifiable.
+- desc should describe the style/voice/safety stance the answer actually exhibits.
+- Do NOT include word count, paragraph structure, language choice, or first-person bans here.
+  Those are handled elsewhere.
+- Do NOT output explanations outside JSON."""
+
 
     user_prompt = (
-        "ANSWER TEXT (full):\n" + response_text.strip() + "\n\n"
-        "BLOCK OUTLINE (order and intent):\n" + block_outline + "\n\n"
-        "Infer the global style/tone/safety constraints. Output ONLY the JSON list."
+        "GLOBAL OUTLINE (structure only; DO NOT invent rules from this):\n"
+        f"{outline_str}\n\n"
+        "TEXT SNIPPET (this is the FULL ANSWER content as given to the user;\n"
+        "ALL requirements MUST be grounded in this text, do NOT hallucinate):\n"
+        f"{answer_clean}\n\n"
+        "Extract the global style/tone/safety constraints that the answer is ALREADY following.\n"
+        "Return ONLY the JSON list.\n"
     )
 
     headers = {
@@ -260,14 +292,10 @@ def _call_deepseek_soft_constraints(response_text: str,
         resp.raise_for_status()
         data = resp.json()
         content = data["choices"][0]["message"]["content"].strip()
-
-        start = content.find("[")
-        end = content.rfind("]") + 1
-        json_str = content[start:end]
-        parsed = json.loads(json_str)
-        return parsed
+        return content
     except Exception:
-        return []
+        # 兜底：返回一个空 JSON list 字符串，让上层解析时得到 []
+        return "[]"
 
 
 # -------------------------------------------------
@@ -292,19 +320,23 @@ def extract_global_constraints(response_text: str,
     """
 
     hard_nodes = _build_hard_global_constraints(response_text, segmentation)
-    soft_raw = _call_deepseek_soft_constraints(response_text, segmentation)
+    soft_raw_str = _call_deepseek_soft_constraints(response_text, segmentation)
+    soft_items = extract_constraints(soft_raw_str)  # list[dict]
 
     soft_nodes: List[ConstraintNode] = []
-    for item in soft_raw:
+    for item in soft_items:
+        # extract_constraints() 已经尽量标准化字段名：cid/desc/scope/verifier_spec
         desc = item.get("desc", "").strip()
-        verif = item.get("verifier", {})
-        check_name = verif.get("check")
-        args_obj = verif.get("args", {}) or {}
+        verifier_spec = item.get("verifier_spec", {}) or item.get("verifier", {}) or {}
+        check_name = verifier_spec.get("check")
+        args_obj = verifier_spec.get("args", {}) or {}
+
         if not desc or not check_name:
             continue
+
         soft_nodes.append(
             ConstraintNode(
-                cid="TEMP",  # 先占位，后面统一重排ID
+                cid="TEMP",  # 后续统一重排ID
                 desc=desc,
                 scope="global",
                 verifier_spec={"check": check_name, "args": args_obj},

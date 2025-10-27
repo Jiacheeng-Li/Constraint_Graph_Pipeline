@@ -76,10 +76,11 @@ You can wrap this later for multi-sample generation.
 """
 
 import os
-import json
 import argparse
 from typing import Dict, Any
 from datetime import datetime
+
+from .utils.export_utils import write_json, write_text, save_graph_outputs
 
 # Step modules
 from .step1_seed_task import extract_seed_task
@@ -106,18 +107,6 @@ def _read_file(path: str) -> str:
     except FileNotFoundError:
         return ""
 
-
-def _write_json(path: str, obj: Any) -> None:
-    """Write JSON (UTF-8, pretty)."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(obj, f, ensure_ascii=False, indent=2)
-
-def _write_text(path: str, text: str) -> None:
-    """Write plain UTF-8 text to a file (creates directory)."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(text)
 
 
 # ------------------------------------------------------------
@@ -157,9 +146,13 @@ def run_pipeline_once(sample_id: str,
     segmentation = segment_response(model_answer)
 
     # Step 3: global constraints that should apply to entire answer
+    #    We now pass segmentation so the LLM can see structural outline
+    #    but is STILL required (in step3 module) to ground every rule in
+    #    the actual answer text, not in imagination.
     global_nodes = extract_global_constraints(
         original_instruction=original_instruction,
         model_answer=model_answer,
+        segmentation=segmentation,
     )
 
     # Step 4: local constraints per block (back-translation)
@@ -206,7 +199,7 @@ def run_pipeline_once(sample_id: str,
 
     # 2) Write machine_prompt to data/instructions/<sample_id>.prompt.txt
     prompt_path = os.path.join(instructions_dir, f"{sample_id}.prompt.txt")
-    _write_text(prompt_path, machine_prompt)
+    write_text(prompt_path, machine_prompt)
 
     # 3) Write eval_protocol (+ meta + timestamp) to data/reports/<sample_id>.eval.json
     eval_record = {
@@ -216,7 +209,7 @@ def run_pipeline_once(sample_id: str,
         "meta": bundle.get("meta", {}),
     }
     eval_path = os.path.join(reports_dir, f"{sample_id}.eval.json")
-    _write_json(eval_path, eval_record)
+    write_json(eval_path, eval_record)
 
     # 4) Write the entire bundle (debug use) to data/reports/<sample_id>.bundle.json
     bundle_debug = {
@@ -225,7 +218,7 @@ def run_pipeline_once(sample_id: str,
         **bundle,
     }
     bundle_path = os.path.join(reports_dir, f"{sample_id}.bundle.json")
-    _write_json(bundle_path, bundle_debug)
+    write_json(bundle_path, bundle_debug)
 
     # return summary
     return {
