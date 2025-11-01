@@ -1,0 +1,89 @@
+%% Mermaid flowchart for sample `example_001_v2`
+%% Paste this into any Mermaid renderer to view the graph.
+
+flowchart LR
+    SEED(((Write a short story showing cooperation among forest anim...)))
+    subgraph GLOBAL[Global Constraints]
+        G1((The answer must be at least 184 words long (approximately...)))
+        G2((The answer must be written primarily in English.))
+        G3((The answer must include an Opening/Intro section, a Main...))
+        G4((The answer should maintain an objective, third-person ana...))
+        G1 --- G2 --- G3 --- G4
+    end
+    SEED --> G1
+    subgraph B1[B1 Opening]
+        B1_C1["Establish a forest setting with a coming storm"]
+        B1_C2["Introduce multiple animal characters by name"]
+        B1_C3["Show animals performing cooperative actions"]
+        B1_C4["Use gentle, natural tone with descriptive nature imagery"]
+        B1_C5["Use urgent, tense language describing the storm as threat..."]
+        B1_C6["Describe animals acting with haste and alarm"]
+        B1_C7["Maintain tense, urgent tone throughout the opening"]
+        B1_C8["Include at least three different urgent animal actions"]
+        B1_C1 --- B1_C2 --- B1_C3 --- B1_C4 --- B1_C5 --- B1_C6 --- B1_C7 --- B1_C8
+    end
+    G1 --> B1_C1
+    subgraph B2[B2 Main Analysis]
+        B2_C1["Describe the storm's arrival and immediate effects"]
+        B2_C2["Show animals huddling together in shared shelter"]
+        B2_C3["Include specific animal interactions during the storm"]
+        B2_C4["Show the storm's progression from intensity to easing"]
+        B2_C5["Describe the aftermath visible when animals emerge"]
+        B2_C6["Include at least three distinct emotional states experien..."]
+        B2_C7["Describe specific comforting actions taken by animals to..."]
+        B2_C8["Show animals actively working together to improve their s..."]
+        B2_C9["Maintain a tone focused on resilience and mutual care rat..."]
+        B2_C1 --> B2_C2 --> B2_C3 --> B2_C4 --> B2_C5 --> B2_C6 --> B2_C7 --> B2_C8 --> B2_C9
+    end
+    B1_C1 --> B2_C1
+    subgraph B3[B3 Recommendation]
+        B3_C1["Include at least three distinct animal actions"]
+        B3_C2["Maintain gentle natural tone throughout"]
+        B3_C3["Convey a sense of restoration and gratitude"]
+        B3_C1 --- B3_C2 --- B3_C3
+    end
+    B2_C1 --> B3_C1
+    subgraph B4[B4 Conclusion]
+        B4_C1["Describe the scene after the storm with the sun returning"]
+        B4_C2["Show creatures helping each other in gentle ways"]
+        B4_C3["End with a reflective message about forest strength throu..."]
+        B4_C1 --> B4_C2 --> B4_C3
+    end
+    B3_C1 --> B4_C1
+    DEC_SEL_B1{"If the story needs to emphasize immediate danger and urge..."}
+    B1_C1 --> DEC_SEL_B1
+    subgraph SEL_B1_REAL[Branch: default path]
+        SEL_B1_REAL_B1_C1["B1_C1: Establish a forest setting with a coming storm"]
+        SEL_B1_REAL_B1_C2["B1_C2: Introduce multiple animal characters by name"]
+        SEL_B1_REAL_B1_C3["B1_C3: Show animals performing cooperative actions"]
+        SEL_B1_REAL_B1_C4["B1_C4: Use gentle, natural tone with descriptive nature i..."]
+        SEL_B1_REAL_B1_C1 --- SEL_B1_REAL_B1_C2 --- SEL_B1_REAL_B1_C3 --- SEL_B1_REAL_B1_C4
+    end
+    subgraph SEL_B1_ALT[Branch: conditional path]
+        SEL_B1_ALT_B1_C5["B1_C5: Use urgent, tense language describing the storm as..."]
+        SEL_B1_ALT_B1_C6["B1_C6: Describe animals acting with haste and alarm"]
+        SEL_B1_ALT_B1_C7["B1_C7: Maintain tense, urgent tone throughout the opening"]
+        SEL_B1_ALT_B1_C8["B1_C8: Include at least three different urgent animal act..."]
+        SEL_B1_ALT_B1_C5 --- SEL_B1_ALT_B1_C6 --- SEL_B1_ALT_B1_C7 --- SEL_B1_ALT_B1_C8
+    end
+    DEC_SEL_B1 --> SEL_B1_REAL_B1_C1
+    DEC_SEL_B1 --> SEL_B1_ALT_B1_C5
+    DEC_SEL_B2{"If the story needs to emphasize the animals' emotional re..."}
+    B2_C1 --> DEC_SEL_B2
+    subgraph SEL_B2_REAL[Branch: default path]
+        SEL_B2_REAL_B2_C1["B2_C1: Describe the storm's arrival and immediate effects"]
+        SEL_B2_REAL_B2_C2["B2_C2: Show animals huddling together in shared shelter"]
+        SEL_B2_REAL_B2_C3["B2_C3: Include specific animal interactions during the storm"]
+        SEL_B2_REAL_B2_C4["B2_C4: Show the storm's progression from intensity to easing"]
+        SEL_B2_REAL_B2_C5["B2_C5: Describe the aftermath visible when animals emerge"]
+        SEL_B2_REAL_B2_C1 --- SEL_B2_REAL_B2_C2 --- SEL_B2_REAL_B2_C3 --- SEL_B2_REAL_B2_C4 --- SEL_B2_REAL_B2_C5
+    end
+    subgraph SEL_B2_ALT[Branch: conditional path]
+        SEL_B2_ALT_B2_C6["B2_C6: Include at least three distinct emotional states e..."]
+        SEL_B2_ALT_B2_C7["B2_C7: Describe specific comforting actions taken by anim..."]
+        SEL_B2_ALT_B2_C8["B2_C8: Show animals actively working together to improve..."]
+        SEL_B2_ALT_B2_C9["B2_C9: Maintain a tone focused on resilience and mutual c..."]
+        SEL_B2_ALT_B2_C6 --- SEL_B2_ALT_B2_C7 --- SEL_B2_ALT_B2_C8 --- SEL_B2_ALT_B2_C9
+    end
+    DEC_SEL_B2 --> SEL_B2_REAL_B2_C1
+    DEC_SEL_B2 --> SEL_B2_ALT_B2_C6

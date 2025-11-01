@@ -1,0 +1,864 @@
+{
+  "sample_id": "example_001",
+  "timestamp_utc": "2025-10-28T09:54:35.119818+00:00",
+  "machine_prompt": "OVERALL TASK:\n- Write a short story showing cooperation among forest animals during a storm in a gentle, natural tone and ending with a reflective message.\n\nGLOBAL MANDATORY CONSTRAINTS:\nYou MUST satisfy ALL of the following properties throughout the entire answer:\n- The answer must be at least 184 words long (approximately comparable length to the provided reference).\n- The answer must be written primarily in English.\n- The answer must include an Opening/Intro section, a Main Analysis/Body section, and a Conclusion/Outlook section in logical progression.\n- The answer should maintain an objective, third-person analytic voice without using first-person pronouns.\n\nREQUIRED OUTPUT STRUCTURE (STAGED PLAN):\nYour answer MUST be organized into the following stages / sections.\nYou do not need to literally copy these headings, but you MUST perform the listed duties.\n\nStage B1 — Opening:\n- This stage is 'Opening'. You MUST: Cover ALL of the following points (logical AND).\n  • Establish the setting as a forest morning with a coming storm\n  • Introduce at least four different animal characters\n  • Show animals performing cooperative storm preparation actions\n  • Maintain gentle natural tone throughout the opening\n  • Establish the storm as an immediate threat with urgent language\n  • Describe animals responding to the storm with emergency coordination rather than gentle cooperation\n  • Maintain a tone of urgency and imminent danger throughout the opening\n  • Include direct communication between animals showing emergency coordination\n\nStage B2 — Main Analysis:\n- This stage is 'Main Analysis'. You MUST: Follow these sub-steps IN ORDER.\n  • Describe the storm's arrival and immediate effects\n  • Show animals huddling together in shared shelter\n  • Include specific animal interactions during the storm\n  • Describe the storm's aftermath when animals emerge\n\nStage B3 — Context setup:\n- This stage is 'Context setup'. You MUST: Cover ALL of the following points (logical AND).\n  • Include at least three specific animal actions showing cooperation\n  • Reference the time period of 'through the following day'\n  • Show progression from individual actions to collective outcome\n  • Include the outcome of 'forest seemed alive with quiet gratitude'\n\nStage B4 — Conclusion:\n- This stage is 'Conclusion'. You MUST: Cover ALL of the following points (logical AND).\n  • Include a reflective message about cooperation and strength\n  • Maintain a gentle, natural tone throughout the conclusion\n\nCONDITIONAL BRANCH REQUIREMENTS:\nSome stages include branching logic. You MUST clearly choose ONE branch that applies, and then satisfy ONLY that branch's obligations.\n\nIn stage B1 Opening:\nIF If the story needs to emphasize immediate danger and urgent collective action rather than gentle cooperation THEN you MUST satisfy ALL of these requirements:\n    • Establish the storm as an immediate threat with urgent language\n    • Describe animals responding to the storm with emergency coordination rather than gentle cooperation\n    • Maintain a tone of urgency and imminent danger throughout the opening\n    • Include direct communication between animals showing emergency coordination\nELSE (if the condition does not apply), you MUST satisfy ALL of these requirements:\n    • Establish the setting as a forest morning with a coming storm\n    • Introduce at least four different animal characters\n    • Show animals performing cooperative storm preparation actions\n    • Maintain gentle natural tone throughout the opening\n\nEVALUATION NOTICE:\n- Your answer will be automatically checked against the global constraints, the stage duties, and (if applicable) the branch you chose.\n- You MUST clearly follow EXACTLY ONE branch for each conditional stage. Do NOT merge branches.\n- Automated verifiers will check things like required language, tone, length, inclusion of specific elements, actionable recommendations, numbered items, etc.\n",
+  "eval_protocol": {
+    "seed_task": "Write a short story showing cooperation among forest animals during a storm in a gentle, natural tone and ending with a reflective message.",
+    "global_scoring": [
+      {
+        "cid": "G1",
+        "desc": "The answer must be at least 184 words long (approximately comparable length to the provided reference).",
+        "verifier": {
+          "check": "min_word_count",
+          "args": {
+            "min_words": 184
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G2",
+        "desc": "The answer must be written primarily in English.",
+        "verifier": {
+          "check": "require_language",
+          "args": {
+            "lang": "en"
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G3",
+        "desc": "The answer must include an Opening/Intro section, a Main Analysis/Body section, and a Conclusion/Outlook section in logical progression.",
+        "verifier": {
+          "check": "has_sections",
+          "args": {
+            "sections": [
+              "Opening",
+              "Body",
+              "Conclusion"
+            ]
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G4",
+        "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+        "verifier": {
+          "check": "forbid_first_person",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      }
+    ],
+    "block_scoring": [
+      {
+        "block_id": "B1",
+        "role": "Opening",
+        "logic_type": "AND",
+        "requirements": [
+          {
+            "cid": "B1_C1",
+            "desc": "Establish the setting as a forest morning with a coming storm",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "forest",
+                  "morning",
+                  "storm"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C2",
+            "desc": "Introduce at least four different animal characters",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Squirrel",
+                  "Rabbit",
+                  "Finch",
+                  "Tortoise"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C3",
+            "desc": "Show animals performing cooperative storm preparation actions",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "gather",
+                  "reinforce",
+                  "shelter"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C4",
+            "desc": "Maintain gentle natural tone throughout the opening",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B1_C5",
+            "desc": "Establish the storm as an immediate threat with urgent language",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "urgent",
+                  "danger",
+                  "threatening",
+                  "immediate"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C6",
+            "desc": "Describe animals responding to the storm with emergency coordination rather than gentle cooperation",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "emergency",
+                  "coordinate",
+                  "urgently",
+                  "protect"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C7",
+            "desc": "Maintain a tone of urgency and imminent danger throughout the opening",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B1_C8",
+            "desc": "Include direct communication between animals showing emergency coordination",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "warning",
+                  "quickly",
+                  "now",
+                  "together"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B2",
+        "role": "Main Analysis",
+        "logic_type": "sub-chain",
+        "requirements": [
+          {
+            "cid": "B2_C1",
+            "desc": "Describe the storm's arrival and immediate effects",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "storm",
+                  "rain",
+                  "lightning"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B2_C2",
+            "desc": "Show animals huddling together in shared shelter",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "huddled",
+                  "shelter",
+                  "together"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B2_C3",
+            "desc": "Include specific animal interactions during the storm",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Squirrel",
+                  "Bear",
+                  "Finch"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B2_C4",
+            "desc": "Describe the storm's aftermath when animals emerge",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "wind eased",
+                  "stepped out",
+                  "broken branches"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B3",
+        "role": "Context setup",
+        "logic_type": "AND",
+        "requirements": [
+          {
+            "cid": "B3_C1",
+            "desc": "Include at least three specific animal actions showing cooperation",
+            "verifier": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 3
+              }
+            }
+          },
+          {
+            "cid": "B3_C2",
+            "desc": "Reference the time period of 'through the following day'",
+            "verifier": {
+              "check": "must_reference_timeframe",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B3_C3",
+            "desc": "Show progression from individual actions to collective outcome",
+            "verifier": {
+              "check": "show_action_to_outcome_progression",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B3_C4",
+            "desc": "Include the outcome of 'forest seemed alive with quiet gratitude'",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "gratitude"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B4",
+        "role": "Conclusion",
+        "logic_type": "AND",
+        "requirements": [
+          {
+            "cid": "B4_C1",
+            "desc": "Include a reflective message about cooperation and strength",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "remembered",
+                  "strong",
+                  "hearts",
+                  "together"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Maintain a gentle, natural tone throughout the conclusion",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          }
+        ]
+      }
+    ],
+    "conditional_scoring": [
+      {
+        "sid": "SEL_B1",
+        "where": "B1 Opening",
+        "condition": "If the story needs to emphasize immediate danger and urgent collective action rather than gentle cooperation",
+        "branch_real": [
+          {
+            "cid": "B1_C1",
+            "desc": "Establish the setting as a forest morning with a coming storm",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "forest",
+                  "morning",
+                  "storm"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C2",
+            "desc": "Introduce at least four different animal characters",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Squirrel",
+                  "Rabbit",
+                  "Finch",
+                  "Tortoise"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C3",
+            "desc": "Show animals performing cooperative storm preparation actions",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "gather",
+                  "reinforce",
+                  "shelter"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C4",
+            "desc": "Maintain gentle natural tone throughout the opening",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B1_C5",
+            "desc": "Establish the storm as an immediate threat with urgent language",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "urgent",
+                  "danger",
+                  "threatening",
+                  "immediate"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C6",
+            "desc": "Describe animals responding to the storm with emergency coordination rather than gentle cooperation",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "emergency",
+                  "coordinate",
+                  "urgently",
+                  "protect"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C7",
+            "desc": "Maintain a tone of urgency and imminent danger throughout the opening",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B1_C8",
+            "desc": "Include direct communication between animals showing emergency coordination",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "warning",
+                  "quickly",
+                  "now",
+                  "together"
+                ]
+              }
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      }
+    ],
+    "meta": {
+      "assembled_from": {
+        "step1": "seed_task",
+        "step2": "segmentation",
+        "step3": "global_constraints",
+        "step4": "block_constraints + block_logic",
+        "step5": "selections + augmented block_constraints"
+      }
+    }
+  },
+  "graph_serialized": {
+    "seed_task": "Write a short story showing cooperation among forest animals during a storm in a gentle, natural tone and ending with a reflective message.",
+    "global_constraints": [
+      {
+        "cid": "G1",
+        "desc": "The answer must be at least 184 words long (approximately comparable length to the provided reference).",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "min_word_count",
+          "args": {
+            "min_words": 184
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G2",
+        "desc": "The answer must be written primarily in English.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "require_language",
+          "args": {
+            "lang": "en"
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G3",
+        "desc": "The answer must include an Opening/Intro section, a Main Analysis/Body section, and a Conclusion/Outlook section in logical progression.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "has_sections",
+          "args": {
+            "sections": [
+              "Opening",
+              "Body",
+              "Conclusion"
+            ]
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G4",
+        "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "forbid_first_person",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      }
+    ],
+    "block_specs": [
+      {
+        "block_id": "B1",
+        "intent": "Opening",
+        "text_span": "One morning, the forest woke to a sky heavy with gray. The wind whispered through the leaves, warning of a coming storm. Squirrel dashed about, trying to gather the last acorns, while Rabbit helped pull branches to reinforce the hollow where they all sometimes rested. Above them, Finch called out, “Tie the leaves together! The rain will be fierce!” Even the slow Tortoise dragged fallen bark toward the roots of an old oak, making a sturdy shelter.",
+        "order_index": 0
+      },
+      {
+        "block_id": "B2",
+        "intent": "Main Analysis",
+        "text_span": "By afternoon, the storm came roaring. Rain thudded on the canopy, and lightning flashed beyond the hills. The animals huddled together inside their shared shelter—fur, feathers, and shells pressed close. Squirrel trembled, but Bear’s deep voice rumbled softly, calming them. Finch fluttered near the entrance, watching until the thunder passed. When the wind finally eased, they all stepped out to see broken branches and soaked nests scattered around.",
+        "order_index": 1
+      },
+      {
+        "block_id": "B3",
+        "intent": "Context setup",
+        "text_span": "They worked together through the following day. Beaver repaired the stream dam, Fox carried twigs for the smaller nests, and the deer cleared the paths again. Soon, the forest seemed alive with quiet gratitude.",
+        "order_index": 2
+      },
+      {
+        "block_id": "B4",
+        "intent": "Conclusion",
+        "text_span": "When the sun returned, its light shone on every creature, large and small, each one helping another in some gentle way. From that day on, they remembered: a forest stands strong not because its trees are tall, but because its hearts grow together.",
+        "order_index": 3
+      }
+    ],
+    "block_constraint_sets": [
+      {
+        "block_id": "B1",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B1_C1",
+            "desc": "Establish the setting as a forest morning with a coming storm",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "forest",
+                  "morning",
+                  "storm"
+                ]
+              }
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B1_C2",
+            "desc": "Introduce at least four different animal characters",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Squirrel",
+                  "Rabbit",
+                  "Finch",
+                  "Tortoise"
+                ]
+              }
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B1_C3",
+            "desc": "Show animals performing cooperative storm preparation actions",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "gather",
+                  "reinforce",
+                  "shelter"
+                ]
+              }
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B1_C4",
+            "desc": "Maintain gentle natural tone throughout the opening",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B1_C5",
+            "desc": "Establish the storm as an immediate threat with urgent language",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "urgent",
+                  "danger",
+                  "threatening",
+                  "immediate"
+                ]
+              }
+            },
+            "trace_to": "B1",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B1_C6",
+            "desc": "Describe animals responding to the storm with emergency coordination rather than gentle cooperation",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "emergency",
+                  "coordinate",
+                  "urgently",
+                  "protect"
+                ]
+              }
+            },
+            "trace_to": "B1",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B1_C7",
+            "desc": "Maintain a tone of urgency and imminent danger throughout the opening",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B1",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B1_C8",
+            "desc": "Include direct communication between animals showing emergency coordination",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "warning",
+                  "quickly",
+                  "now",
+                  "together"
+                ]
+              }
+            },
+            "trace_to": "B1",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B2",
+        "logic_type": "sub-chain",
+        "constraints": [
+          {
+            "cid": "B2_C1",
+            "desc": "Describe the storm's arrival and immediate effects",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "storm",
+                  "rain",
+                  "lightning"
+                ]
+              }
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B2_C2",
+            "desc": "Show animals huddling together in shared shelter",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "huddled",
+                  "shelter",
+                  "together"
+                ]
+              }
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B2_C3",
+            "desc": "Include specific animal interactions during the storm",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Squirrel",
+                  "Bear",
+                  "Finch"
+                ]
+              }
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B2_C4",
+            "desc": "Describe the storm's aftermath when animals emerge",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "wind eased",
+                  "stepped out",
+                  "broken branches"
+                ]
+              }
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B3",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B3_C1",
+            "desc": "Include at least three specific animal actions showing cooperation",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 3
+              }
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B3_C2",
+            "desc": "Reference the time period of 'through the following day'",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_reference_timeframe",
+              "args": {}
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B3_C3",
+            "desc": "Show progression from individual actions to collective outcome",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "show_action_to_outcome_progression",
+              "args": {}
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B3_C4",
+            "desc": "Include the outcome of 'forest seemed alive with quiet gratitude'",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "gratitude"
+                ]
+              }
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B4",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B4_C1",
+            "desc": "Include a reflective message about cooperation and strength",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "remembered",
+                  "strong",
+                  "hearts",
+                  "together"
+                ]
+              }
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Maintain a gentle, natural tone throughout the conclusion",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          }
+        ]
+      }
+    ],
+    "selections": [
+      {
+        "sid": "SEL_B1",
+        "condition": "If the story needs to emphasize immediate danger and urgent collective action rather than gentle cooperation",
+        "trace_to": "B1",
+        "branch_real": {
+          "constraints": [
+            "B1_C1",
+            "B1_C2",
+            "B1_C3",
+            "B1_C4"
+          ]
+        },
+        "branch_alt": {
+          "constraints": [
+            "B1_C5",
+            "B1_C6",
+            "B1_C7",
+            "B1_C8"
+          ]
+        },
+        "derived_from": "step5"
+      }
+    ],
+    "meta": {
+      "assembled_from": {
+        "step1": "seed_task",
+        "step2": "segmentation",
+        "step3": "global_constraints",
+        "step4": "block_constraints + block_logic",
+        "step5": "selections + augmented block_constraints"
+      }
+    }
+  },
+  "meta": {
+    "assembled_from": {
+      "step1": "seed_task",
+      "step2": "segmentation",
+      "step3": "global_constraints",
+      "step4": "block_constraints + block_logic",
+      "step5": "selections + augmented block_constraints"
+    }
+  }
+}

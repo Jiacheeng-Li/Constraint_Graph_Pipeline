@@ -14,8 +14,10 @@ verifier_registry.py
         "args": {"min_words": 150}
     }
 
-- 评测时我们会调用:
-    run_verifier(verifier_spec, text)
+- 评测时我们主要调用:
+    run_verifier(check_name="min_word_count",
+                 check_args={"min_words": 150},
+                 answer_text=resp)
   这会自动在注册表里找到对应函数，并把 args 作为关键字参数传入。
 
 注意：
@@ -24,7 +26,7 @@ verifier_registry.py
   后续可以改为返回 None 并单独统计。
 """
 
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, Optional, Tuple
 from ..verifier import hard_checks, soft_checks
 
 # 全局注册表: check_name -> callable
@@ -66,36 +68,62 @@ def _register_builtin() -> None:
 _register_builtin()
 
 
-def run_verifier(verifier_spec: Dict[str, Any], text: str) -> bool:
+def run_verifier(
+    *,
+    check_name: Optional[str] = None,
+    check_args: Optional[Dict[str, Any]] = None,
+    answer_text: Optional[str] = None,
+    context: Optional[Dict[str, Any]] = None,
+    verifier_spec: Optional[Dict[str, Any]] = None,
+) -> Tuple[Optional[bool], Dict[str, Any]]:
     """
-    根据 verifier_spec 调用对应的校验器并返回 True/False。
+    调用指定的校验器并返回 (passed, details)。
 
-    verifier_spec 形如：
-        {
-            "check": "min_word_count",
-            "args": {"min_words": 150}
-        }
+    兼容两种调用方式：
+      A. 关键字参数方式（推荐）：
+            run_verifier(
+                check_name="min_word_count",
+                check_args={"min_words": 150},
+                answer_text=resp,
+                context={"cid": "..."}
+            )
 
-    运行逻辑：
-    1. 找到对应的函数
-    2. 把 text 作为 text=... 传入
-    3. 把 args 其余字段作为关键字参数传入
+      B. 旧版接口（verifier_spec + text）：
+            run_verifier(verifier_spec={"check": "...", "args": {...}}, answer_text=resp)
 
-    异常/未知检查项策略：返回 True（宽容通过）。
+    返回：
+        passed: bool | None  # None 表示未执行（未知校验或缺少文本）
+        details: Dict[str, Any]  # 包含 check / args / 错误信息 等
     """
-    if verifier_spec is None:
-        return True
+    # Back-compat: 如果仅提供 verifier_spec，则从中提取配置
+    if verifier_spec:
+        check_name = check_name or verifier_spec.get("check")
+        check_args = check_args or (verifier_spec.get("args") or {})
 
-    check_name = verifier_spec.get("check")
-    args = verifier_spec.get("args", {}) or {}
+    details: Dict[str, Any] = {
+        "check": check_name,
+        "args": check_args or {},
+        "context": context or {},
+    }
+
+    if not check_name:
+        details["note"] = "missing check name"
+        return None, details
 
     fn = _REGISTRY.get(check_name)
     if fn is None:
-        # 未实现的/未知的校验，当前策略：视为通过
-        return True
+        details["note"] = "unregistered verifier (treated as skipped)"
+        return None, details
+
+    if answer_text is None:
+        details["note"] = "no answer_text provided"
+        return None, details
 
     try:
-        return fn(text=text, **args)
-    except Exception:
-        # 安全兜底：任何异常都不要让整个pipeline崩掉
-        return False
+        result = fn(text=answer_text, **(check_args or {}))
+        passed = bool(result)
+        details["result_raw"] = result
+        return passed, details
+    except Exception as exc:
+        details["error"] = str(exc)
+        return False, details

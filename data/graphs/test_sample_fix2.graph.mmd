@@ -1,0 +1,62 @@
+%% Mermaid flowchart for sample `test_sample_fix2`
+%% Paste this into any Mermaid renderer to view the graph.
+
+flowchart LR
+    SEED(((Analyze 撰写一篇关于全球太空竞赛的分析文章，需要保持中立专业的语气，并在结尾提出下一步建议。)))
+    subgraph GLOBAL[Global Constraints]
+        G1((The answer must be at least 100 words long (approximately...)))
+        G2((The answer must be written primarily in English.))
+        G3((The answer should maintain an objective, third-person ana...))
+        G1 --- G2 --- G3
+    end
+    SEED --> G1
+    subgraph B1[B1 TBD]
+        B1_C1["Maintain a neutral, analytical tone without emotional or..."]
+        B1_C2["Provide a sufficiently detailed explanation of the topic..."]
+        B1_C3["Adopt an explicitly critical tone highlighting concrete p..."]
+        B1_C4["Propose at least one concrete next-step action to address..."]
+        B1_C1 --- B1_C2 --- B1_C3 --- B1_C4
+    end
+    G1 --> B1_C1
+    subgraph B2[B2 TBD]
+        B2_C1["Maintain a neutral, analytical tone without emotional or..."]
+        B2_C2["Provide a sufficiently detailed explanation of the topic..."]
+        B2_C1 --- B2_C2
+    end
+    B1_C1 --> B2_C1
+    subgraph B3[B3 TBD]
+        B3_C1["Maintain a neutral, analytical tone without emotional or..."]
+        B3_C2["Provide a sufficiently detailed explanation of the topic..."]
+        B3_C3["Adopt an explicitly critical tone highlighting concrete p..."]
+        B3_C4["Propose at least one concrete next-step action to address..."]
+        B3_C1 --- B3_C2 --- B3_C3 --- B3_C4
+    end
+    B2_C1 --> B3_C1
+    DEC_SEL_B1{"If the stance is critical/negative"}
+    B1_C1 --> DEC_SEL_B1
+    subgraph SEL_B1_REAL[Branch: default path]
+        B1_C1["Maintain a neutral, analytical tone without emotional or..."]
+        B1_C2["Provide a sufficiently detailed explanation of the topic..."]
+        B1_C1 --- B1_C2
+    end
+    subgraph SEL_B1_ALT[Branch: conditional path]
+        B1_C3["Adopt an explicitly critical tone highlighting concrete p..."]
+        B1_C4["Propose at least one concrete next-step action to address..."]
+        B1_C3 --- B1_C4
+    end
+    DEC_SEL_B1 --> B1_C1
+    DEC_SEL_B1 --> B1_C3
+    DEC_SEL_B3{"If the stance is critical/negative"}
+    B3_C1 --> DEC_SEL_B3
+    subgraph SEL_B3_REAL[Branch: default path]
+        B3_C1["Maintain a neutral, analytical tone without emotional or..."]
+        B3_C2["Provide a sufficiently detailed explanation of the topic..."]
+        B3_C1 --- B3_C2
+    end
+    subgraph SEL_B3_ALT[Branch: conditional path]
+        B3_C3["Adopt an explicitly critical tone highlighting concrete p..."]
+        B3_C4["Propose at least one concrete next-step action to address..."]
+        B3_C3 --- B3_C4
+    end
+    DEC_SEL_B3 --> B3_C1
+    DEC_SEL_B3 --> B3_C3

@@ -1,0 +1,26 @@
+OVERALL TASK:
+- Analyze 撰写一篇关于全球太空竞赛的分析文章，需要保持中立专业的语气，并在结尾提出下一步建议。
+
+GLOBAL MANDATORY CONSTRAINTS:
+You MUST satisfy ALL of the following properties throughout the entire answer:
+- The answer must be at least 100 words long (approximately comparable length to the provided reference).
+- The answer must be written primarily in English.
+- The answer should maintain an objective, third-person analytic voice without using first-person pronouns.
+
+REQUIRED OUTPUT STRUCTURE (STAGED PLAN):
+Your answer MUST be organized into the following stages / sections.
+You do not need to literally copy these headings, but you MUST perform the listed duties.
+
+Stage B1 — TBD:
+- This stage is 'TBD'. You MUST: Cover ALL of the following points (logical AND).
+
+Stage B2 — TBD:
+- This stage is 'TBD'. You MUST: Cover ALL of the following points (logical AND).
+
+Stage B3 — TBD:
+- This stage is 'TBD'. You MUST: Cover ALL of the following points (logical AND).
+
+EVALUATION NOTICE:
+- Your answer will be automatically checked against the global constraints, the stage duties, and (if applicable) the branch you chose.
+- You MUST clearly follow EXACTLY ONE branch for each conditional stage. Do NOT merge branches.
+- Automated verifiers will check things like required language, tone, length, inclusion of specific elements, actionable recommendations, numbered items, etc.

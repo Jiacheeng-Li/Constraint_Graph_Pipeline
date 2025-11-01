@@ -1,0 +1,1008 @@
+{
+  "sample_id": "example_001_v2",
+  "timestamp_utc": "2025-10-28T10:09:43.016008+00:00",
+  "candidate_file": "data/reports/example_001_v2.candidate.txt",
+  "summary": {
+    "global_pass_rate": 0.75,
+    "block_pass_rate": 0.6521739130434783,
+    "branch_pass_rate": 1.0,
+    "overall_pass_rate": 0.8007246376811595
+  },
+  "branch_choice": {
+    "SEL_B1": {
+      "chosen": "branch_real",
+      "score_branch_real": 1.0,
+      "score_branch_alt": 0.0
+    },
+    "SEL_B2": {
+      "chosen": "branch_real",
+      "score_branch_real": 1.0,
+      "score_branch_alt": 0.25
+    }
+  },
+  "per_constraint": [
+    {
+      "cid": "G1",
+      "desc": "The answer must be at least 184 words long (approximately comparable length to the provided reference).",
+      "passed": true,
+      "details": {
+        "check": "min_word_count",
+        "args": {
+          "min_words": 184
+        },
+        "context": {
+          "cid": "G1",
+          "desc": "The answer must be at least 184 words long (approximately comparable length to the provided reference).",
+          "scope": "global"
+        },
+        "result_raw": true
+      },
+      "scope": "global",
+      "block_id": null,
+      "selection_id": null
+    },
+    {
+      "cid": "G2",
+      "desc": "The answer must be written primarily in English.",
+      "passed": true,
+      "details": {
+        "check": "require_language",
+        "args": {
+          "lang": "en"
+        },
+        "context": {
+          "cid": "G2",
+          "desc": "The answer must be written primarily in English.",
+          "scope": "global"
+        },
+        "result_raw": true
+      },
+      "scope": "global",
+      "block_id": null,
+      "selection_id": null
+    },
+    {
+      "cid": "G3",
+      "desc": "The answer must include an Opening/Intro section, a Main Analysis/Body section, and a Conclusion/Outlook section in logical progression.",
+      "passed": false,
+      "details": {
+        "check": "has_sections",
+        "args": {
+          "sections": [
+            "Opening",
+            "Body",
+            "Conclusion"
+          ]
+        },
+        "context": {
+          "cid": "G3",
+          "desc": "The answer must include an Opening/Intro section, a Main Analysis/Body section, and a Conclusion/Outlook section in logical progression.",
+          "scope": "global"
+        },
+        "result_raw": false
+      },
+      "scope": "global",
+      "block_id": null,
+      "selection_id": null
+    },
+    {
+      "cid": "G4",
+      "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+      "passed": true,
+      "details": {
+        "check": "forbid_first_person",
+        "args": {},
+        "context": {
+          "cid": "G4",
+          "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+          "scope": "global"
+        },
+        "result_raw": true
+      },
+      "scope": "global",
+      "block_id": null,
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C1",
+      "desc": "Establish a forest setting with a coming storm",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "forest",
+            "storm"
+          ]
+        },
+        "context": {
+          "cid": "B1_C1",
+          "desc": "Establish a forest setting with a coming storm",
+          "block_id": "B1"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C2",
+      "desc": "Introduce multiple animal characters by name",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "Squirrel",
+            "Rabbit",
+            "Finch",
+            "Tortoise"
+          ]
+        },
+        "context": {
+          "cid": "B1_C2",
+          "desc": "Introduce multiple animal characters by name",
+          "block_id": "B1"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C3",
+      "desc": "Show animals performing cooperative actions",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "helped",
+            "together",
+            "shelter"
+          ]
+        },
+        "context": {
+          "cid": "B1_C3",
+          "desc": "Show animals performing cooperative actions",
+          "block_id": "B1"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C4",
+      "desc": "Use gentle, natural tone with descriptive nature imagery",
+      "passed": true,
+      "details": {
+        "check": "tone_neutral_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B1_C4",
+          "desc": "Use gentle, natural tone with descriptive nature imagery",
+          "block_id": "B1"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C5",
+      "desc": "Use urgent, tense language describing the storm as threatening",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "urgent",
+            "danger",
+            "threatening",
+            "fierce"
+          ]
+        },
+        "context": {
+          "cid": "B1_C5",
+          "desc": "Use urgent, tense language describing the storm as threatening",
+          "block_id": "B1"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C6",
+      "desc": "Describe animals acting with haste and alarm",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "frantic",
+            "hurried",
+            "scrambled",
+            "rushed"
+          ]
+        },
+        "context": {
+          "cid": "B1_C6",
+          "desc": "Describe animals acting with haste and alarm",
+          "block_id": "B1"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C7",
+      "desc": "Maintain tense, urgent tone throughout the opening",
+      "passed": false,
+      "details": {
+        "check": "tone_negative_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B1_C7",
+          "desc": "Maintain tense, urgent tone throughout the opening",
+          "block_id": "B1"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C8",
+      "desc": "Include at least three different urgent animal actions",
+      "passed": false,
+      "details": {
+        "check": "min_numbered_items",
+        "args": {
+          "min_items": 3
+        },
+        "context": {
+          "cid": "B1_C8",
+          "desc": "Include at least three different urgent animal actions",
+          "block_id": "B1"
+        },
+        "error": "min_numbered_items() got an unexpected keyword argument 'min_items'"
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C1",
+      "desc": "Describe the storm's arrival and immediate effects",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "storm",
+            "rain",
+            "lightning"
+          ]
+        },
+        "context": {
+          "cid": "B2_C1",
+          "desc": "Describe the storm's arrival and immediate effects",
+          "block_id": "B2"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C2",
+      "desc": "Show animals huddling together in shared shelter",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "huddled",
+            "shelter",
+            "together"
+          ]
+        },
+        "context": {
+          "cid": "B2_C2",
+          "desc": "Show animals huddling together in shared shelter",
+          "block_id": "B2"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C3",
+      "desc": "Include specific animal interactions during the storm",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "Squirrel",
+            "Bear",
+            "Finch"
+          ]
+        },
+        "context": {
+          "cid": "B2_C3",
+          "desc": "Include specific animal interactions during the storm",
+          "block_id": "B2"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C4",
+      "desc": "Show the storm's progression from intensity to easing",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "thunder",
+            "wind",
+            "eased"
+          ]
+        },
+        "context": {
+          "cid": "B2_C4",
+          "desc": "Show the storm's progression from intensity to easing",
+          "block_id": "B2"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C5",
+      "desc": "Describe the aftermath visible when animals emerge",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "broken branches",
+            "soaked nests"
+          ]
+        },
+        "context": {
+          "cid": "B2_C5",
+          "desc": "Describe the aftermath visible when animals emerge",
+          "block_id": "B2"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C6",
+      "desc": "Include at least three distinct emotional states experienced by different animals during the storm",
+      "passed": false,
+      "details": {
+        "check": "must_list_n_subpoints",
+        "args": {
+          "n": 3
+        },
+        "context": {
+          "cid": "B2_C6",
+          "desc": "Include at least three distinct emotional states experienced by different animals during the storm",
+          "block_id": "B2"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C7",
+      "desc": "Describe specific comforting actions taken by animals to support each other",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "comfort",
+            "reassure",
+            "support"
+          ]
+        },
+        "context": {
+          "cid": "B2_C7",
+          "desc": "Describe specific comforting actions taken by animals to support each other",
+          "block_id": "B2"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C8",
+      "desc": "Show animals actively working together to improve their shelter during the storm",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "worked",
+            "improved",
+            "strengthened"
+          ]
+        },
+        "context": {
+          "cid": "B2_C8",
+          "desc": "Show animals actively working together to improve their shelter during the storm",
+          "block_id": "B2"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C9",
+      "desc": "Maintain a tone focused on resilience and mutual care rather than just survival",
+      "passed": true,
+      "details": {
+        "check": "tone_neutral_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B2_C9",
+          "desc": "Maintain a tone focused on resilience and mutual care rather than just survival",
+          "block_id": "B2"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B3_C1",
+      "desc": "Include at least three distinct animal actions",
+      "passed": false,
+      "details": {
+        "check": "min_numbered_items",
+        "args": {
+          "min_items": 3
+        },
+        "context": {
+          "cid": "B3_C1",
+          "desc": "Include at least three distinct animal actions",
+          "block_id": "B3"
+        },
+        "error": "min_numbered_items() got an unexpected keyword argument 'min_items'"
+      },
+      "scope": "block",
+      "block_id": "B3",
+      "selection_id": null
+    },
+    {
+      "cid": "B3_C2",
+      "desc": "Maintain gentle natural tone throughout",
+      "passed": true,
+      "details": {
+        "check": "tone_neutral_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B3_C2",
+          "desc": "Maintain gentle natural tone throughout",
+          "block_id": "B3"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B3",
+      "selection_id": null
+    },
+    {
+      "cid": "B3_C3",
+      "desc": "Convey a sense of restoration and gratitude",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "repaired",
+            "cleared",
+            "gratitude"
+          ]
+        },
+        "context": {
+          "cid": "B3_C3",
+          "desc": "Convey a sense of restoration and gratitude",
+          "block_id": "B3"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B3",
+      "selection_id": null
+    },
+    {
+      "cid": "B4_C1",
+      "desc": "Describe the scene after the storm with the sun returning",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "sun",
+            "returned",
+            "light"
+          ]
+        },
+        "context": {
+          "cid": "B4_C1",
+          "desc": "Describe the scene after the storm with the sun returning",
+          "block_id": "B4"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B4",
+      "selection_id": null
+    },
+    {
+      "cid": "B4_C2",
+      "desc": "Show creatures helping each other in gentle ways",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "creature",
+            "helping",
+            "gentle"
+          ]
+        },
+        "context": {
+          "cid": "B4_C2",
+          "desc": "Show creatures helping each other in gentle ways",
+          "block_id": "B4"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B4",
+      "selection_id": null
+    },
+    {
+      "cid": "B4_C3",
+      "desc": "End with a reflective message about forest strength through unity",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "forest",
+            "strong",
+            "hearts",
+            "together"
+          ]
+        },
+        "context": {
+          "cid": "B4_C3",
+          "desc": "End with a reflective message about forest strength through unity",
+          "block_id": "B4"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B4",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C1",
+      "desc": "Establish a forest setting with a coming storm",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "forest",
+            "storm"
+          ]
+        },
+        "context": {
+          "cid": "B1_C1",
+          "desc": "Establish a forest setting with a coming storm",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C2",
+      "desc": "Introduce multiple animal characters by name",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "Squirrel",
+            "Rabbit",
+            "Finch",
+            "Tortoise"
+          ]
+        },
+        "context": {
+          "cid": "B1_C2",
+          "desc": "Introduce multiple animal characters by name",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C3",
+      "desc": "Show animals performing cooperative actions",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "helped",
+            "together",
+            "shelter"
+          ]
+        },
+        "context": {
+          "cid": "B1_C3",
+          "desc": "Show animals performing cooperative actions",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C4",
+      "desc": "Use gentle, natural tone with descriptive nature imagery",
+      "passed": true,
+      "details": {
+        "check": "tone_neutral_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B1_C4",
+          "desc": "Use gentle, natural tone with descriptive nature imagery",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C5",
+      "desc": "Use urgent, tense language describing the storm as threatening",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "urgent",
+            "danger",
+            "threatening",
+            "fierce"
+          ]
+        },
+        "context": {
+          "cid": "B1_C5",
+          "desc": "Use urgent, tense language describing the storm as threatening",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": false
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C6",
+      "desc": "Describe animals acting with haste and alarm",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "frantic",
+            "hurried",
+            "scrambled",
+            "rushed"
+          ]
+        },
+        "context": {
+          "cid": "B1_C6",
+          "desc": "Describe animals acting with haste and alarm",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": false
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C7",
+      "desc": "Maintain tense, urgent tone throughout the opening",
+      "passed": false,
+      "details": {
+        "check": "tone_negative_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B1_C7",
+          "desc": "Maintain tense, urgent tone throughout the opening",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": false
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C8",
+      "desc": "Include at least three different urgent animal actions",
+      "passed": false,
+      "details": {
+        "check": "min_numbered_items",
+        "args": {
+          "min_items": 3
+        },
+        "context": {
+          "cid": "B1_C8",
+          "desc": "Include at least three different urgent animal actions",
+          "selection_id": "SEL_B1"
+        },
+        "error": "min_numbered_items() got an unexpected keyword argument 'min_items'"
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B2_C1",
+      "desc": "Describe the storm's arrival and immediate effects",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "storm",
+            "rain",
+            "lightning"
+          ]
+        },
+        "context": {
+          "cid": "B2_C1",
+          "desc": "Describe the storm's arrival and immediate effects",
+          "selection_id": "SEL_B2"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B2"
+    },
+    {
+      "cid": "B2_C2",
+      "desc": "Show animals huddling together in shared shelter",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "huddled",
+            "shelter",
+            "together"
+          ]
+        },
+        "context": {
+          "cid": "B2_C2",
+          "desc": "Show animals huddling together in shared shelter",
+          "selection_id": "SEL_B2"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B2"
+    },
+    {
+      "cid": "B2_C3",
+      "desc": "Include specific animal interactions during the storm",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "Squirrel",
+            "Bear",
+            "Finch"
+          ]
+        },
+        "context": {
+          "cid": "B2_C3",
+          "desc": "Include specific animal interactions during the storm",
+          "selection_id": "SEL_B2"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B2"
+    },
+    {
+      "cid": "B2_C4",
+      "desc": "Show the storm's progression from intensity to easing",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "thunder",
+            "wind",
+            "eased"
+          ]
+        },
+        "context": {
+          "cid": "B2_C4",
+          "desc": "Show the storm's progression from intensity to easing",
+          "selection_id": "SEL_B2"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B2"
+    },
+    {
+      "cid": "B2_C5",
+      "desc": "Describe the aftermath visible when animals emerge",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "broken branches",
+            "soaked nests"
+          ]
+        },
+        "context": {
+          "cid": "B2_C5",
+          "desc": "Describe the aftermath visible when animals emerge",
+          "selection_id": "SEL_B2"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B2"
+    },
+    {
+      "cid": "B2_C6",
+      "desc": "Include at least three distinct emotional states experienced by different animals during the storm",
+      "passed": false,
+      "details": {
+        "check": "must_list_n_subpoints",
+        "args": {
+          "n": 3
+        },
+        "context": {
+          "cid": "B2_C6",
+          "desc": "Include at least three distinct emotional states experienced by different animals during the storm",
+          "selection_id": "SEL_B2"
+        },
+        "result_raw": false
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B2"
+    },
+    {
+      "cid": "B2_C7",
+      "desc": "Describe specific comforting actions taken by animals to support each other",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "comfort",
+            "reassure",
+            "support"
+          ]
+        },
+        "context": {
+          "cid": "B2_C7",
+          "desc": "Describe specific comforting actions taken by animals to support each other",
+          "selection_id": "SEL_B2"
+        },
+        "result_raw": false
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B2"
+    },
+    {
+      "cid": "B2_C8",
+      "desc": "Show animals actively working together to improve their shelter during the storm",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "worked",
+            "improved",
+            "strengthened"
+          ]
+        },
+        "context": {
+          "cid": "B2_C8",
+          "desc": "Show animals actively working together to improve their shelter during the storm",
+          "selection_id": "SEL_B2"
+        },
+        "result_raw": false
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B2"
+    },
+    {
+      "cid": "B2_C9",
+      "desc": "Maintain a tone focused on resilience and mutual care rather than just survival",
+      "passed": true,
+      "details": {
+        "check": "tone_neutral_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B2_C9",
+          "desc": "Maintain a tone focused on resilience and mutual care rather than just survival",
+          "selection_id": "SEL_B2"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B2"
+    }
+  ]
+}

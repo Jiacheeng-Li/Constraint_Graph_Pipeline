@@ -1,0 +1,79 @@
+{
+  "sample_id": "test_sample_3",
+  "timestamp_utc": "2025-10-28T08:59:50.793586Z",
+  "eval_protocol": {
+    "seed_task": "Analyze 撰写一篇关于全球太空竞赛的分析文章，需要保持中立专业的语气，并在结尾提出下一步建议。",
+    "global_scoring": [
+      {
+        "cid": "G1",
+        "desc": "The answer must be at least 100 words long (approximately comparable length to the provided reference).",
+        "verifier": {
+          "check": "min_word_count",
+          "args": {
+            "min_words": 100
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G2",
+        "desc": "The answer must be written primarily in English.",
+        "verifier": {
+          "check": "require_language",
+          "args": {
+            "lang": "en"
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G3",
+        "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+        "verifier": {
+          "check": "forbid_first_person",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      }
+    ],
+    "block_scoring": [
+      {
+        "block_id": "B1",
+        "role": "TBD",
+        "logic_type": "AND",
+        "requirements": []
+      },
+      {
+        "block_id": "B2",
+        "role": "TBD",
+        "logic_type": "AND",
+        "requirements": []
+      },
+      {
+        "block_id": "B3",
+        "role": "TBD",
+        "logic_type": "AND",
+        "requirements": []
+      }
+    ],
+    "conditional_scoring": [],
+    "meta": {
+      "assembled_from": {
+        "step1": "seed_task",
+        "step2": "segmentation",
+        "step3": "global_constraints",
+        "step4": "block_constraints + block_logic",
+        "step5": "selections + augmented block_constraints"
+      }
+    }
+  },
+  "meta": {
+    "assembled_from": {
+      "step1": "seed_task",
+      "step2": "segmentation",
+      "step3": "global_constraints",
+      "step4": "block_constraints + block_logic",
+      "step5": "selections + augmented block_constraints"
+    }
+  }
+}

@@ -40,7 +40,7 @@ Note:
 
 import os
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any
 
 from .verifier.evaluate import run_evaluation
@@ -128,7 +128,7 @@ def run_scoring_once(sample_id: str,
                                 candidate_answer=candidate_answer)
 
     # 4. augment with metadata and persist
-    timestamp_utc = datetime.utcnow().isoformat() + "Z"
+    timestamp_utc = datetime.now(timezone.utc).isoformat()
     score_record = {
         "sample_id": sample_id,
         "timestamp_utc": timestamp_utc,

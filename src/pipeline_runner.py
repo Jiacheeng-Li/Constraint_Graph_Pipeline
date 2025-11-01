@@ -14,7 +14,7 @@ It produces:
 
 Assumptions / contracts between steps:
     Step1 (step1_seed_task.extract_seed_task)
-        input: original_instruction (str), model_answer (str)
+        input: original_instruction (str)
         output: seed_task (str)
 
     Step2 (step2_segmentation.segment_response)
@@ -22,11 +22,11 @@ Assumptions / contracts between steps:
         output: segmentation dict => {"blocks": [{block_id, intent, text_span, order_index}, ...], "order": [...]}
 
     Step3 (step3_global_constraints.extract_global_constraints)
-        input: original_instruction (str), model_answer (str)
+        input: model_answer (str), segmentation (from step2)
         output: List[ConstraintNode]  (global scope nodes, each has verifier_spec)
 
     Step4 (step4_back_translation.extract_block_constraints)
-        input: segmentation (from step2), model_answer (str)
+        input: segmentation (from step2), seed_task (from step1)
         output: {
             "block_constraints": {block_id: [ConstraintNode,...]},
             "block_logic": {block_id: "AND" | "sub-chain"}
@@ -36,8 +36,7 @@ Assumptions / contracts between steps:
         input:
             seed_task (str)
             segmentation (from step2)
-            block_constraints (from step4)
-            block_logic (from step4)
+            step4_output (dict with block_constraints + block_logic)
         output:
             {
                 "block_constraints": {block_id: [...]},      # may be augmented with new nodes
@@ -78,7 +77,7 @@ You can wrap this later for multi-sample generation.
 import os
 import argparse
 from typing import Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .utils.export_utils import write_json, write_text, save_graph_outputs
 
@@ -88,10 +87,7 @@ from .step2_segmentation import segment_response
 from .step3_global_constraints import extract_global_constraints
 from .step4_back_translation import extract_block_constraints
 from .step5_selection_augment import generate_selection_branches
-from .step6_graph_assembly import (
-    assemble_constraint_graph,
-    save_graph_outputs,
-)
+from .step6_graph_assembly import assemble_constraint_graph
 from .step7_instruction_synthesis import synthesize_instruction_bundle
 
 
@@ -134,13 +130,10 @@ def run_pipeline_once(sample_id: str,
     instructions_dir = os.path.join(base_data_dir, "instructions")  # final machine prompts
     reports_dir = os.path.join(base_data_dir, "reports")        # eval protocol / bundle
 
-    ts_utc = datetime.utcnow().isoformat() + "Z"  # lightweight timestamp for traceability
+    ts_utc = datetime.now(timezone.utc).isoformat()
 
     # Step 1: extract seed task (core imperative task statement)
-    seed_task = extract_seed_task(
-        original_instruction=original_instruction,
-        model_answer=model_answer,
-    )
+    seed_task = extract_seed_task(instruction_text=original_instruction)
 
     # Step 2: segment the answer into ordered blocks
     segmentation = segment_response(model_answer)
@@ -150,25 +143,21 @@ def run_pipeline_once(sample_id: str,
     #    but is STILL required (in step3 module) to ground every rule in
     #    the actual answer text, not in imagination.
     global_nodes = extract_global_constraints(
-        original_instruction=original_instruction,
-        model_answer=model_answer,
+        response_text=model_answer,
         segmentation=segmentation,
     )
 
     # Step 4: local constraints per block (back-translation)
     step4_out = extract_block_constraints(
         segmentation=segmentation,
-        model_answer=model_answer,
+        seed_task=seed_task,
     )
-    block_constraints_step4 = step4_out.get("block_constraints", {})
-    block_logic_step4 = step4_out.get("block_logic", {})
 
     # Step 5: generate conditional branches / selections
     step5_out = generate_selection_branches(
-        seed_task=seed_task,
         segmentation=segmentation,
-        block_constraints=block_constraints_step4,
-        block_logic=block_logic_step4,
+        seed_task=seed_task,
+        step4_output=step4_out,
     )
 
     # Step 6: assemble final constraint graph and save .graph.json / .graph.mmd

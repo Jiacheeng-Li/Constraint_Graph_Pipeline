@@ -110,7 +110,7 @@ verifier/evaluate.py
 
 from typing import Dict, Any, List, Optional, Tuple
 
-from utils.verifier_registry import run_verifier  # 我们需要确保 verifier_registry 暴露 run_verifier
+from ..utils.verifier_registry import run_verifier  # 我们需要确保 verifier_registry 暴露 run_verifier
 
 
 # ------------------------------------------------------------

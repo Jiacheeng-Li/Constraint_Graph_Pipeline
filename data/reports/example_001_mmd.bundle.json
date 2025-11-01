@@ -1,0 +1,737 @@
+{
+  "sample_id": "example_001_mmd",
+  "timestamp_utc": "2025-10-28T10:05:30.662376+00:00",
+  "machine_prompt": "OVERALL TASK:\n- Write a short story (around 200–300 words) showing cooperation among forest animals during a storm.\n\nGLOBAL MANDATORY CONSTRAINTS:\nYou MUST satisfy ALL of the following properties throughout the entire answer:\n- The answer must be at least 184 words long (approximately comparable length to the provided reference).\n- The answer must be written primarily in English.\n- The answer should maintain an objective, third-person analytic voice without using first-person pronouns.\n\nREQUIRED OUTPUT STRUCTURE (STAGED PLAN):\nYour answer MUST be organized into the following stages / sections.\nYou do not need to literally copy these headings, but you MUST perform the listed duties.\n\nStage B1 — TBD:\n- This stage is 'TBD'. You MUST: Cover ALL of the following points (logical AND).\n  • Maintain a neutral, analytical tone without emotional or inflammatory language.\n  • Provide a sufficiently detailed explanation of the topic with at least 50 words.\n\nStage B2 — TBD:\n- This stage is 'TBD'. You MUST: Cover ALL of the following points (logical AND).\n  • Maintain a neutral, analytical tone without emotional or inflammatory language.\n  • Provide a sufficiently detailed explanation of the topic with at least 50 words.\n  • Adopt an explicitly critical tone highlighting concrete problems or failures.\n  • Propose at least one concrete next-step action to address the identified problems.\n\nStage B3 — TBD:\n- This stage is 'TBD'. You MUST: Cover ALL of the following points (logical AND).\n  • Maintain a neutral, analytical tone without emotional or inflammatory language.\n  • Provide a sufficiently detailed explanation of the topic with at least 50 words.\n  • Adopt an explicitly critical tone highlighting concrete problems or failures.\n  • Propose at least one concrete next-step action to address the identified problems.\n\nStage B4 — TBD:\n- This stage is 'TBD'. You MUST: Cover ALL of the following points (logical AND).\n  • Maintain a neutral, analytical tone without emotional or inflammatory language.\n  • Provide a sufficiently detailed explanation of the topic with at least 50 words.\n  • Adopt an explicitly critical tone highlighting concrete problems or failures.\n  • Propose at least one concrete next-step action to address the identified problems.\n\nStage B5 — TBD:\n- This stage is 'TBD'. You MUST: Cover ALL of the following points (logical AND).\n  • Maintain a neutral, analytical tone without emotional or inflammatory language.\n  • Provide a sufficiently detailed explanation of the topic with at least 50 words.\n\nCONDITIONAL BRANCH REQUIREMENTS:\nSome stages include branching logic. You MUST clearly choose ONE branch that applies, and then satisfy ONLY that branch's obligations.\n\nIn stage B2 TBD:\nIF If the stance is critical/negative THEN you MUST satisfy ALL of these requirements:\n    • Adopt an explicitly critical tone highlighting concrete problems or failures.\n    • Propose at least one concrete next-step action to address the identified problems.\nELSE (if the condition does not apply), you MUST satisfy ALL of these requirements:\n    • Maintain a neutral, analytical tone without emotional or inflammatory language.\n    • Provide a sufficiently detailed explanation of the topic with at least 50 words.\n\nIn stage B3 TBD:\nIF If the stance is critical/negative THEN you MUST satisfy ALL of these requirements:\n    • Adopt an explicitly critical tone highlighting concrete problems or failures.\n    • Propose at least one concrete next-step action to address the identified problems.\nELSE (if the condition does not apply), you MUST satisfy ALL of these requirements:\n    • Maintain a neutral, analytical tone without emotional or inflammatory language.\n    • Provide a sufficiently detailed explanation of the topic with at least 50 words.\n\nIn stage B4 TBD:\nIF If the stance is critical/negative THEN you MUST satisfy ALL of these requirements:\n    • Adopt an explicitly critical tone highlighting concrete problems or failures.\n    • Propose at least one concrete next-step action to address the identified problems.\nELSE (if the condition does not apply), you MUST satisfy ALL of these requirements:\n    • Maintain a neutral, analytical tone without emotional or inflammatory language.\n    • Provide a sufficiently detailed explanation of the topic with at least 50 words.\n\nEVALUATION NOTICE:\n- Your answer will be automatically checked against the global constraints, the stage duties, and (if applicable) the branch you chose.\n- You MUST clearly follow EXACTLY ONE branch for each conditional stage. Do NOT merge branches.\n- Automated verifiers will check things like required language, tone, length, inclusion of specific elements, actionable recommendations, numbered items, etc.\n",
+  "eval_protocol": {
+    "seed_task": "Write a short story (around 200–300 words) showing cooperation among forest animals during a storm.",
+    "global_scoring": [
+      {
+        "cid": "G1",
+        "desc": "The answer must be at least 184 words long (approximately comparable length to the provided reference).",
+        "verifier": {
+          "check": "min_word_count",
+          "args": {
+            "min_words": 184
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G2",
+        "desc": "The answer must be written primarily in English.",
+        "verifier": {
+          "check": "require_language",
+          "args": {
+            "lang": "en"
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G3",
+        "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+        "verifier": {
+          "check": "forbid_first_person",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      }
+    ],
+    "block_scoring": [
+      {
+        "block_id": "B1",
+        "role": "TBD",
+        "logic_type": "AND",
+        "requirements": [
+          {
+            "cid": "B1_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B1_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "verifier": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B2",
+        "role": "TBD",
+        "logic_type": "AND",
+        "requirements": [
+          {
+            "cid": "B2_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B2_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "verifier": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            }
+          },
+          {
+            "cid": "B2_C3",
+            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B2_C4",
+            "desc": "Propose at least one concrete next-step action to address the identified problems.",
+            "verifier": {
+              "check": "actionability_judge",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B3",
+        "role": "TBD",
+        "logic_type": "AND",
+        "requirements": [
+          {
+            "cid": "B3_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B3_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "verifier": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            }
+          },
+          {
+            "cid": "B3_C3",
+            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B3_C4",
+            "desc": "Propose at least one concrete next-step action to address the identified problems.",
+            "verifier": {
+              "check": "actionability_judge",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B4",
+        "role": "TBD",
+        "logic_type": "AND",
+        "requirements": [
+          {
+            "cid": "B4_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "verifier": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            }
+          },
+          {
+            "cid": "B4_C3",
+            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B4_C4",
+            "desc": "Propose at least one concrete next-step action to address the identified problems.",
+            "verifier": {
+              "check": "actionability_judge",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B5",
+        "role": "TBD",
+        "logic_type": "AND",
+        "requirements": [
+          {
+            "cid": "B5_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "verifier": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "conditional_scoring": [
+      {
+        "sid": "SEL_B2",
+        "where": "B2 TBD",
+        "condition": "If the stance is critical/negative",
+        "branch_real": [
+          {
+            "cid": "B2_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B2_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "verifier": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B2_C3",
+            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B2_C4",
+            "desc": "Propose at least one concrete next-step action to address the identified problems.",
+            "verifier": {
+              "check": "actionability_judge",
+              "args": {}
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      },
+      {
+        "sid": "SEL_B3",
+        "where": "B3 TBD",
+        "condition": "If the stance is critical/negative",
+        "branch_real": [
+          {
+            "cid": "B3_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B3_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "verifier": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B3_C3",
+            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B3_C4",
+            "desc": "Propose at least one concrete next-step action to address the identified problems.",
+            "verifier": {
+              "check": "actionability_judge",
+              "args": {}
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      },
+      {
+        "sid": "SEL_B4",
+        "where": "B4 TBD",
+        "condition": "If the stance is critical/negative",
+        "branch_real": [
+          {
+            "cid": "B4_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "verifier": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "verifier": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B4_C3",
+            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B4_C4",
+            "desc": "Propose at least one concrete next-step action to address the identified problems.",
+            "verifier": {
+              "check": "actionability_judge",
+              "args": {}
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      }
+    ],
+    "meta": {
+      "assembled_from": {
+        "step1": "seed_task",
+        "step2": "segmentation",
+        "step3": "global_constraints",
+        "step4": "block_constraints + block_logic",
+        "step5": "selections + augmented block_constraints"
+      }
+    }
+  },
+  "graph_serialized": {
+    "seed_task": "Write a short story (around 200–300 words) showing cooperation among forest animals during a storm.",
+    "global_constraints": [
+      {
+        "cid": "G1",
+        "desc": "The answer must be at least 184 words long (approximately comparable length to the provided reference).",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "min_word_count",
+          "args": {
+            "min_words": 184
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G2",
+        "desc": "The answer must be written primarily in English.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "require_language",
+          "args": {
+            "lang": "en"
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G3",
+        "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "forbid_first_person",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      }
+    ],
+    "block_specs": [
+      {
+        "block_id": "B1",
+        "intent": "TBD",
+        "text_span": "**Title:** *The Storm and the Grove*",
+        "order_index": 0
+      },
+      {
+        "block_id": "B2",
+        "intent": "TBD",
+        "text_span": "One morning, the forest woke to a sky heavy with gray. The wind whispered through the leaves, warning of a coming storm. Squirrel dashed about, trying to gather the last acorns, while Rabbit helped pull branches to reinforce the hollow where they all sometimes rested. Above them, Finch called out, “Tie the leaves together! The rain will be fierce!” Even the slow Tortoise dragged fallen bark toward the roots of an old oak, making a sturdy shelter.",
+        "order_index": 1
+      },
+      {
+        "block_id": "B3",
+        "intent": "TBD",
+        "text_span": "By afternoon, the storm came roaring. Rain thudded on the canopy, and lightning flashed beyond the hills. The animals huddled together inside their shared shelter—fur, feathers, and shells pressed close. Squirrel trembled, but Bear’s deep voice rumbled softly, calming them. Finch fluttered near the entrance, watching until the thunder passed. When the wind finally eased, they all stepped out to see broken branches and soaked nests scattered around.",
+        "order_index": 2
+      },
+      {
+        "block_id": "B4",
+        "intent": "TBD",
+        "text_span": "They worked together through the following day. Beaver repaired the stream dam, Fox carried twigs for the smaller nests, and the deer cleared the paths again. Soon, the forest seemed alive with quiet gratitude.",
+        "order_index": 3
+      },
+      {
+        "block_id": "B5",
+        "intent": "TBD",
+        "text_span": "When the sun returned, its light shone on every creature, large and small, each one helping another in some gentle way. From that day on, they remembered: a forest stands strong not because its trees are tall, but because its hearts grow together.",
+        "order_index": 4
+      }
+    ],
+    "block_constraint_sets": [
+      {
+        "block_id": "B1",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B1_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B1_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B2",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B2_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B2_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B2_C3",
+            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B2",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B2_C4",
+            "desc": "Propose at least one concrete next-step action to address the identified problems.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "actionability_judge",
+              "args": {}
+            },
+            "trace_to": "B2",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B3",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B3_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B3_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B3_C3",
+            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B3",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B3_C4",
+            "desc": "Propose at least one concrete next-step action to address the identified problems.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "actionability_judge",
+              "args": {}
+            },
+            "trace_to": "B3",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B4",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B4_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B4_C3",
+            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B4",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B4_C4",
+            "desc": "Propose at least one concrete next-step action to address the identified problems.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "actionability_judge",
+              "args": {}
+            },
+            "trace_to": "B4",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B5",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B5_C1",
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_neutral_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B5",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B5_C2",
+            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            },
+            "trace_to": "B5",
+            "derived_from": "step4"
+          }
+        ]
+      }
+    ],
+    "selections": [
+      {
+        "sid": "SEL_B2",
+        "condition": "If the stance is critical/negative",
+        "trace_to": "B2",
+        "branch_real": {
+          "constraints": [
+            "B2_C1",
+            "B2_C2"
+          ]
+        },
+        "branch_alt": {
+          "constraints": [
+            "B2_C3",
+            "B2_C4"
+          ]
+        },
+        "derived_from": "step5"
+      },
+      {
+        "sid": "SEL_B3",
+        "condition": "If the stance is critical/negative",
+        "trace_to": "B3",
+        "branch_real": {
+          "constraints": [
+            "B3_C1",
+            "B3_C2"
+          ]
+        },
+        "branch_alt": {
+          "constraints": [
+            "B3_C3",
+            "B3_C4"
+          ]
+        },
+        "derived_from": "step5"
+      },
+      {
+        "sid": "SEL_B4",
+        "condition": "If the stance is critical/negative",
+        "trace_to": "B4",
+        "branch_real": {
+          "constraints": [
+            "B4_C1",
+            "B4_C2"
+          ]
+        },
+        "branch_alt": {
+          "constraints": [
+            "B4_C3",
+            "B4_C4"
+          ]
+        },
+        "derived_from": "step5"
+      }
+    ],
+    "meta": {
+      "assembled_from": {
+        "step1": "seed_task",
+        "step2": "segmentation",
+        "step3": "global_constraints",
+        "step4": "block_constraints + block_logic",
+        "step5": "selections + augmented block_constraints"
+      }
+    }
+  },
+  "meta": {
+    "assembled_from": {
+      "step1": "seed_task",
+      "step2": "segmentation",
+      "step3": "global_constraints",
+      "step4": "block_constraints + block_logic",
+      "step5": "selections + augmented block_constraints"
+    }
+  }
+}

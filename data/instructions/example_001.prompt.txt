@@ -1,0 +1,63 @@
+OVERALL TASK:
+- Write a short story showing cooperation among forest animals during a storm in a gentle, natural tone and ending with a reflective message.
+
+GLOBAL MANDATORY CONSTRAINTS:
+You MUST satisfy ALL of the following properties throughout the entire answer:
+- The answer must be at least 184 words long (approximately comparable length to the provided reference).
+- The answer must be written primarily in English.
+- The answer must include an Opening/Intro section, a Main Analysis/Body section, and a Conclusion/Outlook section in logical progression.
+- The answer should maintain an objective, third-person analytic voice without using first-person pronouns.
+
+REQUIRED OUTPUT STRUCTURE (STAGED PLAN):
+Your answer MUST be organized into the following stages / sections.
+You do not need to literally copy these headings, but you MUST perform the listed duties.
+
+Stage B1 — Opening:
+- This stage is 'Opening'. You MUST: Cover ALL of the following points (logical AND).
+  • Establish the setting as a forest morning with a coming storm
+  • Introduce at least four different animal characters
+  • Show animals performing cooperative storm preparation actions
+  • Maintain gentle natural tone throughout the opening
+  • Establish the storm as an immediate threat with urgent language
+  • Describe animals responding to the storm with emergency coordination rather than gentle cooperation
+  • Maintain a tone of urgency and imminent danger throughout the opening
+  • Include direct communication between animals showing emergency coordination
+
+Stage B2 — Main Analysis:
+- This stage is 'Main Analysis'. You MUST: Follow these sub-steps IN ORDER.
+  • Describe the storm's arrival and immediate effects
+  • Show animals huddling together in shared shelter
+  • Include specific animal interactions during the storm
+  • Describe the storm's aftermath when animals emerge
+
+Stage B3 — Context setup:
+- This stage is 'Context setup'. You MUST: Cover ALL of the following points (logical AND).
+  • Include at least three specific animal actions showing cooperation
+  • Reference the time period of 'through the following day'
+  • Show progression from individual actions to collective outcome
+  • Include the outcome of 'forest seemed alive with quiet gratitude'
+
+Stage B4 — Conclusion:
+- This stage is 'Conclusion'. You MUST: Cover ALL of the following points (logical AND).
+  • Include a reflective message about cooperation and strength
+  • Maintain a gentle, natural tone throughout the conclusion
+
+CONDITIONAL BRANCH REQUIREMENTS:
+Some stages include branching logic. You MUST clearly choose ONE branch that applies, and then satisfy ONLY that branch's obligations.
+
+In stage B1 Opening:
+IF If the story needs to emphasize immediate danger and urgent collective action rather than gentle cooperation THEN you MUST satisfy ALL of these requirements:
+    • Establish the storm as an immediate threat with urgent language
+    • Describe animals responding to the storm with emergency coordination rather than gentle cooperation
+    • Maintain a tone of urgency and imminent danger throughout the opening
+    • Include direct communication between animals showing emergency coordination
+ELSE (if the condition does not apply), you MUST satisfy ALL of these requirements:
+    • Establish the setting as a forest morning with a coming storm
+    • Introduce at least four different animal characters
+    • Show animals performing cooperative storm preparation actions
+    • Maintain gentle natural tone throughout the opening
+
+EVALUATION NOTICE:
+- Your answer will be automatically checked against the global constraints, the stage duties, and (if applicable) the branch you chose.
+- You MUST clearly follow EXACTLY ONE branch for each conditional stage. Do NOT merge branches.
+- Automated verifiers will check things like required language, tone, length, inclusion of specific elements, actionable recommendations, numbered items, etc.

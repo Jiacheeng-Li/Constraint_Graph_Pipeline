@@ -272,7 +272,12 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
     def _short(txt: str) -> str:
         t = txt.strip().replace("\n", " ")
         if len(t) > max_desc_len:
-            return t[:max_desc_len - 3].rstrip() + "..."
+            t = t[:max_desc_len - 3].rstrip() + "..."
+        # Balance parentheses for readability (avoid dangling "(" after truncation)
+        open_count = t.count("(")
+        close_count = t.count(")")
+        if open_count > close_count:
+            t = t + (")" * (open_count - close_count))
         return t
 
     # ----- Seed task node -----
@@ -402,20 +407,21 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
             """
             渲染一个分支子图：
             subgraph <branch_name>[<header_label>]
-                <cid>["desc"]
+                <alias>["desc"]
                 ...
                 c1 --- c2 --- c3   # 用 '---' 表示 AND 关系
             end
             返回该分支第一个节点的 cid（用于连线）
             """
             lines.append(f'    subgraph {branch_name}[{header_label}]')
-
             rendered = []
             for cid in constraint_ids:
                 cn = all_constraints_index.get(cid)
-                label = _short(cn.desc) if cn and cn.desc else cid
-                lines.append(f'        {cid}["{label}"]')
-                rendered.append(cid)
+                label_desc = cn.desc if cn and cn.desc else cid
+                label = _short(f"{cid}: {label_desc}")
+                alias = f"{branch_name}_{cid}"
+                lines.append(f'        {alias}["{label}"]')
+                rendered.append(alias)
 
             if len(rendered) >= 2:
                 chain_expr = " --- ".join(rendered)

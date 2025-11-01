@@ -2,15 +2,6 @@
 
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
-import uuid
-
-
-def _gen_id(prefix: str) -> str:
-    """
-    Helper to generate short stable-looking IDs for nodes/edges/etc.
-    We keep this here in case we later want deterministic hashing.
-    """
-    return f"{prefix}_{uuid.uuid4().hex[:8]}"
 
 
 @dataclass
@@ -62,6 +53,21 @@ class BlockSpec:
 
 
 @dataclass
+class BlockConstraintSet:
+    """
+    某个 block 对应的一组局部约束以及逻辑关系。
+
+    字段含义：
+    - block_id: 对应的 BlockSpec.block_id
+    - logic_type: "AND" 或 "sub-chain"（其它值会被上游规范化）
+    - constraints: 该 block 下的 ConstraintNode 列表
+    """
+    block_id: str
+    logic_type: str
+    constraints: List[ConstraintNode] = field(default_factory=list)
+
+
+@dataclass
 class SelectionBranch:
     """
     Selection 分支中的一条路径。
@@ -96,28 +102,6 @@ class SelectionNode:
 
 
 @dataclass
-class GraphEdge:
-    """
-    图中的一条有向边。
-
-    字段含义：
-    - source: 源节点ID（可以是block_id / cid / selection.sid）
-    - target: 目标节点ID
-    - edge_type: 边类型：
-        "CHAIN"     表示顺序依赖（Block A → Block B）
-        "AND"       表示并列必需（Block → 该Block下所有必须满足的约束）
-        "SELECTION" 表示这里存在条件分支（Block → Selection 节点）
-    - derived_from: 该边是在哪个步骤推出来的（step2/step4/step5等）
-    - trace_to: 可选，指向来源块，帮助调试/追踪。
-    """
-    source: str
-    target: str
-    edge_type: str
-    derived_from: str
-    trace_to: Optional[str] = None
-
-
-@dataclass
 class ConstraintGraph:
     """
     整体约束图的数据结构。
@@ -125,20 +109,17 @@ class ConstraintGraph:
     字段含义：
     - seed_task: 种子任务（Step1提炼的原子任务描述）。
     - global_constraints: 全局约束节点列表（ConstraintNode）。
-    - block_constraints: dict: block_id -> List[ConstraintNode]
-      每个block对应若干条约束，这些约束节点就是图中的可验证原子要求。
-    - selections: SelectionNode列表，表示条件化分支。
-    - blocks: BlockSpec列表，记录回答里每个逻辑块的信息及顺序。
-    - edges: GraphEdge列表，包含CHAIN / AND / SELECTION依赖关系。
-    - cnode: List[str]，一组关键约束ID，满足这些可视为“主路径达标”。
+    - block_specs: BlockSpec 列表，记录回答里每个逻辑块的信息及顺序。
+    - block_constraint_sets: BlockConstraintSet 列表，记录每个 block 的约束集合及逻辑。
+    - selections: SelectionNode 列表，表示条件化分支。
+    - meta: 额外的溯源元数据（由 Step6 组装时写入）。
     """
     seed_task: str
     global_constraints: List[ConstraintNode]
-    block_constraints: Dict[str, List[ConstraintNode]]
+    block_specs: List[BlockSpec]
+    block_constraint_sets: List[BlockConstraintSet]
     selections: List[SelectionNode]
-    blocks: List[BlockSpec]
-    edges: List[GraphEdge]
-    cnode: List[str] = field(default_factory=list)
+    meta: Dict[str, Any] = field(default_factory=dict)
 
     def to_json(self) -> Dict[str, Any]:
         """
@@ -155,7 +136,7 @@ class ConstraintGraph:
                     "intent": b.intent,
                     "text_span": b.text_span,
                     "order_index": b.order_index,
-                } for b in self.blocks
+                } for b in self.block_specs
             ],
             "global_constraints": [
                 {
@@ -167,19 +148,23 @@ class ConstraintGraph:
                     "derived_from": c.derived_from,
                 } for c in self.global_constraints
             ],
-            "block_constraints": {
-                bid: [
-                    {
-                        "cid": c.cid,
-                        "desc": c.desc,
-                        "scope": c.scope,
-                        "verifier_spec": c.verifier_spec,
-                        "trace_to": c.trace_to,
-                        "derived_from": c.derived_from,
-                    } for c in clist
-                ]
-                for bid, clist in self.block_constraints.items()
-            },
+            "block_constraint_sets": [
+                {
+                    "block_id": bcs.block_id,
+                    "logic_type": bcs.logic_type,
+                    "constraints": [
+                        {
+                            "cid": c.cid,
+                            "desc": c.desc,
+                            "scope": c.scope,
+                            "verifier_spec": c.verifier_spec,
+                            "trace_to": c.trace_to,
+                            "derived_from": c.derived_from,
+                        } for c in bcs.constraints
+                    ],
+                }
+                for bcs in self.block_constraint_sets
+            ],
             "selections": [
                 {
                     "sid": s.sid,
@@ -194,14 +179,5 @@ class ConstraintGraph:
                     "derived_from": s.derived_from,
                 } for s in self.selections
             ],
-            "edges": [
-                {
-                    "source": e.source,
-                    "target": e.target,
-                    "type": e.edge_type,
-                    "derived_from": e.derived_from,
-                    "trace_to": e.trace_to,
-                } for e in self.edges
-            ],
-            "cnode": self.cnode,
+            "meta": self.meta,
         }

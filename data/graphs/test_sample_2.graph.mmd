@@ -1,0 +1,24 @@
+%% Mermaid flowchart for sample `test_sample_2`
+%% Paste this into any Mermaid renderer to view the graph.
+
+flowchart LR
+    SEED(((Analyze 撰写一篇关于全球太空竞赛的分析文章，需要保持中立专业的语气，并在结尾提出下一步建议。)))
+    subgraph GLOBAL[Global Constraints]
+        G1((The answer must be at least 100 words long (approximately...))
+        G2((The answer must be written primarily in English.))
+        G3((The answer should maintain an objective, third-person ana...))
+        G1 --- G2 --- G3
+    end
+    SEED --> G1
+    subgraph B1[B1 TBD]
+    end
+    B1_EMPTY["B1 (no explicit constraints)"]
+    G1 --> B1_EMPTY
+    subgraph B2[B2 TBD]
+    end
+    B2_EMPTY["B2 (no explicit constraints)"]
+    B1_EMPTY --> B2_EMPTY
+    subgraph B3[B3 TBD]
+    end
+    B3_EMPTY["B3 (no explicit constraints)"]
+    B2_EMPTY --> B3_EMPTY

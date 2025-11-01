@@ -1,0 +1,687 @@
+{
+  "sample_id": "example_001",
+  "timestamp_utc": "2025-10-28T09:56:19.124746+00:00",
+  "candidate_file": "data/reports/example_001.candidate.txt",
+  "summary": {
+    "global_pass_rate": 0.75,
+    "block_pass_rate": 0.625,
+    "branch_pass_rate": 1.0,
+    "overall_pass_rate": 0.7916666666666666
+  },
+  "branch_choice": {
+    "SEL_B1": {
+      "chosen": "branch_real",
+      "score_branch_real": 1.0,
+      "score_branch_alt": 0.0
+    }
+  },
+  "per_constraint": [
+    {
+      "cid": "G1",
+      "desc": "The answer must be at least 184 words long (approximately comparable length to the provided reference).",
+      "passed": true,
+      "details": {
+        "check": "min_word_count",
+        "args": {
+          "min_words": 184
+        },
+        "context": {
+          "cid": "G1",
+          "desc": "The answer must be at least 184 words long (approximately comparable length to the provided reference).",
+          "scope": "global"
+        },
+        "result_raw": true
+      },
+      "scope": "global",
+      "block_id": null,
+      "selection_id": null
+    },
+    {
+      "cid": "G2",
+      "desc": "The answer must be written primarily in English.",
+      "passed": true,
+      "details": {
+        "check": "require_language",
+        "args": {
+          "lang": "en"
+        },
+        "context": {
+          "cid": "G2",
+          "desc": "The answer must be written primarily in English.",
+          "scope": "global"
+        },
+        "result_raw": true
+      },
+      "scope": "global",
+      "block_id": null,
+      "selection_id": null
+    },
+    {
+      "cid": "G3",
+      "desc": "The answer must include an Opening/Intro section, a Main Analysis/Body section, and a Conclusion/Outlook section in logical progression.",
+      "passed": false,
+      "details": {
+        "check": "has_sections",
+        "args": {
+          "sections": [
+            "Opening",
+            "Body",
+            "Conclusion"
+          ]
+        },
+        "context": {
+          "cid": "G3",
+          "desc": "The answer must include an Opening/Intro section, a Main Analysis/Body section, and a Conclusion/Outlook section in logical progression.",
+          "scope": "global"
+        },
+        "result_raw": false
+      },
+      "scope": "global",
+      "block_id": null,
+      "selection_id": null
+    },
+    {
+      "cid": "G4",
+      "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+      "passed": true,
+      "details": {
+        "check": "forbid_first_person",
+        "args": {},
+        "context": {
+          "cid": "G4",
+          "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+          "scope": "global"
+        },
+        "result_raw": true
+      },
+      "scope": "global",
+      "block_id": null,
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C1",
+      "desc": "Establish the setting as a forest morning with a coming storm",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "forest",
+            "morning",
+            "storm"
+          ]
+        },
+        "context": {
+          "cid": "B1_C1",
+          "desc": "Establish the setting as a forest morning with a coming storm",
+          "block_id": "B1"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C2",
+      "desc": "Introduce at least four different animal characters",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "Squirrel",
+            "Rabbit",
+            "Finch",
+            "Tortoise"
+          ]
+        },
+        "context": {
+          "cid": "B1_C2",
+          "desc": "Introduce at least four different animal characters",
+          "block_id": "B1"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C3",
+      "desc": "Show animals performing cooperative storm preparation actions",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "gather",
+            "reinforce",
+            "shelter"
+          ]
+        },
+        "context": {
+          "cid": "B1_C3",
+          "desc": "Show animals performing cooperative storm preparation actions",
+          "block_id": "B1"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C4",
+      "desc": "Maintain gentle natural tone throughout the opening",
+      "passed": true,
+      "details": {
+        "check": "tone_neutral_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B1_C4",
+          "desc": "Maintain gentle natural tone throughout the opening",
+          "block_id": "B1"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C5",
+      "desc": "Establish the storm as an immediate threat with urgent language",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "urgent",
+            "danger",
+            "threatening",
+            "immediate"
+          ]
+        },
+        "context": {
+          "cid": "B1_C5",
+          "desc": "Establish the storm as an immediate threat with urgent language",
+          "block_id": "B1"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C6",
+      "desc": "Describe animals responding to the storm with emergency coordination rather than gentle cooperation",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "emergency",
+            "coordinate",
+            "urgently",
+            "protect"
+          ]
+        },
+        "context": {
+          "cid": "B1_C6",
+          "desc": "Describe animals responding to the storm with emergency coordination rather than gentle cooperation",
+          "block_id": "B1"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C7",
+      "desc": "Maintain a tone of urgency and imminent danger throughout the opening",
+      "passed": false,
+      "details": {
+        "check": "tone_negative_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B1_C7",
+          "desc": "Maintain a tone of urgency and imminent danger throughout the opening",
+          "block_id": "B1"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C8",
+      "desc": "Include direct communication between animals showing emergency coordination",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "warning",
+            "quickly",
+            "now",
+            "together"
+          ]
+        },
+        "context": {
+          "cid": "B1_C8",
+          "desc": "Include direct communication between animals showing emergency coordination",
+          "block_id": "B1"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B1",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C1",
+      "desc": "Describe the storm's arrival and immediate effects",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "storm",
+            "rain",
+            "lightning"
+          ]
+        },
+        "context": {
+          "cid": "B2_C1",
+          "desc": "Describe the storm's arrival and immediate effects",
+          "block_id": "B2"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C2",
+      "desc": "Show animals huddling together in shared shelter",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "huddled",
+            "shelter",
+            "together"
+          ]
+        },
+        "context": {
+          "cid": "B2_C2",
+          "desc": "Show animals huddling together in shared shelter",
+          "block_id": "B2"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C3",
+      "desc": "Include specific animal interactions during the storm",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "Squirrel",
+            "Bear",
+            "Finch"
+          ]
+        },
+        "context": {
+          "cid": "B2_C3",
+          "desc": "Include specific animal interactions during the storm",
+          "block_id": "B2"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B2_C4",
+      "desc": "Describe the storm's aftermath when animals emerge",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "wind eased",
+            "stepped out",
+            "broken branches"
+          ]
+        },
+        "context": {
+          "cid": "B2_C4",
+          "desc": "Describe the storm's aftermath when animals emerge",
+          "block_id": "B2"
+        },
+        "result_raw": false
+      },
+      "scope": "block",
+      "block_id": "B2",
+      "selection_id": null
+    },
+    {
+      "cid": "B3_C1",
+      "desc": "Include at least three specific animal actions showing cooperation",
+      "passed": false,
+      "details": {
+        "check": "min_numbered_items",
+        "args": {
+          "min_items": 3
+        },
+        "context": {
+          "cid": "B3_C1",
+          "desc": "Include at least three specific animal actions showing cooperation",
+          "block_id": "B3"
+        },
+        "error": "min_numbered_items() got an unexpected keyword argument 'min_items'"
+      },
+      "scope": "block",
+      "block_id": "B3",
+      "selection_id": null
+    },
+    {
+      "cid": "B3_C2",
+      "desc": "Reference the time period of 'through the following day'",
+      "passed": null,
+      "details": {
+        "check": "must_reference_timeframe",
+        "args": {},
+        "context": {
+          "cid": "B3_C2",
+          "desc": "Reference the time period of 'through the following day'",
+          "block_id": "B3"
+        },
+        "note": "unregistered verifier (treated as skipped)"
+      },
+      "scope": "block",
+      "block_id": "B3",
+      "selection_id": null
+    },
+    {
+      "cid": "B3_C3",
+      "desc": "Show progression from individual actions to collective outcome",
+      "passed": null,
+      "details": {
+        "check": "show_action_to_outcome_progression",
+        "args": {},
+        "context": {
+          "cid": "B3_C3",
+          "desc": "Show progression from individual actions to collective outcome",
+          "block_id": "B3"
+        },
+        "note": "unregistered verifier (treated as skipped)"
+      },
+      "scope": "block",
+      "block_id": "B3",
+      "selection_id": null
+    },
+    {
+      "cid": "B3_C4",
+      "desc": "Include the outcome of 'forest seemed alive with quiet gratitude'",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "gratitude"
+          ]
+        },
+        "context": {
+          "cid": "B3_C4",
+          "desc": "Include the outcome of 'forest seemed alive with quiet gratitude'",
+          "block_id": "B3"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B3",
+      "selection_id": null
+    },
+    {
+      "cid": "B4_C1",
+      "desc": "Include a reflective message about cooperation and strength",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "remembered",
+            "strong",
+            "hearts",
+            "together"
+          ]
+        },
+        "context": {
+          "cid": "B4_C1",
+          "desc": "Include a reflective message about cooperation and strength",
+          "block_id": "B4"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B4",
+      "selection_id": null
+    },
+    {
+      "cid": "B4_C2",
+      "desc": "Maintain a gentle, natural tone throughout the conclusion",
+      "passed": true,
+      "details": {
+        "check": "tone_neutral_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B4_C2",
+          "desc": "Maintain a gentle, natural tone throughout the conclusion",
+          "block_id": "B4"
+        },
+        "result_raw": true
+      },
+      "scope": "block",
+      "block_id": "B4",
+      "selection_id": null
+    },
+    {
+      "cid": "B1_C1",
+      "desc": "Establish the setting as a forest morning with a coming storm",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "forest",
+            "morning",
+            "storm"
+          ]
+        },
+        "context": {
+          "cid": "B1_C1",
+          "desc": "Establish the setting as a forest morning with a coming storm",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C2",
+      "desc": "Introduce at least four different animal characters",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "Squirrel",
+            "Rabbit",
+            "Finch",
+            "Tortoise"
+          ]
+        },
+        "context": {
+          "cid": "B1_C2",
+          "desc": "Introduce at least four different animal characters",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C3",
+      "desc": "Show animals performing cooperative storm preparation actions",
+      "passed": true,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "gather",
+            "reinforce",
+            "shelter"
+          ]
+        },
+        "context": {
+          "cid": "B1_C3",
+          "desc": "Show animals performing cooperative storm preparation actions",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C4",
+      "desc": "Maintain gentle natural tone throughout the opening",
+      "passed": true,
+      "details": {
+        "check": "tone_neutral_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B1_C4",
+          "desc": "Maintain gentle natural tone throughout the opening",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": true
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C5",
+      "desc": "Establish the storm as an immediate threat with urgent language",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "urgent",
+            "danger",
+            "threatening",
+            "immediate"
+          ]
+        },
+        "context": {
+          "cid": "B1_C5",
+          "desc": "Establish the storm as an immediate threat with urgent language",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": false
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C6",
+      "desc": "Describe animals responding to the storm with emergency coordination rather than gentle cooperation",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "emergency",
+            "coordinate",
+            "urgently",
+            "protect"
+          ]
+        },
+        "context": {
+          "cid": "B1_C6",
+          "desc": "Describe animals responding to the storm with emergency coordination rather than gentle cooperation",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": false
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C7",
+      "desc": "Maintain a tone of urgency and imminent danger throughout the opening",
+      "passed": false,
+      "details": {
+        "check": "tone_negative_llm_judge",
+        "args": {},
+        "context": {
+          "cid": "B1_C7",
+          "desc": "Maintain a tone of urgency and imminent danger throughout the opening",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": false
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    },
+    {
+      "cid": "B1_C8",
+      "desc": "Include direct communication between animals showing emergency coordination",
+      "passed": false,
+      "details": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "warning",
+            "quickly",
+            "now",
+            "together"
+          ]
+        },
+        "context": {
+          "cid": "B1_C8",
+          "desc": "Include direct communication between animals showing emergency coordination",
+          "selection_id": "SEL_B1"
+        },
+        "result_raw": false
+      },
+      "scope": "branch",
+      "block_id": null,
+      "selection_id": "SEL_B1"
+    }
+  ]
+}

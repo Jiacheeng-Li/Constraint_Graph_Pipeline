@@ -73,6 +73,7 @@ Fallback：
 import json
 import requests
 import random
+import hashlib
 from typing import Dict, Any, List
 from .graph_schema import ConstraintNode, SelectionNode, SelectionBranch
 from .utils.text_clean import make_snippet, clip
@@ -140,15 +141,15 @@ def _choose_blocks_for_selection(block_constraints: Dict[str, List[ConstraintNod
             deduped.append(bid)
             seen.add(bid)
 
-    # 4. 随机决定要几个 block
-    #    - 如果只有1个，就用1个
-    #    - 如果有很多，就在1~3之间随机
-    max_pick = min(len(deduped), 3)
-    pick_n = random.randint(1, max_pick)
+    # 4. 基于候选集生成稳定随机子集。
+    seed_material = "|".join(deduped).encode("utf-8")
+    seed_int = int.from_bytes(hashlib.sha256(seed_material).digest(), "big")
+    rng = random.Random(seed_int)
 
-    # 为了稳定性，不要直接 random.sample 后打乱顺序。
-    # 我们先随机抽子集，再按原顺序排序输出。
-    picked_set = set(random.sample(deduped, pick_n))
+    max_pick = min(len(deduped), 3)
+    pick_n = rng.randint(1, max_pick)
+
+    picked_set = set(rng.sample(deduped, pick_n))
     final_list = [bid for bid in ordered_block_ids if bid in picked_set]
 
     return final_list

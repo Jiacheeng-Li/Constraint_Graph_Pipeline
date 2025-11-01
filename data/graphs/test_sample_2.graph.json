@@ -1,0 +1,89 @@
+{
+  "seed_task": "Analyze 撰写一篇关于全球太空竞赛的分析文章，需要保持中立专业的语气，并在结尾提出下一步建议。",
+  "global_constraints": [
+    {
+      "cid": "G1",
+      "desc": "The answer must be at least 100 words long (approximately comparable length to the provided reference).",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "min_word_count",
+        "args": {
+          "min_words": 100
+        }
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G2",
+      "desc": "The answer must be written primarily in English.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "require_language",
+        "args": {
+          "lang": "en"
+        }
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G3",
+      "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "forbid_first_person",
+        "args": {}
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    }
+  ],
+  "block_specs": [
+    {
+      "block_id": "B1",
+      "intent": "TBD",
+      "text_span": "The modern space race combines technological ambition with geopolitical signaling. Recent launches from national agencies highlight prestige concerns, while private firms push commercial frontiers.",
+      "order_index": 0
+    },
+    {
+      "block_id": "B2",
+      "intent": "TBD",
+      "text_span": "First, investors and governments are coordinating on reusable launch vehicles to cut costs. Second, collaboration frameworks like the Artemis Accords illustrate attempts to manage competition. Throughout, analysts emphasize staying neutral and evidence-driven.",
+      "order_index": 1
+    },
+    {
+      "block_id": "B3",
+      "intent": "TBD",
+      "text_span": "In conclusion, nations should expand cooperative monitoring, develop crisis hotlines, and invest in joint research hubs to reduce escalation risks.",
+      "order_index": 2
+    }
+  ],
+  "block_constraint_sets": [
+    {
+      "block_id": "B1",
+      "logic_type": "AND",
+      "constraints": []
+    },
+    {
+      "block_id": "B2",
+      "logic_type": "AND",
+      "constraints": []
+    },
+    {
+      "block_id": "B3",
+      "logic_type": "AND",
+      "constraints": []
+    }
+  ],
+  "selections": [],
+  "meta": {
+    "assembled_from": {
+      "step1": "seed_task",
+      "step2": "segmentation",
+      "step3": "global_constraints",
+      "step4": "block_constraints + block_logic",
+      "step5": "selections + augmented block_constraints"
+    }
+  }
+}

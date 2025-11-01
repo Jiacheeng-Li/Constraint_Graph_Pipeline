@@ -257,7 +257,6 @@ Pipeline_10.25/
 │  │   ├─ parsing.py                # 解析LLM输出，提取block与约束信息
 │  │   ├─ verifier_registry.py      # 注册并管理verifier_spec对应的检测函数
 │  │   ├─ text_clean.py             # 文本清理与规范化工具
-│  │   ├─ trace_manager.py          # 处理trace_to与derived_from元数据
 │  │   └─ export_utils.py           # 导出graph与instruction文件
 │  │
 │  ├─ graph_schema.py               # 统一的节点、边、元数据数据结构定义

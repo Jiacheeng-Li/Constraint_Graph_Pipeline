@@ -301,15 +301,17 @@ def extract_block_constraints(segmentation: Dict[str, Any],
 
         raw_str = _call_deepseek_block_constraints(block, seed_task, segmentation)
         parsed = _parse_block_llm_result(raw_str)
-        if not parsed or "constraints" not in parsed:
+        constraints_list = parsed.get("constraints") if isinstance(parsed, dict) else None
+        if not parsed or not constraints_list:
             parsed = _fallback_block_constraints(block)
+            constraints_list = parsed.get("constraints", [])
 
         logic_tag = parsed.get("logic", "AND")
         block_logic[block.block_id] = "sub-chain" if str(logic_tag).lower().startswith("sub") else "AND"
 
         local_nodes: List[ConstraintNode] = []
         cid_idx = 1
-        for item in parsed.get("constraints", []):
+        for item in constraints_list:
             # item 可能是 extract_constraints() 的输出风格：
             # {"cid":..., "desc":..., "verifier_spec":{check,args}, ...}
             desc = item.get("desc", "").strip()
