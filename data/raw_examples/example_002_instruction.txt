@@ -1,0 +1,5 @@
+You are a culinary writing assistant. Compose a **detailed Markdown-formatted cooking guide** that teaches how to make *homemade pasta with tomato basil sauce*.
+
+The guide should:
+1. Be written in **English**, in an **instructive yet friendly tone** using imperative verbs.
+2. Use **Markdown** with clear headings and lists; highlight key items with **bold** or *italics*.

@@ -1,6 +1,6 @@
 {
-  "sample_id": "example_001",
-  "timestamp_utc": "2025-11-02T13:23:29.755347+00:00",
+  "sample_id": "example_001_21",
+  "timestamp_utc": "2025-11-02T13:41:03.463009+00:00",
   "eval_protocol": {
     "seed_task": "Write a short story (around 200–300 words) showing cooperation among forest animals during a storm.",
     "global_scoring": [

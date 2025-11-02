@@ -1,4 +1,4 @@
-%% Mermaid flowchart for sample `example_001`
+%% Mermaid flowchart for sample `example_001_globaltest`
 %% Paste this into any Mermaid renderer to view the graph.
 
 flowchart LR
@@ -25,35 +25,38 @@ flowchart LR
         B3_C2["B3_C2: Provide a sufficiently detailed explanation of the..."]
         B3_C1 --- B3_C2
     end
+    subgraph B3_ALT[B3_ALT TBD]
+        B3_ALT_C1["B3_ALT_C1: Reimagine this stage with a fundamentally diff..."]
+        B3_ALT_C2["B3_ALT_C2: Introduce a new conflict that redirects the su..."]
+        B3_ALT_C1 --- B3_ALT_C2
+    end
+    subgraph B3_ALT_NEXT1[B3_ALT_NEXT1 TBD alternate path]
+        B3_ALT_NEXT1_C1["B3_ALT_NEXT1_C1: Diagnose at least two critical failures..."]
+        B3_ALT_NEXT1_C2["B3_ALT_NEXT1_C2: Maintain an openly critical tone that as..."]
+        B3_ALT_NEXT1_C1 --- B3_ALT_NEXT1_C2
+    end
     subgraph B4[B4 TBD]
         B4_C1["B4_C1: Maintain a neutral, analytical tone without emotio..."]
         B4_C2["B4_C2: Provide a sufficiently detailed explanation of the..."]
         B4_C1 --- B4_C2
     end
-    subgraph B4_ALT[B4_ALT TBD]
-        B4_ALT_C1["B4_ALT_C1: Adopt an explicitly critical tone highlighting..."]
-        B4_ALT_C2["B4_ALT_C2: Propose at least one concrete next-step action..."]
-        B4_ALT_C1 --- B4_ALT_C2
+    subgraph B3_ALT_NEXT2[B3_ALT_NEXT2 TBD alternate path]
+        B3_ALT_NEXT2_C1["B3_ALT_NEXT2_C1: Lay out an urgent recovery plan using nu..."]
+        B3_ALT_NEXT2_C2["B3_ALT_NEXT2_C2: Highlight the need for rapid collaborati..."]
+        B3_ALT_NEXT2_C1 --- B3_ALT_NEXT2_C2
     end
     subgraph B5[B5 TBD]
         B5_C1["B5_C1: Maintain a neutral, analytical tone without emotio..."]
         B5_C2["B5_C2: Provide a sufficiently detailed explanation of the..."]
         B5_C1 --- B5_C2
     end
-    subgraph B5_ALT[B5_ALT TBD]
-        B5_ALT_C1["B5_ALT_C1: Adopt an explicitly critical tone highlighting..."]
-        B5_ALT_C2["B5_ALT_C2: Propose at least one concrete next-step action..."]
-        B5_ALT_C1 --- B5_ALT_C2
-    end
     G3 --> B1_C1
     B1_C2 --> B2_C1
-    B2_C2 --> B3_C1
-    DEC_SEL_B4{"If the stance is critical/negative"}
-    B3_C2 --> DEC_SEL_B4
-    DEC_SEL_B4 --> B4_C1
-    DEC_SEL_B4 --> B4_ALT_C1
-    B4_ALT_C2 --> DEC_SEL_B5
-    DEC_SEL_B5{"If the stance is critical/negative"}
-    B4_C2 --> DEC_SEL_B5
-    DEC_SEL_B5 --> B5_C1
-    DEC_SEL_B5 --> B5_ALT_C1
+    B3_C2 --> B4_C1
+    B4_C2 --> B5_C1
+    DEC_SEL_B3{"If a radically different storyline is required"}
+    B2_C2 --> DEC_SEL_B3
+    DEC_SEL_B3 --> B3_C1
+    DEC_SEL_B3 --> B3_ALT_C1
+    B3_ALT_C2 --> B3_ALT_NEXT1_C1
+    B3_ALT_NEXT1_C2 --> B3_ALT_NEXT2_C1

@@ -210,6 +210,42 @@ def _render_selections(selections: List[SelectionNode],
     return rendered
 
 
+def _condition_statement(cond: str) -> str:
+    text = (cond or "").strip()
+    if not text:
+        return ""
+    lowered = text.lower()
+    if lowered.startswith("if "):
+        text = text[3:].strip()
+    if not text:
+        return ""
+    if text[0].islower():
+        text = text[0].upper() + text[1:]
+    if not text.endswith("."):
+        text += "."
+    return text
+
+
+def _negated_condition_statement(cond: str) -> str:
+    statement = _condition_statement(cond).rstrip(".")
+    if not statement:
+        return ""
+    lowered = statement.lower()
+    if " is " in lowered:
+        parts = statement.split(" is ", 1)
+        return f"{parts[0]} is not {parts[1]}."
+    if " are " in lowered:
+        parts = statement.split(" are ", 1)
+        return f"{parts[0]} are not {parts[1]}."
+    if " should " in lowered:
+        parts = statement.split(" should ", 1)
+        return f"{parts[0]} should not {parts[1]}."
+    if " must " in lowered:
+        parts = statement.split(" must ", 1)
+        return f"{parts[0]} must not {parts[1]}."
+    return f"It is not the case that {statement.lower()}."
+
+
 # ------------------------------------------------------------
 # Helper 4. 组装 machine_prompt
 # （给待评测模型看的最终高复杂度指令）
@@ -231,6 +267,9 @@ def _mk_machine_prompt(seed_task: str,
     """
 
     lines: List[str] = []
+
+    lines.append("SYSTEM INSTRUCTIONS:")
+    lines.append("")
 
     # 0. 总任务（seed_task）：告诉模型它要完成的核心目标
     lines.append("OVERALL TASK:")
@@ -273,39 +312,39 @@ def _mk_machine_prompt(seed_task: str,
         sel = selection_map.get(stage_id)
         if sel and sel.get("selection_type", "").lower() == "global":
             condition_text = sel["condition"].strip()
-            condition_clause = condition_text[3:].strip() if condition_text.lower().startswith("if ") else condition_text
+            condition_statement = _condition_statement(condition_text)
 
             lines.append(f"{heading}:")
-            lines.append("Choose one of the following story paths:")
-            lines.append("If you want to stay with the cooperative storyline:")
+            lines.append("Branch conditions and obligations:")
 
-            for main_stage in block_plan[i:]:
-                heading_main = main_stage["role"] or main_stage["block_id"]
-                lines.append(f"  {heading_main}:")
-                for requirement in main_stage["requirements"]:
-                    lines.append(f"    • {requirement['desc']}")
-
-            lines.append(f"Otherwise, if {condition_clause}:")
+            satisfied_label = condition_statement or "Condition satisfied."
+            lines.append(f"  • When {satisfied_label.rstrip('.')}:")
             alt_sequence = sel.get("alt_path_blocks") or [sel.get("branch_alt_block")]
             by_block = sel.get("alt_by_block") or {}
             for block_id in alt_sequence:
                 label = block_label_lookup.get(block_id, block_id)
-                lines.append(f"  {label}:")
+                lines.append(f"    - {label}:")
                 items = by_block.get(block_id)
                 if items:
                     for item in items:
-                        lines.append(f"    • {item.get('desc')}")
+                        lines.append(f"      • {item.get('desc')}")
                 else:
-                    # Fallback to legacy cid-prefix grouping if trace_to-based grouping is unavailable
                     alt_requirements = [
                         item for item in sel.get("branch_alt", [])
                         if item.get("cid", "").startswith(f"{block_id}_")
                     ]
                     if alt_requirements:
                         for item in alt_requirements:
-                            lines.append(f"    • {item.get('desc')}")
+                            lines.append(f"      • {item.get('desc')}")
                     else:
-                        lines.append("    • Continue the alternate story in a way that fits this focus.")
+                        lines.append("      • Continue the alternate storyline in a manner consistent with this block.")
+
+            lines.append("  • When the condition is not satisfied:")
+            for main_stage in block_plan[i:]:
+                heading_main = main_stage["role"] or main_stage["block_id"]
+                lines.append(f"    - {heading_main}:")
+                for requirement in main_stage["requirements"]:
+                    lines.append(f"      • {requirement['desc']}")
 
             break
 
@@ -313,16 +352,15 @@ def _mk_machine_prompt(seed_task: str,
 
         if sel and sel.get("selection_type", "").lower() == "local":
             condition_text = sel["condition"].strip()
-            condition_clause = condition_text
-            if condition_text.lower().startswith("if "):
-                condition_clause = condition_text[3:].strip()
-            lines.append(f"If {condition_clause}:")
-            alt_requirements = [item for item in sel["branch_alt"]]
-            for item in alt_requirements:
-                lines.append(f"  • {item.get('desc')}")
-            lines.append("Otherwise:")
+            condition_statement = _condition_statement(condition_text)
+            satisfied_label = condition_statement or "Condition satisfied."
+            lines.append("Branch conditions and obligations:")
+            lines.append(f"  • When {satisfied_label.rstrip('.')}:")
+            for item in sel["branch_alt"]:
+                lines.append(f"    - {item.get('desc')}")
+            lines.append("  • When the condition is not satisfied:")
             for r in sel["branch_real"]:
-                lines.append(f"  • {r['desc']}")
+                lines.append(f"    - {r['desc']}")
         else:
             lines.append(f"{logic_phrase}")
             for r in reqs:
@@ -331,21 +369,20 @@ def _mk_machine_prompt(seed_task: str,
     lines.append("")
 
     if selections_view:
-        lines.append("SCENARIO CONDITION:")
+        lines.append("CONDITION FOR THIS RESPONSE:")
         for sel in selections_view:
             cond = sel["condition"].strip()
             stage_label = block_label_lookup.get(sel["trace_to"], sel["trace_to"])
-            condition_clause = cond[3:].strip() if cond.lower().startswith("if ") else cond
-            primary_focus = sel["branch_real"][0]["desc"]
-            lines.append(f"- {stage_label}: ensure the story {primary_focus.lower()}; switch only if {condition_clause}.")
+            negated = _negated_condition_statement(cond)
+            statement = negated or "The specified condition is not satisfied."
+            lines.append(f"- {stage_label}: {statement}")
         lines.append("")
 
     # 4. 评测提醒：明确告诉模型它会被自动检查，并且不能混合分支
     lines.append("EVALUATION NOTICE:")
-    lines.append("- Your answer will be checked against the global requirements, each stage’s duties, "
-                 "and whichever branch you choose for conditional stages.")
-    lines.append("- Pick one branch whenever a stage presents an IF/ELSE choice, and stay consistent with that path.")
-    lines.append("- Automated checks will verify language, tone, required details, and any promised alternate storyline tasks.")
+    lines.append("- Your answer will be checked against the global requirements, each stage’s duties, and the branch obligations implied by the stated condition.")
+    lines.append("- Alternate branch requirements only apply when their corresponding condition is satisfied; otherwise use the duties listed for the condition not being satisfied.")
+    lines.append("- Automated checks will verify language, tone, required details, and branch-specific requirements.")
     lines.append("")
 
     return "\n".join(lines).strip() + "\n"

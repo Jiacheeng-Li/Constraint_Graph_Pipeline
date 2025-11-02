@@ -45,11 +45,15 @@ class BlockSpec:
     - intent: 这个块在语义/功能上的角色（背景介绍、主体分析、结论…）
     - text_span: 该块对应的原始回答文本片段
     - order_index: 在回答整体顺序中的位置，用于重建chain
+    - is_alternate: 是否为选择分支中新生成的替代块
+    - origin_block: 如果是替代块，对应的原始块ID
     """
     block_id: str
     intent: str
     text_span: str
     order_index: int
+    is_alternate: bool = False
+    origin_block: Optional[str] = None
 
 
 @dataclass
@@ -73,9 +77,11 @@ class SelectionBranch:
     Selection 分支中的一条路径。
 
     字段含义：
+    - block_id: 该分支对应的 block（原块或替代块）
     - constraints: 该分支下需要满足的约束ID列表（cid列表）。
       这些cid必须能在 ConstraintGraph.block_constraints 或 global_constraints 里找到。
     """
+    block_id: str
     constraints: List[str]
 
 
@@ -92,6 +98,9 @@ class SelectionNode:
     - branch_real: 真正回答走过的那条路径（真实链路）对应的约束ID集。
     - branch_alt: 我们合成的另一条“伪分支”路径的约束ID集。
     - derived_from: 我们是在pipeline哪一步造出的这个Selection（通常是 step5）。
+    - selection_type: "local" | "global"
+    - merge_point: 若为 local，分支合流到的块ID；global 默认为 None
+    - truncated: 若因为上限被截断，则为 True
     """
     sid: str
     condition: str
@@ -99,6 +108,10 @@ class SelectionNode:
     branch_real: SelectionBranch
     branch_alt: SelectionBranch
     derived_from: str = "step5"
+    selection_type: str = "local"
+    merge_point: Optional[str] = None
+    truncated: bool = False
+    alt_path_blocks: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -136,6 +149,8 @@ class ConstraintGraph:
                     "intent": b.intent,
                     "text_span": b.text_span,
                     "order_index": b.order_index,
+                    "is_alternate": b.is_alternate,
+                    "origin_block": b.origin_block,
                 } for b in self.block_specs
             ],
             "global_constraints": [
@@ -171,12 +186,18 @@ class ConstraintGraph:
                     "condition": s.condition,
                     "trace_to": s.trace_to,
                     "branch_real": {
+                        "block_id": s.branch_real.block_id,
                         "constraints": s.branch_real.constraints
                     },
                     "branch_alt": {
+                        "block_id": s.branch_alt.block_id,
                         "constraints": s.branch_alt.constraints
                     },
                     "derived_from": s.derived_from,
+                    "selection_type": s.selection_type,
+                    "merge_point": s.merge_point,
+                    "truncated": s.truncated,
+                    "alt_path_blocks": s.alt_path_blocks,
                 } for s in self.selections
             ],
             "meta": self.meta,

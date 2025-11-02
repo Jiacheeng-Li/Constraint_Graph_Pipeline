@@ -43,7 +43,8 @@ from .graph_schema import (
 )
 
 
-def _build_block_specs(segmentation: Dict[str, Any]) -> List[BlockSpec]:
+def _build_block_specs(segmentation: Dict[str, Any],
+                      extra_blocks: List[BlockSpec]) -> List[BlockSpec]:
     """
     根据 step2_segmentation 的输出，构造 BlockSpec 列表。
 
@@ -56,6 +57,7 @@ def _build_block_specs(segmentation: Dict[str, Any]) -> List[BlockSpec]:
     }
 
     如果 step2 没提供 order_index，我们用遍历顺序赋值。
+    extra_blocks 用于挂载 Step5 生成的替代块 (B3_ALT 等)。
     """
     block_specs: List[BlockSpec] = []
     for idx, b in enumerate(segmentation.get("blocks", [])):
@@ -65,8 +67,12 @@ def _build_block_specs(segmentation: Dict[str, Any]) -> List[BlockSpec]:
                 intent=b.get("intent", ""),
                 text_span=b.get("text_span", ""),
                 order_index=b.get("order_index", idx),
+                is_alternate=False,
+                origin_block=None,
             )
         )
+    block_specs.extend(extra_blocks)
+    block_specs.sort(key=lambda bs: (bs.order_index, bs.block_id))
     return block_specs
 
 
@@ -144,7 +150,8 @@ def assemble_constraint_graph(
     - selections 已经引用了这些 block 的约束 cid，我们此处只是挂上去。
     """
 
-    block_specs = _build_block_specs(segmentation)
+    extra_blocks: List[BlockSpec] = step5_output.get("extra_blocks", [])
+    block_specs = _build_block_specs(segmentation, extra_blocks)
 
     block_constraint_sets = _build_block_constraint_sets(
         block_constraints=step5_output.get("block_constraints", {}),
@@ -205,6 +212,8 @@ def serialize_graph(graph: ConstraintGraph) -> Dict[str, Any]:
             "intent": b.intent,
             "text_span": b.text_span,
             "order_index": b.order_index,
+            "is_alternate": b.is_alternate,
+            "origin_block": b.origin_block,
         }
 
     def _ser_block_constraint_set(bcs: BlockConstraintSet) -> Dict[str, Any]:
@@ -220,12 +229,18 @@ def serialize_graph(graph: ConstraintGraph) -> Dict[str, Any]:
             "condition": sel.condition,
             "trace_to": sel.trace_to,
             "branch_real": {
+                "block_id": sel.branch_real.block_id,
                 "constraints": list(sel.branch_real.constraints),
             },
             "branch_alt": {
+                "block_id": sel.branch_alt.block_id,
                 "constraints": list(sel.branch_alt.constraints),
             },
             "derived_from": sel.derived_from,
+            "selection_type": sel.selection_type,
+            "merge_point": sel.merge_point,
+            "truncated": sel.truncated,
+            "alt_path_blocks": list(sel.alt_path_blocks),
         }
 
     out = {
@@ -269,15 +284,13 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
     lines.append("flowchart LR")
 
     # helper: shorten long text for node labels
+    def _clean_text(txt: str) -> str:
+        return txt.replace("(", "").replace(")", "")
+
     def _short(txt: str) -> str:
-        t = txt.strip().replace("\n", " ")
+        t = _clean_text(txt.strip().replace("\n", " "))
         if len(t) > max_desc_len:
             t = t[:max_desc_len - 3].rstrip() + "..."
-        # Balance parentheses for readability (avoid dangling "(" after truncation)
-        open_count = t.count("(")
-        close_count = t.count(")")
-        if open_count > close_count:
-            t = t + (")" * (open_count - close_count))
         return t
 
     # ----- Seed task node -----
@@ -293,7 +306,8 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
         glob_node_ids = []
         for gc in graph.global_constraints:
             nid = gc.cid if gc.cid else f"G_{len(glob_node_ids)+1}"
-            label = _short(gc.desc or gc.cid or "global rule")
+            label_desc = gc.desc or gc.cid or "global rule"
+            label = _short(f"{nid}: {label_desc}")
             # circle node
             lines.append(f'        {nid}(({label}))')
             glob_node_ids.append(nid)
@@ -308,9 +322,10 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
         # Connect SEED --> first global node
         first_global = glob_node_ids[0]
         lines.append(f'    SEED --> {first_global}')
+        global_end = glob_node_ids[-1]
     else:
         # no global constraints: just connect SEED forward later
-        first_global = "SEED"
+        global_end = "SEED"
 
     # ----- Block subgraphs -----
     # We need to:
@@ -319,7 +334,16 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
     #
     # Also: Keep a mapping from block_id -> first constraint node id,
     # which we'll use to connect chain edges.
-    block_anchor_map = {}  # block_id -> first constraint node id
+    block_anchor_map = {}
+    block_end_map: Dict[str, str] = {}
+    main_blocks: List[str] = []
+
+    # Sort block_specs in natural order (primary order_index, secondary block_id)
+    sorted_blocks = sorted(graph.block_specs, key=lambda b: (b.order_index, b.block_id))
+    ordering: Dict[str, int] = {b.block_id: idx for idx, b in enumerate(sorted_blocks)}
+
+    # Collect all alternate block IDs for edge-origin logic
+    alt_block_ids = {b.block_id for b in sorted_blocks if getattr(b, "is_alternate", False)}
 
     # Build helper maps for quick lookup
     # - constraints per block
@@ -329,14 +353,9 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
         bcs.block_id: bcs.constraints for bcs in graph.block_constraint_sets
     }
 
-    # Sort block_specs in natural order of appearance
-    sorted_blocks = sorted(graph.block_specs, key=lambda b: b.order_index)
-
-    prev_anchor = first_global  # we chain from global to first block
-
     for b in sorted_blocks:
         bid = b.block_id
-        intent_label = b.intent or bid
+        intent_label = _clean_text(b.intent or bid)
         subgraph_name = bid  # Mermaid subgraph label uses this as header ID
         lines.append(f'    subgraph {subgraph_name}[{bid} {intent_label}]')
 
@@ -347,7 +366,8 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
         rendered_ids = []
         for cnode in block_nodes:
             cid = cnode.cid or f"{bid}_C{len(rendered_ids)+1}"
-            label = _short(cnode.desc or cid)
+            label_desc = cnode.desc or ""
+            label = _short(f"{cid}: {label_desc}")
             lines.append(f'        {cid}["{label}"]')
             rendered_ids.append(cid)
             if anchor_id is None:
@@ -365,16 +385,33 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
 
         if anchor_id:
             block_anchor_map[bid] = anchor_id
-            # connect prev anchor to this block's anchor
-            lines.append(f'    {prev_anchor} --> {anchor_id}')
-            prev_anchor = anchor_id
+            block_end_map[bid] = rendered_ids[-1]
         else:
-            # 块内没有显式局部约束，我们仍然给它一个锚点，方便主链连接
             synthetic_anchor = f"{bid}_EMPTY"
             lines.append(f'    {synthetic_anchor}["{bid} (no explicit constraints)"]')
             block_anchor_map[bid] = synthetic_anchor
-            lines.append(f'    {prev_anchor} --> {synthetic_anchor}')
-            prev_anchor = synthetic_anchor
+            block_end_map[bid] = synthetic_anchor
+
+        if not b.is_alternate:
+            main_blocks.append(bid)
+
+    # Connect main chain blocks (using last -> first constraint)
+    selection_map = {sel.trace_to: sel for sel in graph.selections}
+
+    if main_blocks:
+        first_main = main_blocks[0]
+        if first_main not in selection_map:
+            lines.append(f'    {global_end} --> {block_anchor_map[first_main]}')
+
+        for idx in range(len(main_blocks) - 1):
+            curr_bid = main_blocks[idx]
+            next_bid = main_blocks[idx + 1]
+            if next_bid in selection_map:
+                continue
+            curr_end = block_end_map.get(curr_bid)
+            next_start = block_anchor_map.get(next_bid)
+            if curr_end and next_start:
+                lines.append(f'    {curr_end} --> {next_start}')
 
     # ----- Selection branches -----
     # 对于每个 SelectionNode：
@@ -382,12 +419,6 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
     #   2. 从对应 block 的锚点连到该菱形
     #   3. 为 branch_real / branch_alt 各建一个子图子分支
     #   4. 决策菱形分别指向两个分支的第一个节点
-
-    # 为了能把 cid 解析成 desc，需要一份全局索引
-    all_constraints_index = {}
-    for bcs in graph.block_constraint_sets:
-        for cn in bcs.constraints:
-            all_constraints_index[cn.cid] = cn
 
     for sel in graph.selections:
         sid = sel.sid
@@ -398,53 +429,72 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
         lines.append(f'    {dec_id}{{"{cond_label}"}}')
 
         origin_bid = sel.trace_to
-        origin_anchor = block_anchor_map.get(origin_bid, prev_anchor)
-        lines.append(f'    {origin_anchor} --> {dec_id}')
+        prev_end_node = None
+        if origin_bid in main_blocks:
+            idx = main_blocks.index(origin_bid)
+            if idx == 0:
+                prev_end_node = global_end
+            else:
+                prev_block = main_blocks[idx - 1]
+                prev_end_node = block_end_map.get(prev_block)
+        else:
+            prev_end_node = global_end
+        if prev_end_node:
+            lines.append(f'    {prev_end_node} --> {dec_id}')
 
-        def _render_branch(branch_name: str,
-                           header_label: str,
-                           constraint_ids: List[str]):
-            """
-            渲染一个分支子图：
-            subgraph <branch_name>[<header_label>]
-                <alias>["desc"]
-                ...
-                c1 --- c2 --- c3   # 用 '---' 表示 AND 关系
-            end
-            返回该分支第一个节点的 cid（用于连线）
-            """
-            lines.append(f'    subgraph {branch_name}[{header_label}]')
-            rendered = []
-            for cid in constraint_ids:
-                cn = all_constraints_index.get(cid)
-                label_desc = cn.desc if cn and cn.desc else cid
-                label = _short(f"{cid}: {label_desc}")
-                alias = f"{branch_name}_{cid}"
-                lines.append(f'        {alias}["{label}"]')
-                rendered.append(alias)
-
-            if len(rendered) >= 2:
-                chain_expr = " --- ".join(rendered)
-                lines.append(f'        {chain_expr}')
-
-            lines.append("    end")
-            return rendered[0] if rendered else None
-
-        # 真实/默认分支（branch_real）
-        real_ids = list(sel.branch_real.constraints)
-        real_header = "Branch: default path"
-        real_anchor = _render_branch(f"{sid}_REAL", real_header, real_ids)
-
-        # 条件分支（branch_alt）
-        alt_ids = list(sel.branch_alt.constraints)
-        alt_header = "Branch: conditional path"
-        alt_anchor = _render_branch(f"{sid}_ALT", alt_header, alt_ids)
-
-        # 从菱形连到两个分支的锚点
+        # 真实/默认分支（branch_real）指向原块锚点
+        real_anchor = block_anchor_map.get(sel.branch_real.block_id)
         if real_anchor:
             lines.append(f'    {dec_id} --> {real_anchor}')
-        if alt_anchor:
-            lines.append(f'    {dec_id} --> {alt_anchor}')
+
+        # 条件分支指向替代块锚点（可能是多段链）
+        alt_path_blocks = sel.alt_path_blocks or [sel.branch_alt.block_id]
+        first_alt_block = alt_path_blocks[0]
+        first_alt_anchor = block_anchor_map.get(first_alt_block)
+        if first_alt_anchor:
+            lines.append(f'    {dec_id} --> {first_alt_anchor}')
+
+        # Chain alternate blocks.
+        # For ALT blocks, outgoing edges originate from the block's last internal constraint node (end)
+        # rather than the first constraint (anchor).
+        for idx_chain in range(len(alt_path_blocks) - 1):
+            current_block = alt_path_blocks[idx_chain]
+            next_block = alt_path_blocks[idx_chain + 1]
+            # For ALT blocks, use the last internal constraint as the origin; otherwise use anchor
+            origin_node = (
+                block_end_map.get(current_block)
+                if current_block in alt_block_ids else
+                block_anchor_map.get(current_block)
+            )
+            next_anchor = block_anchor_map.get(next_block)
+            if origin_node and next_anchor:
+                lines.append(f'    {origin_node} --> {next_anchor}')
+
+        # For ALT blocks, the outgoing edge should originate from the last internal constraint
+        final_alt_block_id = alt_path_blocks[-1]
+        final_origin_node = (
+            block_end_map.get(final_alt_block_id)
+            if final_alt_block_id in alt_block_ids else
+            block_anchor_map.get(final_alt_block_id)
+        )
+        if final_origin_node and sel.merge_point:
+            merge_sel = selection_map.get(sel.merge_point)
+            if merge_sel:
+                lines.append(f'    {final_origin_node} --> DEC_{merge_sel.sid}')
+            else:
+                merge_anchor = block_anchor_map.get(sel.merge_point)
+                if merge_anchor:
+                    lines.append(f'    {final_origin_node} --> {merge_anchor}')
+        elif final_origin_node and not sel.merge_point and sel.selection_type.lower() == "local":
+            order_idx = ordering.get(alt_path_blocks[-1], 0) + 1
+            next_main = next((bid for bid in main_blocks if ordering.get(bid, 0) >= order_idx), None)
+            next_sel = next((s for s in graph.selections if ordering.get(s.trace_to, 0) >= order_idx), None)
+            if next_sel:
+                lines.append(f'    {final_origin_node} --> DEC_{next_sel.sid}')
+            elif next_main:
+                next_anchor = block_anchor_map.get(next_main)
+                if next_anchor:
+                    lines.append(f'    {final_origin_node} --> {next_anchor}')
 
     # 最终把所有 Mermaid 行合并
     return "\n".join(lines)
@@ -522,35 +572,51 @@ if __name__ == "__main__":
                 trace_to="B3",
                 derived_from="step4",
             ),
+        ],
+        "B3_ALT": [
             ConstraintNode(
-                cid="B3_C3",
+                cid="B3_ALT_C1",
                 desc="Adopt an explicitly critical tone highlighting concrete problems or failures.",
                 scope="local",
                 verifier_spec={"check": "tone_negative_llm_judge", "args": {}},
-                trace_to="B3",
+                trace_to="B3_ALT",
                 derived_from="step5",
             ),
             ConstraintNode(
-                cid="B3_C4",
+                cid="B3_ALT_C2",
                 desc="Propose at least one concrete next-step action to address the identified problems.",
                 scope="local",
                 verifier_spec={"check": "actionability_judge", "args": {}},
-                trace_to="B3",
+                trace_to="B3_ALT",
                 derived_from="step5",
             ),
-        ]
+        ],
     }
 
-    block_logic_demo = {"B3": "AND"}
+    block_logic_demo = {"B3": "AND", "B3_ALT": "AND"}
 
     selections_demo = [
         SelectionNode(
             sid="SEL_B3",
             condition="If the stance is critical/negative",
             trace_to="B3",
-            branch_real=SelectionBranch(constraints=["B3_C1", "B3_C2"]),
-            branch_alt=SelectionBranch(constraints=["B3_C3", "B3_C4"]),
+            branch_real=SelectionBranch(block_id="B3", constraints=["B3_C1", "B3_C2"]),
+            branch_alt=SelectionBranch(block_id="B3_ALT", constraints=["B3_ALT_C1", "B3_ALT_C2"]),
             derived_from="step5",
+            selection_type="local",
+            merge_point=None,
+            alt_path_blocks=["B3_ALT"],
+        )
+    ]
+
+    extra_blocks_demo = [
+        BlockSpec(
+            block_id="B3_ALT",
+            intent="Conclusion / Outlook / Recommendation (alternate)",
+            text_span="Alternate conclusion branch text...",
+            order_index=2,
+            is_alternate=True,
+            origin_block="B3",
         )
     ]
 
@@ -558,6 +624,7 @@ if __name__ == "__main__":
         "block_constraints": block_constraints_demo,
         "block_logic": block_logic_demo,
         "selections": selections_demo,
+        "extra_blocks": extra_blocks_demo,
     }
 
     graph_demo = assemble_constraint_graph(

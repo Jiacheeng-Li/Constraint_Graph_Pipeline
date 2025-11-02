@@ -1,0 +1,57 @@
+OVERALL TASK:
+- Write a short story (around 200–300 words) showing cooperation among forest animals during a storm.
+
+GLOBAL MANDATORY CONSTRAINTS:
+You MUST satisfy ALL of the following properties throughout the entire answer:
+- The answer must be at least 184 words long (approximately comparable length to the provided reference).
+- The answer must be written primarily in English.
+- The answer should maintain an objective, third-person analytic voice without using first-person pronouns.
+
+REQUIRED OUTPUT STRUCTURE (STAGED PLAN):
+Your answer MUST be organized into the following stages / sections.
+You do not need to literally copy these headings, but you MUST perform the listed duties.
+
+TBD:
+Cover all of the following points:
+  • Maintain a neutral, analytical tone without emotional or inflammatory language.
+  • Provide a sufficiently detailed explanation of the topic with at least 50 words.
+
+TBD:
+Cover all of the following points:
+  • Maintain a neutral, analytical tone without emotional or inflammatory language.
+  • Provide a sufficiently detailed explanation of the topic with at least 50 words.
+
+TBD:
+Choose one of the following story paths:
+If you want to stay with the cooperative storyline:
+  TBD:
+    • Maintain a neutral, analytical tone without emotional or inflammatory language.
+    • Provide a sufficiently detailed explanation of the topic with at least 50 words.
+  TBD:
+    • Maintain a neutral, analytical tone without emotional or inflammatory language.
+    • Provide a sufficiently detailed explanation of the topic with at least 50 words.
+  TBD:
+    • Maintain a neutral, analytical tone without emotional or inflammatory language.
+    • Provide a sufficiently detailed explanation of the topic with at least 50 words.
+Otherwise, if a radically different storyline is required:
+  TBD:
+    • Reimagine this stage with a fundamentally different narrative focus.
+    • Introduce a new conflict that redirects the subsequent storyline.
+    • Diagnose at least two critical failures driving the alternate scenario.
+    • Maintain an openly critical tone that assigns accountability for those failures.
+    • Lay out an urgent recovery plan using numbered steps.
+    • Highlight the need for rapid collaborative action to stabilize the situation.
+  TBD (alternate path):
+    • Diagnose at least two critical failures driving the alternate scenario.
+    • Maintain an openly critical tone that assigns accountability for those failures.
+  TBD (alternate path):
+    • Lay out an urgent recovery plan using numbered steps.
+    • Highlight the need for rapid collaborative action to stabilize the situation.
+
+SCENARIO CONDITION:
+- TBD: ensure the story maintain a neutral, analytical tone without emotional or inflammatory language.; switch only if a radically different storyline is required.
+
+EVALUATION NOTICE:
+- Your answer will be checked against the global requirements, each stage’s duties, and whichever branch you choose for conditional stages.
+- Pick one branch whenever a stage presents an IF/ELSE choice, and stay consistent with that path.
+- Automated checks will verify language, tone, required details, and any promised alternate storyline tasks.

@@ -1,0 +1,2125 @@
+{
+  "sample_id": "example_002",
+  "timestamp_utc": "2025-11-02T15:04:45.675945+00:00",
+  "machine_prompt": "SYSTEM INSTRUCTIONS:\n\nOVERALL TASK:\n- Write a detailed Markdown-formatted cooking guide for homemade pasta with tomato basil sauce in an instructive yet friendly tone.\n\nGLOBAL MANDATORY CONSTRAINTS:\nYou MUST satisfy ALL of the following properties throughout the entire answer:\n- The answer must be at least 156 words long (approximately comparable length to the provided reference).\n- The answer must be written primarily in English.\n- The answer should maintain an objective, third-person analytic voice without using first-person pronouns.\n- Use clear, step-by-step instructional language with imperative verbs\n- Include ingredient lists and measurements for each recipe component\n- Provide practical tips and substitutions for ingredients\n- Include dietary suitability notices where applicable\n- Use emojis and symbols for visual emphasis in headings\n- Specify cooking times and doneness indicators\n- Offer optional serving suggestions\n\nREQUIRED OUTPUT STRUCTURE (STAGED PLAN):\nYour answer MUST be organized into the following stages / sections.\nYou do not need to literally copy these headings, but you MUST perform the listed duties.\n\nOpening:\nCover all of the following points:\n  • Include the title 'Homemade Pasta with Tomato Basil Sauce'\n  • Use a pasta emoji in the title\n  • Format the title as a Markdown heading level 1\n\nNotice:\nCover all of the following points:\n  • Include a notice section with a warning symbol\n  • State that the recipe is not suitable for vegetarians\n\nStep Instructions:\nWork through the following steps in order:\n  • List the ingredients for the dough in bullet points\n  • Provide numbered step-by-step instructions for preparing the dough\n  • Include specific time duration for resting the dough\n\nStep Instructions:\nBranch conditions and obligations:\n  • When The cooking guide is targeted at beginners who may not have specialized pasta equipment:\n    - Provide detailed rolling pin technique with thickness guidance for beginners\n    - Offer multiple pasta shape options beyond fettuccine for flexibility\n    - Include troubleshooting advice for dough sticking during rolling\n    - Ensure the instructions have a minimum word count to provide adequate detail for beginners\n  • When the condition is not satisfied:\n    - Instruct to use a pasta roller or rolling pin to flatten the dough\n    - Instruct to cut dough into thin fettuccine strips\n    - Instruct to sprinkle flour to prevent sticking\n\nStep Instructions:\nBranch conditions and obligations:\n  • When The cooking guide is targeted at advanced chefs who prefer improvisation over strict recipes:\n    - Step Instructions:\n      • Provide ingredient ratios and proportions instead of fixed quantities\n      • Focus on technique descriptions and sensory cues rather than numbered steps\n      • Emphasize visual and aromatic indicators for cooking stages\n      • Include chef's tips for ingredient variations and substitutions\n    - Step Instructions:\n      • Explain how to develop deeper flavor complexity through extended techniques\n    - Step Instructions (alternate path):\n      • Diagnose at least two critical failures driving the alternate scenario.\n      • Maintain an openly critical tone that assigns accountability for those failures.\n    - Tips (alternate path):\n      • Lay out an urgent recovery plan using numbered steps.\n      • Highlight the need for rapid collaborative action to stabilize the situation.\n  • When the condition is not satisfied:\n    - Step Instructions:\n      • List all sauce ingredients with quantities\n      • Provide numbered cooking steps for sauce preparation\n      • Include specific cooking times and techniques\n    - Step Instructions:\n      • Specify pasta boiling time as 3–4 minutes\n      • State that pasta should be cooked until al dente\n      • Instruct to drain pasta after boiling\n      • Instruct to toss pasta with sauce\n      • Mention parmesan cheese as optional addition\n    - Tips:\n      • Include at least two numbered tips\n      • Include a tip about tomato substitution\n      • Include a tip about serving timing\n\nCONDITION FOR THIS RESPONSE:\n- Step Instructions: The cooking guide is not targeted at beginners who may not have specialized pasta equipment.\n- Step Instructions: The cooking guide is not targeted at advanced chefs who prefer improvisation over strict recipes.\n- Step Instructions: The cooking guide is not targeted at advanced cooks who prefer detailed technique explanations.\n- Tips: The cooking guide is not targeted at advanced home cooks who want to optimize flavor and texture.\n\nEVALUATION NOTICE:\n- Your answer will be checked against the global requirements, each stage’s duties, and the branch obligations implied by the stated condition.\n- Alternate branch requirements only apply when their corresponding condition is satisfied; otherwise use the duties listed for the condition not being satisfied.\n- Automated checks will verify language, tone, required details, and branch-specific requirements.\n",
+  "eval_protocol": {
+    "seed_task": "Write a detailed Markdown-formatted cooking guide for homemade pasta with tomato basil sauce in an instructive yet friendly tone.",
+    "global_scoring": [
+      {
+        "cid": "G1",
+        "desc": "The answer must be at least 156 words long (approximately comparable length to the provided reference).",
+        "verifier": {
+          "check": "min_word_count",
+          "args": {
+            "min_words": 156
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G2",
+        "desc": "The answer must be written primarily in English.",
+        "verifier": {
+          "check": "require_language",
+          "args": {
+            "lang": "en"
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G3",
+        "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+        "verifier": {
+          "check": "forbid_first_person",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G4",
+        "desc": "Use clear, step-by-step instructional language with imperative verbs",
+        "verifier": {
+          "check": "instructional_language_judge",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G5",
+        "desc": "Include ingredient lists and measurements for each recipe component",
+        "verifier": {
+          "check": "must_include_ingredient_lists",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G6",
+        "desc": "Provide practical tips and substitutions for ingredients",
+        "verifier": {
+          "check": "must_include_practical_tips",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G7",
+        "desc": "Include dietary suitability notices where applicable",
+        "verifier": {
+          "check": "must_include_dietary_notices",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G8",
+        "desc": "Use emojis and symbols for visual emphasis in headings",
+        "verifier": {
+          "check": "visual_emphasis_judge",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G9",
+        "desc": "Specify cooking times and doneness indicators",
+        "verifier": {
+          "check": "must_include_timing_guidance",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G10",
+        "desc": "Offer optional serving suggestions",
+        "verifier": {
+          "check": "must_include_optional_suggestions",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      }
+    ],
+    "block_scoring": [
+      {
+        "block_id": "B1",
+        "role": "Opening",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B1_C1",
+            "desc": "Include the title 'Homemade Pasta with Tomato Basil Sauce'",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Homemade Pasta with Tomato Basil Sauce"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C2",
+            "desc": "Use a pasta emoji in the title",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "🍝"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B1_C3",
+            "desc": "Format the title as a Markdown heading level 1",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "# "
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B2",
+        "role": "Notice",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B2_C1",
+            "desc": "Include a notice section with a warning symbol",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Notice",
+                  "❗️"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B2_C2",
+            "desc": "State that the recipe is not suitable for vegetarians",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "not suitable for vegetarians"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B3",
+        "role": "Step Instructions",
+        "logic_type": "sub-chain",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B3_C1",
+            "desc": "List the ingredients for the dough in bullet points",
+            "verifier": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "min_items": 4
+              }
+            }
+          },
+          {
+            "cid": "B3_C2",
+            "desc": "Provide numbered step-by-step instructions for preparing the dough",
+            "verifier": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 5
+              }
+            }
+          },
+          {
+            "cid": "B3_C3",
+            "desc": "Include specific time duration for resting the dough",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "30 minutes"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B4",
+        "role": "Step Instructions",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B4_C1",
+            "desc": "Instruct to use a pasta roller or rolling pin to flatten the dough",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "pasta roller",
+                  "rolling pin",
+                  "flatten",
+                  "dough"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Instruct to cut dough into thin fettuccine strips",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "cut",
+                  "thin fettuccine strips"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B4_C3",
+            "desc": "Instruct to sprinkle flour to prevent sticking",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "sprinkle flour",
+                  "prevent sticking"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B5",
+        "role": "Step Instructions",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B5_C1",
+            "desc": "List all sauce ingredients with quantities",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "olive oil",
+                  "garlic",
+                  "tomatoes",
+                  "salt",
+                  "basil"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B5_C2",
+            "desc": "Provide numbered cooking steps for sauce preparation",
+            "verifier": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 3
+              }
+            }
+          },
+          {
+            "cid": "B5_C3",
+            "desc": "Include specific cooking times and techniques",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "sauté",
+                  "simmer",
+                  "stir"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B6",
+        "role": "Step Instructions",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B6_C1",
+            "desc": "Specify pasta boiling time as 3–4 minutes",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "3–4 minutes"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B6_C2",
+            "desc": "State that pasta should be cooked until al dente",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "al dente"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B6_C3",
+            "desc": "Instruct to drain pasta after boiling",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "drain"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B6_C4",
+            "desc": "Instruct to toss pasta with sauce",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "toss with the sauce"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B6_C5",
+            "desc": "Mention parmesan cheese as optional addition",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "parmesan cheese",
+                  "optional"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B7",
+        "role": "Tips",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B7_C1",
+            "desc": "Include at least two numbered tips",
+            "verifier": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 2
+              }
+            }
+          },
+          {
+            "cid": "B7_C2",
+            "desc": "Include a tip about tomato substitution",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "canned crushed tomatoes"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B7_C3",
+            "desc": "Include a tip about serving timing",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Serve immediately"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "conditional_scoring": [
+      {
+        "sid": "SEL_B4",
+        "where": "B4 Step Instructions",
+        "condition": "If the cooking guide is targeted at beginners who may not have specialized pasta equipment",
+        "selection_type": "local",
+        "merge_point": "B5",
+        "truncated": false,
+        "branch_real_block": "B4",
+        "branch_alt_block": "B4_ALT",
+        "alt_path_blocks": [
+          "B4_ALT"
+        ],
+        "branch_real": [
+          {
+            "cid": "B4_C1",
+            "desc": "Instruct to use a pasta roller or rolling pin to flatten the dough",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "pasta roller",
+                  "rolling pin",
+                  "flatten",
+                  "dough"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Instruct to cut dough into thin fettuccine strips",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "cut",
+                  "thin fettuccine strips"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B4_C3",
+            "desc": "Instruct to sprinkle flour to prevent sticking",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "sprinkle flour",
+                  "prevent sticking"
+                ]
+              }
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B4_ALT_C1",
+            "desc": "Provide detailed rolling pin technique with thickness guidance for beginners",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "rolling pin",
+                  "1/8 inch thick",
+                  "even thickness",
+                  "work surface"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B4_ALT_C2",
+            "desc": "Offer multiple pasta shape options beyond fettuccine for flexibility",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "tagliatelle",
+                  "pappardelle",
+                  "or fettuccine",
+                  "width"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B4_ALT_C3",
+            "desc": "Include troubleshooting advice for dough sticking during rolling",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "if sticky",
+                  "more flour",
+                  "lightly dust",
+                  "work surface"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B4_ALT_C4",
+            "desc": "Ensure the instructions have a minimum word count to provide adequate detail for beginners",
+            "verifier": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      },
+      {
+        "sid": "SEL_B5",
+        "where": "B5 Step Instructions",
+        "condition": "If the cooking guide is targeted at advanced chefs who prefer improvisation over strict recipes",
+        "selection_type": "global",
+        "merge_point": null,
+        "truncated": false,
+        "branch_real_block": "B5",
+        "branch_alt_block": "B5_ALT",
+        "alt_path_blocks": [
+          "B5_ALT",
+          "B5_ALT_N1",
+          "B5_ALT_NEXT1",
+          "B5_ALT_NEXT2"
+        ],
+        "branch_real": [
+          {
+            "cid": "B5_C1",
+            "desc": "List all sauce ingredients with quantities",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "olive oil",
+                  "garlic",
+                  "tomatoes",
+                  "salt",
+                  "basil"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B5_C2",
+            "desc": "Provide numbered cooking steps for sauce preparation",
+            "verifier": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 3
+              }
+            }
+          },
+          {
+            "cid": "B5_C3",
+            "desc": "Include specific cooking times and techniques",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "sauté",
+                  "simmer",
+                  "stir"
+                ]
+              }
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B5_ALT_C1",
+            "desc": "Provide ingredient ratios and proportions instead of fixed quantities",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "ratio",
+                  "proportion",
+                  "parts",
+                  "to taste",
+                  "adjust"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B5_ALT_C2",
+            "desc": "Focus on technique descriptions and sensory cues rather than numbered steps",
+            "verifier": {
+              "check": "forbid_numbered_steps",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_ALT_C3",
+            "desc": "Emphasize visual and aromatic indicators for cooking stages",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "fragrant",
+                  "aroma",
+                  "color",
+                  "texture",
+                  "bubbling",
+                  "reduced"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B5_ALT_C4",
+            "desc": "Include chef's tips for ingredient variations and substitutions",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "variation",
+                  "substitute",
+                  "alternative",
+                  "option",
+                  "instead"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B5_ALT_N1_C1",
+            "desc": "Explain how to develop deeper flavor complexity through extended techniques",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "caramelize",
+                  "deglaze",
+                  "reduction",
+                  "concentrate",
+                  "layered"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B5_ALT_NEXT1_C1",
+            "desc": "Diagnose at least two critical failures driving the alternate scenario.",
+            "verifier": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "n": 2
+              }
+            }
+          },
+          {
+            "cid": "B5_ALT_NEXT1_C2",
+            "desc": "Maintain an openly critical tone that assigns accountability for those failures.",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_ALT_NEXT2_C1",
+            "desc": "Lay out an urgent recovery plan using numbered steps.",
+            "verifier": {
+              "check": "min_numbered_items",
+              "args": {
+                "n": 2
+              }
+            }
+          },
+          {
+            "cid": "B5_ALT_NEXT2_C2",
+            "desc": "Highlight the need for rapid collaborative action to stabilize the situation.",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "urgent",
+                  "collaboration"
+                ]
+              }
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      },
+      {
+        "sid": "SEL_B6",
+        "where": "B6 Step Instructions",
+        "condition": "If the cooking guide is targeted at advanced cooks who prefer detailed technique explanations",
+        "selection_type": "local",
+        "merge_point": "B7",
+        "truncated": false,
+        "branch_real_block": "B6",
+        "branch_alt_block": "B6_ALT",
+        "alt_path_blocks": [
+          "B6_ALT"
+        ],
+        "branch_real": [
+          {
+            "cid": "B6_C1",
+            "desc": "Specify pasta boiling time as 3–4 minutes",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "3–4 minutes"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B6_C2",
+            "desc": "State that pasta should be cooked until al dente",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "al dente"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B6_C3",
+            "desc": "Instruct to drain pasta after boiling",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "drain"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B6_C4",
+            "desc": "Instruct to toss pasta with sauce",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "toss with the sauce"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B6_C5",
+            "desc": "Mention parmesan cheese as optional addition",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "parmesan cheese",
+                  "optional"
+                ]
+              }
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B6_ALT_C1",
+            "desc": "Explain the importance of reserving pasta water for sauce consistency",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "reserve pasta water",
+                  "starchy water",
+                  "sauce consistency"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B6_ALT_C2",
+            "desc": "Specify the technique for emulsifying sauce with pasta water",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "emulsify",
+                  "creamy sauce",
+                  "tossing technique"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B6_ALT_C3",
+            "desc": "Provide alternative cheese options beyond parmesan with flavor profiles",
+            "verifier": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "min_items": 2
+              }
+            }
+          },
+          {
+            "cid": "B6_ALT_C4",
+            "desc": "Include timing guidance for optimal pasta-sauce integration",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "finish cooking",
+                  "sauce pan",
+                  "integrate flavors"
+                ]
+              }
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      },
+      {
+        "sid": "SEL_B7",
+        "where": "B7 Tips",
+        "condition": "If the cooking guide is targeted at advanced home cooks who want to optimize flavor and texture",
+        "selection_type": "local",
+        "merge_point": "B8",
+        "truncated": false,
+        "branch_real_block": "B7",
+        "branch_alt_block": "B7_ALT",
+        "alt_path_blocks": [
+          "B7_ALT"
+        ],
+        "branch_real": [
+          {
+            "cid": "B7_C1",
+            "desc": "Include at least two numbered tips",
+            "verifier": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 2
+              }
+            }
+          },
+          {
+            "cid": "B7_C2",
+            "desc": "Include a tip about tomato substitution",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "canned crushed tomatoes"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B7_C3",
+            "desc": "Include a tip about serving timing",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Serve immediately"
+                ]
+              }
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B7_ALT_C1",
+            "desc": "Include at least three numbered tips focused on flavor enhancement techniques",
+            "verifier": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 3
+              }
+            }
+          },
+          {
+            "cid": "B7_ALT_C2",
+            "desc": "Include a tip about tomato roasting for deeper flavor",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "roast tomatoes",
+                  "caramelized",
+                  "deeper flavor"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B7_ALT_C3",
+            "desc": "Include a tip about resting the sauce before serving",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "rest the sauce",
+                  "flavors meld",
+                  "30 minutes"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B7_ALT_C4",
+            "desc": "Include a tip about finishing with high-quality olive oil",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "finish with",
+                  "extra virgin olive oil",
+                  "drizzle"
+                ]
+              }
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      }
+    ],
+    "meta": {
+      "assembled_from": {
+        "step1": "seed_task",
+        "step2": "segmentation",
+        "step3": "global_constraints",
+        "step4": "block_constraints + block_logic",
+        "step5": "selections + augmented block_constraints"
+      }
+    }
+  },
+  "graph_serialized": {
+    "seed_task": "Write a detailed Markdown-formatted cooking guide for homemade pasta with tomato basil sauce in an instructive yet friendly tone.",
+    "global_constraints": [
+      {
+        "cid": "G1",
+        "desc": "The answer must be at least 156 words long (approximately comparable length to the provided reference).",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "min_word_count",
+          "args": {
+            "min_words": 156
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G2",
+        "desc": "The answer must be written primarily in English.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "require_language",
+          "args": {
+            "lang": "en"
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G3",
+        "desc": "The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "forbid_first_person",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G4",
+        "desc": "Use clear, step-by-step instructional language with imperative verbs",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "instructional_language_judge",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G5",
+        "desc": "Include ingredient lists and measurements for each recipe component",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "must_include_ingredient_lists",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G6",
+        "desc": "Provide practical tips and substitutions for ingredients",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "must_include_practical_tips",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G7",
+        "desc": "Include dietary suitability notices where applicable",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "must_include_dietary_notices",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G8",
+        "desc": "Use emojis and symbols for visual emphasis in headings",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "visual_emphasis_judge",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G9",
+        "desc": "Specify cooking times and doneness indicators",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "must_include_timing_guidance",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G10",
+        "desc": "Offer optional serving suggestions",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "must_include_optional_suggestions",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      }
+    ],
+    "block_specs": [
+      {
+        "block_id": "B1",
+        "intent": "Opening",
+        "text_span": "# 🍝 Homemade Pasta with Tomato Basil Sauce",
+        "order_index": 0,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B2",
+        "intent": "Notice",
+        "text_span": "## Notice❗️: This recipe is not suitable for vegetarians.",
+        "order_index": 1,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B3",
+        "intent": "Step Instructions",
+        "text_span": "## Step 1: Prepare the Dough\n- **Ingredients**\n  - 2 cups all-purpose flour\n  - 3 large eggs\n  - 1 tsp salt\n  - 1 tbsp olive oil\n\n1. Make a well in the center of the flour.\n2. Add eggs, salt, and olive oil.\n3. Mix until the dough comes together.\n4. Knead for about 10 minutes until smooth.\n5. Wrap and rest for 30 minutes.",
+        "order_index": 2,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B4",
+        "intent": "Step Instructions",
+        "text_span": "## Step 2: Roll & Cut the Pasta\n- Use a pasta roller or rolling pin to flatten the dough.\n- Cut into thin fettuccine strips.\n- Sprinkle flour to prevent sticking.",
+        "order_index": 3,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B4_ALT",
+        "intent": "Step Instructions",
+        "text_span": "## Step 2: Roll & Cut the Pasta\n- Use a pasta roller or rolling pin to flatten the dough.\n- Cut into thin fettuccine strips.\n- Sprinkle flour to prevent sticking.",
+        "order_index": 3,
+        "is_alternate": true,
+        "origin_block": "B4"
+      },
+      {
+        "block_id": "B5",
+        "intent": "Step Instructions",
+        "text_span": "## Step 3: Make the Tomato Basil Sauce\n- **Ingredients**\n  - 2 tbsp olive oil\n  - 2 cloves garlic, minced\n  - 3 ripe tomatoes, chopped\n  - 1/2 tsp salt\n  - Fresh basil leaves\n\n1. Sauté garlic in olive oil until fragrant.\n2. Add tomatoes and simmer for 15 minutes.\n3. Stir in salt and chopped basil.",
+        "order_index": 4,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B5_ALT",
+        "intent": "Step Instructions",
+        "text_span": "## Step 3: Make the Tomato Basil Sauce\n- **Ingredients**\n  - 2 tbsp olive oil\n  - 2 cloves garlic, minced\n  - 3 ripe tomatoes, chopped\n  - 1/2 tsp salt\n  - Fresh basil leaves\n\n1. Sauté garlic in olive oil until fragrant.\n2. Add tomatoes and simmer for 15 minutes.\n3. Stir in salt and chopped basil.",
+        "order_index": 4,
+        "is_alternate": true,
+        "origin_block": "B5"
+      },
+      {
+        "block_id": "B5_ALT_NEXT1",
+        "intent": "Step Instructions (alternate path)",
+        "text_span": "Alternate storyline continuation derived from B6.",
+        "order_index": 5,
+        "is_alternate": true,
+        "origin_block": "B6"
+      },
+      {
+        "block_id": "B6",
+        "intent": "Step Instructions",
+        "text_span": "## Step 4: Combine and Serve\n- Boil pasta for **3–4 minutes** until al dente.\n- Drain and toss with the sauce.\n- **Optional:** Add parmesan cheese if you like.",
+        "order_index": 5,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B6_ALT",
+        "intent": "Step Instructions",
+        "text_span": "## Step 4: Combine and Serve\n- Boil pasta for **3–4 minutes** until al dente.\n- Drain and toss with the sauce.\n- **Optional:** Add parmesan cheese if you like.",
+        "order_index": 5,
+        "is_alternate": true,
+        "origin_block": "B6"
+      },
+      {
+        "block_id": "B5_ALT_N1",
+        "intent": "Step Instructions",
+        "text_span": "## Step 3: Make the Tomato Basil Sauce\n- **Ingredients**\n  - 2 tbsp olive oil\n  - 2 cloves garlic, minced\n  - 3 ripe tomatoes, chopped\n  - 1/2 tsp salt\n  - Fresh basil leaves\n\n1. Sauté garlic in olive oil until fragrant.\n2. Add tomatoes and simmer for 15 minutes.\n3. Stir in salt and chopped basil.",
+        "order_index": 6,
+        "is_alternate": true,
+        "origin_block": "B5"
+      },
+      {
+        "block_id": "B5_ALT_NEXT2",
+        "intent": "Tips (alternate path)",
+        "text_span": "Alternate storyline continuation derived from B7.",
+        "order_index": 6,
+        "is_alternate": true,
+        "origin_block": "B7"
+      },
+      {
+        "block_id": "B7",
+        "intent": "Tips",
+        "text_span": "## 🍽️ Tips\n- If you don’t have fresh tomatoes, use canned crushed tomatoes.\n- Serve immediately for the best texture.",
+        "order_index": 6,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B7_ALT",
+        "intent": "Tips",
+        "text_span": "## 🍽️ Tips\n- If you don’t have fresh tomatoes, use canned crushed tomatoes.\n- Serve immediately for the best texture.",
+        "order_index": 6,
+        "is_alternate": true,
+        "origin_block": "B7"
+      }
+    ],
+    "block_constraint_sets": [
+      {
+        "block_id": "B1",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B1_C1",
+            "desc": "Include the title 'Homemade Pasta with Tomato Basil Sauce'",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Homemade Pasta with Tomato Basil Sauce"
+                ]
+              }
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B1_C2",
+            "desc": "Use a pasta emoji in the title",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "🍝"
+                ]
+              }
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B1_C3",
+            "desc": "Format the title as a Markdown heading level 1",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "# "
+                ]
+              }
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B2",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B2_C1",
+            "desc": "Include a notice section with a warning symbol",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Notice",
+                  "❗️"
+                ]
+              }
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B2_C2",
+            "desc": "State that the recipe is not suitable for vegetarians",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "not suitable for vegetarians"
+                ]
+              }
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B3",
+        "logic_type": "sub-chain",
+        "constraints": [
+          {
+            "cid": "B3_C1",
+            "desc": "List the ingredients for the dough in bullet points",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "min_items": 4
+              }
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B3_C2",
+            "desc": "Provide numbered step-by-step instructions for preparing the dough",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 5
+              }
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B3_C3",
+            "desc": "Include specific time duration for resting the dough",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "30 minutes"
+                ]
+              }
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B4",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B4_C1",
+            "desc": "Instruct to use a pasta roller or rolling pin to flatten the dough",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "pasta roller",
+                  "rolling pin",
+                  "flatten",
+                  "dough"
+                ]
+              }
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Instruct to cut dough into thin fettuccine strips",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "cut",
+                  "thin fettuccine strips"
+                ]
+              }
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B4_C3",
+            "desc": "Instruct to sprinkle flour to prevent sticking",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "sprinkle flour",
+                  "prevent sticking"
+                ]
+              }
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B4_ALT",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B4_ALT_C1",
+            "desc": "Provide detailed rolling pin technique with thickness guidance for beginners",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "rolling pin",
+                  "1/8 inch thick",
+                  "even thickness",
+                  "work surface"
+                ]
+              }
+            },
+            "trace_to": "B4_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B4_ALT_C2",
+            "desc": "Offer multiple pasta shape options beyond fettuccine for flexibility",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "tagliatelle",
+                  "pappardelle",
+                  "or fettuccine",
+                  "width"
+                ]
+              }
+            },
+            "trace_to": "B4_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B4_ALT_C3",
+            "desc": "Include troubleshooting advice for dough sticking during rolling",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "if sticky",
+                  "more flour",
+                  "lightly dust",
+                  "work surface"
+                ]
+              }
+            },
+            "trace_to": "B4_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B4_ALT_C4",
+            "desc": "Ensure the instructions have a minimum word count to provide adequate detail for beginners",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_word_count",
+              "args": {
+                "min_words": 50
+              }
+            },
+            "trace_to": "B4_ALT",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B5",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B5_C1",
+            "desc": "List all sauce ingredients with quantities",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "olive oil",
+                  "garlic",
+                  "tomatoes",
+                  "salt",
+                  "basil"
+                ]
+              }
+            },
+            "trace_to": "B5",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B5_C2",
+            "desc": "Provide numbered cooking steps for sauce preparation",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 3
+              }
+            },
+            "trace_to": "B5",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B5_C3",
+            "desc": "Include specific cooking times and techniques",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "sauté",
+                  "simmer",
+                  "stir"
+                ]
+              }
+            },
+            "trace_to": "B5",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B5_ALT",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B5_ALT_C1",
+            "desc": "Provide ingredient ratios and proportions instead of fixed quantities",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "ratio",
+                  "proportion",
+                  "parts",
+                  "to taste",
+                  "adjust"
+                ]
+              }
+            },
+            "trace_to": "B5_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B5_ALT_C2",
+            "desc": "Focus on technique descriptions and sensory cues rather than numbered steps",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "forbid_numbered_steps",
+              "args": {}
+            },
+            "trace_to": "B5_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B5_ALT_C3",
+            "desc": "Emphasize visual and aromatic indicators for cooking stages",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "fragrant",
+                  "aroma",
+                  "color",
+                  "texture",
+                  "bubbling",
+                  "reduced"
+                ]
+              }
+            },
+            "trace_to": "B5_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B5_ALT_C4",
+            "desc": "Include chef's tips for ingredient variations and substitutions",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "variation",
+                  "substitute",
+                  "alternative",
+                  "option",
+                  "instead"
+                ]
+              }
+            },
+            "trace_to": "B5_ALT",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B5_ALT_N1",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B5_ALT_N1_C1",
+            "desc": "Explain how to develop deeper flavor complexity through extended techniques",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "caramelize",
+                  "deglaze",
+                  "reduction",
+                  "concentrate",
+                  "layered"
+                ]
+              }
+            },
+            "trace_to": "B5_ALT_N1",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B5_ALT_NEXT1",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B5_ALT_NEXT1_C1",
+            "desc": "Diagnose at least two critical failures driving the alternate scenario.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "n": 2
+              }
+            },
+            "trace_to": "B5_ALT_NEXT1",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B5_ALT_NEXT1_C2",
+            "desc": "Maintain an openly critical tone that assigns accountability for those failures.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B5_ALT_NEXT1",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B5_ALT_NEXT2",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B5_ALT_NEXT2_C1",
+            "desc": "Lay out an urgent recovery plan using numbered steps.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_numbered_items",
+              "args": {
+                "n": 2
+              }
+            },
+            "trace_to": "B5_ALT_NEXT2",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B5_ALT_NEXT2_C2",
+            "desc": "Highlight the need for rapid collaborative action to stabilize the situation.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "urgent",
+                  "collaboration"
+                ]
+              }
+            },
+            "trace_to": "B5_ALT_NEXT2",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B6",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B6_C1",
+            "desc": "Specify pasta boiling time as 3–4 minutes",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "3–4 minutes"
+                ]
+              }
+            },
+            "trace_to": "B6",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B6_C2",
+            "desc": "State that pasta should be cooked until al dente",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "al dente"
+                ]
+              }
+            },
+            "trace_to": "B6",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B6_C3",
+            "desc": "Instruct to drain pasta after boiling",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "drain"
+                ]
+              }
+            },
+            "trace_to": "B6",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B6_C4",
+            "desc": "Instruct to toss pasta with sauce",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "toss with the sauce"
+                ]
+              }
+            },
+            "trace_to": "B6",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B6_C5",
+            "desc": "Mention parmesan cheese as optional addition",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "parmesan cheese",
+                  "optional"
+                ]
+              }
+            },
+            "trace_to": "B6",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B6_ALT",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B6_ALT_C1",
+            "desc": "Explain the importance of reserving pasta water for sauce consistency",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "reserve pasta water",
+                  "starchy water",
+                  "sauce consistency"
+                ]
+              }
+            },
+            "trace_to": "B6_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B6_ALT_C2",
+            "desc": "Specify the technique for emulsifying sauce with pasta water",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "emulsify",
+                  "creamy sauce",
+                  "tossing technique"
+                ]
+              }
+            },
+            "trace_to": "B6_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B6_ALT_C3",
+            "desc": "Provide alternative cheese options beyond parmesan with flavor profiles",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "min_items": 2
+              }
+            },
+            "trace_to": "B6_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B6_ALT_C4",
+            "desc": "Include timing guidance for optimal pasta-sauce integration",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "finish cooking",
+                  "sauce pan",
+                  "integrate flavors"
+                ]
+              }
+            },
+            "trace_to": "B6_ALT",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B7",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B7_C1",
+            "desc": "Include at least two numbered tips",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 2
+              }
+            },
+            "trace_to": "B7",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B7_C2",
+            "desc": "Include a tip about tomato substitution",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "canned crushed tomatoes"
+                ]
+              }
+            },
+            "trace_to": "B7",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B7_C3",
+            "desc": "Include a tip about serving timing",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "Serve immediately"
+                ]
+              }
+            },
+            "trace_to": "B7",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B7_ALT",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B7_ALT_C1",
+            "desc": "Include at least three numbered tips focused on flavor enhancement techniques",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 3
+              }
+            },
+            "trace_to": "B7_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B7_ALT_C2",
+            "desc": "Include a tip about tomato roasting for deeper flavor",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "roast tomatoes",
+                  "caramelized",
+                  "deeper flavor"
+                ]
+              }
+            },
+            "trace_to": "B7_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B7_ALT_C3",
+            "desc": "Include a tip about resting the sauce before serving",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "rest the sauce",
+                  "flavors meld",
+                  "30 minutes"
+                ]
+              }
+            },
+            "trace_to": "B7_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B7_ALT_C4",
+            "desc": "Include a tip about finishing with high-quality olive oil",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "finish with",
+                  "extra virgin olive oil",
+                  "drizzle"
+                ]
+              }
+            },
+            "trace_to": "B7_ALT",
+            "derived_from": "step5"
+          }
+        ]
+      }
+    ],
+    "selections": [
+      {
+        "sid": "SEL_B4",
+        "condition": "If the cooking guide is targeted at beginners who may not have specialized pasta equipment",
+        "trace_to": "B4",
+        "branch_real": {
+          "block_id": "B4",
+          "constraints": [
+            "B4_C1",
+            "B4_C2",
+            "B4_C3"
+          ]
+        },
+        "branch_alt": {
+          "block_id": "B4_ALT",
+          "constraints": [
+            "B4_ALT_C1",
+            "B4_ALT_C2",
+            "B4_ALT_C3",
+            "B4_ALT_C4"
+          ]
+        },
+        "derived_from": "step5",
+        "selection_type": "local",
+        "merge_point": "B5",
+        "truncated": false,
+        "alt_path_blocks": [
+          "B4_ALT"
+        ]
+      },
+      {
+        "sid": "SEL_B5",
+        "condition": "If the cooking guide is targeted at advanced chefs who prefer improvisation over strict recipes",
+        "trace_to": "B5",
+        "branch_real": {
+          "block_id": "B5",
+          "constraints": [
+            "B5_C1",
+            "B5_C2",
+            "B5_C3"
+          ]
+        },
+        "branch_alt": {
+          "block_id": "B5_ALT",
+          "constraints": [
+            "B5_ALT_C1",
+            "B5_ALT_C2",
+            "B5_ALT_C3",
+            "B5_ALT_C4",
+            "B5_ALT_N1_C1",
+            "B5_ALT_NEXT1_C1",
+            "B5_ALT_NEXT1_C2",
+            "B5_ALT_NEXT2_C1",
+            "B5_ALT_NEXT2_C2"
+          ]
+        },
+        "derived_from": "step5",
+        "selection_type": "global",
+        "merge_point": null,
+        "truncated": false,
+        "alt_path_blocks": [
+          "B5_ALT",
+          "B5_ALT_N1",
+          "B5_ALT_NEXT1",
+          "B5_ALT_NEXT2"
+        ]
+      },
+      {
+        "sid": "SEL_B6",
+        "condition": "If the cooking guide is targeted at advanced cooks who prefer detailed technique explanations",
+        "trace_to": "B6",
+        "branch_real": {
+          "block_id": "B6",
+          "constraints": [
+            "B6_C1",
+            "B6_C2",
+            "B6_C3",
+            "B6_C4",
+            "B6_C5"
+          ]
+        },
+        "branch_alt": {
+          "block_id": "B6_ALT",
+          "constraints": [
+            "B6_ALT_C1",
+            "B6_ALT_C2",
+            "B6_ALT_C3",
+            "B6_ALT_C4"
+          ]
+        },
+        "derived_from": "step5",
+        "selection_type": "local",
+        "merge_point": "B7",
+        "truncated": false,
+        "alt_path_blocks": [
+          "B6_ALT"
+        ]
+      },
+      {
+        "sid": "SEL_B7",
+        "condition": "If the cooking guide is targeted at advanced home cooks who want to optimize flavor and texture",
+        "trace_to": "B7",
+        "branch_real": {
+          "block_id": "B7",
+          "constraints": [
+            "B7_C1",
+            "B7_C2",
+            "B7_C3"
+          ]
+        },
+        "branch_alt": {
+          "block_id": "B7_ALT",
+          "constraints": [
+            "B7_ALT_C1",
+            "B7_ALT_C2",
+            "B7_ALT_C3",
+            "B7_ALT_C4"
+          ]
+        },
+        "derived_from": "step5",
+        "selection_type": "local",
+        "merge_point": "B8",
+        "truncated": false,
+        "alt_path_blocks": [
+          "B7_ALT"
+        ]
+      }
+    ],
+    "meta": {
+      "assembled_from": {
+        "step1": "seed_task",
+        "step2": "segmentation",
+        "step3": "global_constraints",
+        "step4": "block_constraints + block_logic",
+        "step5": "selections + augmented block_constraints"
+      }
+    }
+  },
+  "meta": {
+    "assembled_from": {
+      "step1": "seed_task",
+      "step2": "segmentation",
+      "step3": "global_constraints",
+      "step4": "block_constraints + block_logic",
+      "step5": "selections + augmented block_constraints"
+    }
+  }
+}

@@ -74,85 +74,113 @@ import json
 import requests
 import random
 import hashlib
-from typing import Dict, Any, List
-from .graph_schema import ConstraintNode, SelectionNode, SelectionBranch
+import copy
+from typing import Dict, Any, List, Optional, Tuple
+from .graph_schema import (
+    ConstraintNode,
+    SelectionNode,
+    SelectionBranch,
+    BlockSpec,
+)
 from .utils.text_clean import make_snippet, clip
 
 _DEEPSEEK_API_KEY_DEFAULT = "sk-4bb3e24d26674a30b2cc7e2ff1bfc763"
 _DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
 _DEEPSEEK_MODEL = "deepseek-chat"
 
+# Selection configuration (can be tuned for experiments)
+SELECTION_CONFIG = {
+    "local_min": 1,
+    "local_max": 3,
+    "global_min": 0,
+    "global_max": 1,
+}
+
+# Library of fallback constraint templates used to keep alternate
+# global branches distinct when the LLM does not return an explicit chain.
+_GLOBAL_ALT_FOLLOWUP_LIBRARY = [
+    [
+        {
+            "desc": "Diagnose at least two critical failures driving the alternate scenario.",
+            "verifier": {"check": "must_list_n_subpoints", "args": {"n": 2}},
+        },
+        {
+            "desc": "Maintain an openly critical tone that assigns accountability for those failures.",
+            "verifier": {"check": "tone_negative_llm_judge", "args": {}},
+        },
+    ],
+    [
+        {
+            "desc": "Lay out an urgent recovery plan using numbered steps.",
+            "verifier": {"check": "min_numbered_items", "args": {"n": 2}},
+        },
+        {
+            "desc": "Highlight the need for rapid collaborative action to stabilize the situation.",
+            "verifier": {"check": "must_include_keywords", "args": {"keywords": ["urgent", "collaboration"]}},
+        },
+    ],
+    [
+        {
+            "desc": "Close with a cautious outlook that stresses long-term vigilance.",
+            "verifier": {"check": "must_include_keywords", "args": {"keywords": ["vigilance", "long-term"]}},
+        },
+        {
+            "desc": "Warn about the risks if corrective measures are not executed swiftly.",
+            "verifier": {"check": "must_include_keywords", "args": {"keywords": ["risk", "swiftly"]}},
+        },
+    ],
+]
 
 
-def _choose_blocks_for_selection(block_constraints: Dict[str, List[ConstraintNode]],
-                                 segmentation: Dict[str, Any]) -> List[str]:
+
+def _plan_selections(block_constraints: Dict[str, List[ConstraintNode]],
+                     segmentation: Dict[str, Any],
+                     rng: random.Random) -> List[Tuple[str, str]]:
     """
-    选择若干个 block 来生成 selection 分支，而不是只选一个。
-
-    设计目标：
-    - 我们希望在不同层级（开头、中段、结尾）都可能出现条件分支，而不是永远只在结尾出现。
-    - 这些分支可以在下游指令里变成 if/else 风格的条件化路径。
-
-    策略 (v2):
-    1. 我们先收集所有“有至少一条局部约束”的 block_id，保持它们在原回答中的顺序。
-    2. 我们计算一个候选集：
-       - 优先包含 intent 类似 Conclusion / Recommendation / Outlook / Summary 的块（总结类）；
-       - 同时也包含前半部分和中间的块，以便产生早期分支（可以走到完全不同的结尾）。
-    3. 在候选集中随机抽取 1~3 个 block_id（如果候选很少，就全用）。
-
-    注意：返回顺序按照原文出现顺序，不打乱。后续我们会对这些 block_id 逐个生成 selection。
+    结合配置生成 selection 任务列表，返回 [(block_id, selection_type), ...]
     """
-    # block_id -> intent
-    intent_map = {
-        b.get("block_id"): b.get("intent", "")
-        for b in segmentation.get("blocks", [])
-    }
-
-    # 1. 有约束的 block_ids，保持原顺序
-    ordered_block_ids = [
+    ordered_blocks = [
         b.get("block_id")
         for b in segmentation.get("blocks", [])
         if b.get("block_id") in block_constraints and block_constraints[b.get("block_id")]
     ]
 
-    if not ordered_block_ids:
+    if not ordered_blocks:
         return []
 
-    # 2. 识别“总结/展望/建议”类 intent
-    preferred_keywords = [
-        "conclusion", "outlook", "recommendation", "summary", "next step", "future"
-    ]
-    summary_like = []
-    other_like = []
-    for bid in ordered_block_ids:
-        intent = intent_map.get(bid, "").lower()
-        if any(k in intent for k in preferred_keywords):
-            summary_like.append(bid)
-        else:
-            other_like.append(bid)
+    total_blocks = len(ordered_blocks)
+    available = list(ordered_blocks)
 
-    # 3. 组候选集：优先总结类，其次其余
-    candidates = summary_like + other_like
-    # 去重保持顺序
-    seen = set()
-    deduped = []
-    for bid in candidates:
-        if bid not in seen:
-            deduped.append(bid)
-            seen.add(bid)
+    # Ensure we can satisfy minimum locals
+    local_min_cfg = SELECTION_CONFIG["local_min"]
+    local_min_cap = min(local_min_cfg, total_blocks)
 
-    # 4. 基于候选集生成稳定随机子集。
-    seed_material = "|".join(deduped).encode("utf-8")
-    seed_int = int.from_bytes(hashlib.sha256(seed_material).digest(), "big")
-    rng = random.Random(seed_int)
+    max_global_allowed = max(0, total_blocks - local_min_cap)
+    global_max_possible = min(SELECTION_CONFIG["global_max"], max_global_allowed)
+    global_min = min(SELECTION_CONFIG["global_min"], global_max_possible)
+    global_target = 0
+    if global_max_possible >= global_min:
+        global_target = rng.randint(global_min, global_max_possible)
 
-    max_pick = min(len(deduped), 3)
-    pick_n = rng.randint(1, max_pick)
+    global_blocks = []
+    if global_target > 0:
+        global_blocks = rng.sample(available, global_target)
+        available = [b for b in available if b not in global_blocks]
 
-    picked_set = set(rng.sample(deduped, pick_n))
-    final_list = [bid for bid in ordered_block_ids if bid in picked_set]
+    # Decide local selections
+    local_max_possible = min(SELECTION_CONFIG["local_max"], len(available))
+    local_blocks = []
+    if local_max_possible > 0:
+        local_min = min(SELECTION_CONFIG["local_min"], local_max_possible)
+        local_target = rng.randint(local_min, local_max_possible) if local_max_possible >= local_min else local_max_possible
+        if local_target > 0:
+            local_blocks = rng.sample(available, local_target)
+            available = [b for b in available if b not in local_blocks]
 
-    return final_list
+    plan = [(bid, "global") for bid in global_blocks] + [(bid, "local") for bid in local_blocks]
+    order_index = {bid: idx for idx, bid in enumerate(ordered_blocks)}
+    plan.sort(key=lambda item: order_index.get(item[0], 0))
+    return plan
 
 
 def _format_block_constraints_for_llm(constraints: List[ConstraintNode]) -> str:
@@ -181,7 +209,8 @@ def _call_deepseek_selection_aug(block_id: str,
                                  block_intent: str,
                                  block_text: str,
                                  seed_task: str,
-                                 real_constraints_for_llm: str) -> Dict[str, Any]:
+                                 real_constraints_for_llm: str,
+                                 selection_type_hint: str) -> Dict[str, Any]:
     """
     让 LLM 生成一个条件化分支：
     - 给一个清晰 condition（如 "If the stance is critical/negative"）
@@ -212,6 +241,8 @@ def _call_deepseek_selection_aug(block_id: str,
     # 极端长文本才会硬截断，避免 prompt 过大；这是唯一可能丢信息的点
     if len(block_text_clean) > 12000:
         block_text_clean = clip(block_text_clean, 12000)
+
+    selection_hint_text = selection_type_hint.lower()
 
     system_prompt = (
         "You are generating a conditional alternative branch for evaluation.\n"
@@ -247,6 +278,10 @@ def _call_deepseek_selection_aug(block_id: str,
         "    }, ...\n"
         "  ]\n"
         "}\n\n"
+        "You MUST also include a field \"selection_type\" with value \"local\" or \"global\" matching the user's requested branch type.\n"
+        "If selection_type == \"local\": the alternate branch must merge back into the main timeline at the provided merge_point.\n"
+        "If selection_type == \"global\": the alternate path continues as an independent storyline (merge_point may be null).\n"
+        "You may optionally include \"merge_point\" and \"alt_chain\" for additional alternate blocks.\n"
         "ABOUT verifier.check:\n"
         "- If one of these fits, you MAY use it:\n"
         "    tone_neutral_llm_judge\n"
@@ -298,6 +333,9 @@ def _call_deepseek_selection_aug(block_id: str,
         "- It must impose meaningfully DIFFERENT obligations from the REAL BRANCH (not trivial paraphrase).\n"
         "- It must stay on-topic and plausible for this block's role.\n"
         "- You MAY create new verifier.check names in snake_case if needed, with JSON args.\n"
+        f"- The branch TYPE must be '{selection_hint_text}'.\n"
+        "- If the branch type is 'local', specify merge_point where this alternate branch rejoins the main timeline.\n"
+        "- If the branch type is 'global', you may optionally provide alt_chain to continue the alternate storyline.\n"
         "Return ONLY the JSON spec described above.\n"
     )
 
@@ -334,17 +372,30 @@ def _call_deepseek_selection_aug(block_id: str,
 
 
 def _fallback_selection(block_id: str,
-                         block_constraints: List[ConstraintNode]) -> Dict[str, Any]:
+                        block_constraints: List[ConstraintNode],
+                        selection_type: str) -> Dict[str, Any]:
     """
-    如果 LLM 生成分支失败，我们合成人工分支：
-    - condition: "If the stance is critical/negative"
-    - alt_constraints: 两条：
-        1. 语气必须体现批评/不满 (tone_negative_llm_judge)
-        2. 必须提出下一步改进措施/行动 (actionability_judge)
-    这些 verifier 都存在于 soft_checks，并已在 registry 注册。
+    LLM 失败时构造一个兜底的 selection 说明，支持 local / global。
     """
+    if selection_type == "global":
+        return {
+            "condition": "If a radically different storyline is required",
+            "selection_type": "global",
+            "merge_point": None,
+            "alt_constraints": [
+                {
+                    "desc": "Reimagine this stage with a fundamentally different narrative focus.",
+                    "verifier": {"check": "must_include_keywords", "args": {"keywords": ["new path"]}},
+                },
+                {
+                    "desc": "Introduce a new conflict that redirects the subsequent storyline.",
+                    "verifier": {"check": "must_include_keywords", "args": {"keywords": ["conflict"]}},
+                },
+            ],
+        }
     return {
         "condition": "If the stance is critical/negative",
+        "selection_type": "local",
         "alt_constraints": [
             {
                 "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
@@ -356,6 +407,57 @@ def _fallback_selection(block_id: str,
             },
         ],
     }
+
+
+def _build_global_followup_fallback(base_alt_block_id: str,
+                                    tail_block_ids: List[str],
+                                    block_info_map: Dict[str, Dict[str, Any]],
+                                    start_order_index: int) -> List[Tuple[BlockSpec, List[ConstraintNode]]]:
+    """
+    Construct deterministic alternate follow-up blocks for a global selection when
+    the LLM does not return an alt_chain. These blocks intentionally diverge from
+    the main storyline by enforcing different constraints (keywords, tone, numbered items).
+    """
+    results: List[Tuple[BlockSpec, List[ConstraintNode]]] = []
+    current_order = start_order_index
+
+    for idx, original_bid in enumerate(tail_block_ids, start=1):
+        template_idx = min(idx - 1, len(_GLOBAL_ALT_FOLLOWUP_LIBRARY) - 1)
+        templates = _GLOBAL_ALT_FOLLOWUP_LIBRARY[template_idx]
+
+        new_block_id = f"{base_alt_block_id}_NEXT{idx}"
+        original_info = block_info_map.get(original_bid, {})
+        base_intent = original_info.get("intent") or original_bid
+        new_intent = f"{base_intent} (alternate path)"
+
+        current_order += 1
+        new_spec = BlockSpec(
+            block_id=new_block_id,
+            intent=new_intent,
+            text_span=f"Alternate storyline continuation derived from {original_bid}.",
+            order_index=current_order,
+            is_alternate=True,
+            origin_block=original_bid,
+        )
+
+        new_nodes: List[ConstraintNode] = []
+        for cons_idx, tmpl in enumerate(templates, start=1):
+            desc = tmpl["desc"]
+            verifier_spec = copy.deepcopy(tmpl["verifier"])
+            new_nodes.append(
+                ConstraintNode(
+                    cid=f"{new_block_id}_C{cons_idx}",
+                    desc=desc,
+                    scope="local",
+                    verifier_spec=verifier_spec,
+                    trace_to=new_block_id,
+                    derived_from="step5",
+                )
+            )
+
+        results.append((new_spec, new_nodes))
+
+    return results
 
 
 def generate_selection_branches(segmentation: Dict[str, Any],
@@ -376,7 +478,8 @@ def generate_selection_branches(segmentation: Dict[str, Any],
     - 扩展后的结构：{
         "block_constraints": {... 包含原本约束 + 新增伪分支中产生的新约束 ...},
         "block_logic": {... 原样透传 ...},
-        "selections": [SelectionNode, ...]
+        "selections": [SelectionNode, ...],
+        "extra_blocks": [BlockSpec,...]   # 新增的替代块定义（用于局部/全局分支）
       }
     """
 
@@ -384,20 +487,34 @@ def generate_selection_branches(segmentation: Dict[str, Any],
         bid: list(nodes) for bid, nodes in step4_output["block_constraints"].items()
     }
     block_logic = dict(step4_output["block_logic"])  # shallow copy
+    extra_blocks: List[BlockSpec] = []
 
-    # 1. 决定在哪些 block 上造分支
-    chosen_block_ids = _choose_blocks_for_selection(block_constraints, segmentation)
+    order_list = segmentation.get("order") or [b.get("block_id") for b in segmentation.get("blocks", [])]
+    order_index = {bid: idx for idx, bid in enumerate(order_list)}
+
+    ordered_block_ids = [
+        b.get("block_id")
+        for b in segmentation.get("blocks", [])
+        if b.get("block_id") in block_constraints and block_constraints[b.get("block_id")]
+    ]
+    seed_material = "|".join(ordered_block_ids).encode("utf-8")
+    seed_int = int.from_bytes(hashlib.sha256(seed_material).digest(), "big")
+    rng = random.Random(seed_int)
+
+    selection_plan = _plan_selections(block_constraints, segmentation, rng)
     selections: List[SelectionNode] = []
 
-    if not chosen_block_ids:
-        # 如果完全挑不到合适的块，就返回无selection的结果
+    if not selection_plan:
         return {
             "block_constraints": block_constraints,
             "block_logic": block_logic,
             "selections": selections,
+            "extra_blocks": extra_blocks,
         }
 
-    for chosen_block_id in chosen_block_ids:
+    main_blocks_in_order = list(ordered_block_ids)
+
+    for chosen_block_id, selection_type_target in selection_plan:
         real_nodes = block_constraints.get(chosen_block_id, [])
         real_cids = [n.cid for n in real_nodes]
 
@@ -415,15 +532,42 @@ def generate_selection_branches(segmentation: Dict[str, Any],
             block_text=block_text,
             seed_task=seed_task,
             real_constraints_for_llm=real_constraints_for_llm,
+            selection_type_hint=selection_type_target,
         )
         if not alt_spec or "alt_constraints" not in alt_spec:
-            alt_spec = _fallback_selection(chosen_block_id, real_nodes)
+            alt_spec = _fallback_selection(chosen_block_id, real_nodes, selection_type_target)
 
         condition_text = alt_spec.get("condition", "If an alternative stance applies")
-        alt_constraints_raw = alt_spec.get("alt_constraints", [])
+        selection_type = selection_type_target.lower()
+        if selection_type not in {"local", "global"}:
+            selection_type = "local"
 
+        alt_block_id = alt_spec.get("alt_block_id") or f"{chosen_block_id}_ALT"
+        alt_block_intent = alt_spec.get("alt_block_intent") or block_intent
+        alt_block_intent = alt_block_intent.replace("(alternate)", "").strip()
+        alt_block_text = alt_spec.get("alt_block_text", block_text)
+
+        # Determine merge point for local branches
+        merge_point: Optional[str] = None
+        if selection_type == "local":
+            merge_point = alt_spec.get("merge_point")
+            if not merge_point:
+                # default merge point is the next block in segmentation order
+                order_list = segmentation.get("order") or [b.get("block_id") for b in segmentation.get("blocks", [])]
+                try:
+                    idx = order_list.index(chosen_block_id)
+                    merge_point = order_list[idx + 1] if idx + 1 < len(order_list) else None
+                except ValueError:
+                    merge_point = None
+        else:
+            merge_point = alt_spec.get("merge_point")
+
+        truncated_flag = bool(alt_spec.get("truncated", False))
+
+        # Prepare alternate block constraint nodes
+        alt_constraints_raw = alt_spec.get("alt_constraints", [])
         new_alt_nodes: List[ConstraintNode] = []
-        next_idx = len(real_nodes) + 1
+        next_idx = 1
         for item in alt_constraints_raw:
             desc = item.get("desc", "").strip()
             verif = item.get("verifier", {})
@@ -432,26 +576,121 @@ def generate_selection_branches(segmentation: Dict[str, Any],
             if not desc or not check_name:
                 continue
             new_node = ConstraintNode(
-                cid=f"{chosen_block_id}_C{next_idx}",
+                cid=f"{alt_block_id}_C{next_idx}",
                 desc=desc,
                 scope="local",
                 verifier_spec={"check": check_name, "args": args_obj},
-                trace_to=chosen_block_id,
+                trace_to=alt_block_id,
                 derived_from="step5",
             )
             new_alt_nodes.append(new_node)
-            block_constraints[chosen_block_id].append(new_node)
             next_idx += 1
 
+        # Register alternate block constraints and logic
+        block_constraints.setdefault(alt_block_id, [])
+        block_constraints[alt_block_id].extend(new_alt_nodes)
+        block_logic[alt_block_id] = "AND"
+
+        alt_block_spec = BlockSpec(
+            block_id=alt_block_id,
+            intent=alt_block_intent,
+            text_span=alt_block_text,
+            order_index=block_info.get("order_index", 0),
+            is_alternate=True,
+            origin_block=chosen_block_id,
+        )
+        extra_blocks.append(alt_block_spec)
+
         alt_cids = [n.cid for n in new_alt_nodes]
+        alt_path_blocks: List[str] = [alt_block_id]
+
+        # Handle extended alternate chains for global selections
+        alt_chain = alt_spec.get("alt_chain", [])
+        previous_order_index = alt_block_spec.order_index
+        chain_created = False
+        for idx_chain, block_def in enumerate(alt_chain, start=1):
+            chain_block_id = f"{alt_block_id}_N{idx_chain}"
+            chain_intent = (block_def.get("intent") or block_intent).replace("(alternate)", "").strip()
+            chain_text = block_def.get("text_span", alt_block_text)
+            chain_constraints_raw = block_def.get("constraints", [])
+            chain_logic = block_def.get("logic", "AND")
+
+            chain_nodes: List[ConstraintNode] = []
+            for item_idx, item in enumerate(chain_constraints_raw, start=1):
+                desc = item.get("desc", "").strip()
+                verif = item.get("verifier", {})
+                check_name = verif.get("check")
+                args_obj = verif.get("args", {}) or {}
+                if not desc or not check_name:
+                    continue
+                chain_nodes.append(
+                    ConstraintNode(
+                        cid=f"{chain_block_id}_C{item_idx}",
+                        desc=desc,
+                        scope="local",
+                        verifier_spec={"check": check_name, "args": args_obj},
+                        trace_to=chain_block_id,
+                        derived_from="step5",
+                    )
+                )
+            if not chain_nodes:
+                continue
+
+            block_constraints.setdefault(chain_block_id, [])
+            block_constraints[chain_block_id].extend(chain_nodes)
+            block_logic[chain_block_id] = chain_logic
+
+            chain_spec = BlockSpec(
+                block_id=chain_block_id,
+                intent=chain_intent,
+                text_span=chain_text,
+                order_index=previous_order_index + idx_chain + 1,
+                is_alternate=True,
+                origin_block=chosen_block_id,
+            )
+            extra_blocks.append(chain_spec)
+            alt_path_blocks.append(chain_block_id)
+            alt_cids.extend([node.cid for node in chain_nodes])
+            chain_created = True
+
+        if selection_type == "global":
+            last_reference = alt_path_blocks[-1] if alt_path_blocks else chosen_block_id
+            base_order = order_index.get(last_reference, order_index.get(chosen_block_id, 0))
+            remaining_main = [
+                bid for bid in main_blocks_in_order
+                if order_index.get(bid, 10**6) > order_index.get(chosen_block_id, 0)
+            ]
+            block_info_map = {
+                blk.get("block_id"): blk for blk in segmentation.get("blocks", [])
+            }
+
+            fallback_followups = _build_global_followup_fallback(
+                base_alt_block_id=alt_block_id,
+                tail_block_ids=remaining_main,
+                block_info_map=block_info_map,
+                start_order_index=previous_order_index,
+            )
+
+            for follow_spec, follow_nodes in fallback_followups:
+                block_constraints.setdefault(follow_spec.block_id, [])
+                block_constraints[follow_spec.block_id].extend(follow_nodes)
+                block_logic[follow_spec.block_id] = "AND"
+                extra_blocks.append(follow_spec)
+                alt_path_blocks.append(follow_spec.block_id)
+                alt_cids.extend([node.cid for node in follow_nodes])
+                previous_order_index = follow_spec.order_index
 
         selection_node = SelectionNode(
             sid=f"SEL_{chosen_block_id}",
             condition=condition_text,
             trace_to=chosen_block_id,
-            branch_real=SelectionBranch(constraints=real_cids),
-            branch_alt=SelectionBranch(constraints=alt_cids),
+            branch_real=SelectionBranch(block_id=chosen_block_id, constraints=real_cids),
+            branch_alt=SelectionBranch(block_id=alt_block_id, constraints=alt_cids),
             derived_from="step5",
+            selection_type=selection_type,
+            merge_point=merge_point,
+            truncated=truncated_flag,
+            alt_path_blocks=alt_path_blocks,
         )
         selections.append(selection_node)
 
@@ -460,6 +699,7 @@ def generate_selection_branches(segmentation: Dict[str, Any],
         "block_constraints": block_constraints,
         "block_logic": block_logic,
         "selections": selections,
+        "extra_blocks": extra_blocks,
     }
 
 

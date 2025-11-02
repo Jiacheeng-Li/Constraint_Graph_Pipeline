@@ -1,6 +1,6 @@
 {
-  "sample_id": "example_001",
-  "timestamp_utc": "2025-11-02T13:23:29.755347+00:00",
+  "sample_id": "example_001_globaltest",
+  "timestamp_utc": "2025-11-02T13:41:52.366317+00:00",
   "eval_protocol": {
     "seed_task": "Write a short story (around 200–300 words) showing cooperation among forest animals during a storm.",
     "global_scoring": [
@@ -175,76 +175,22 @@
     ],
     "conditional_scoring": [
       {
-        "sid": "SEL_B4",
-        "where": "B4 TBD",
-        "condition": "If the stance is critical/negative",
-        "selection_type": "local",
-        "merge_point": "B5",
-        "truncated": false,
-        "branch_real_block": "B4",
-        "branch_alt_block": "B4_ALT",
-        "alt_path_blocks": [
-          "B4_ALT"
-        ],
-        "branch_real": [
-          {
-            "cid": "B4_C1",
-            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
-            "verifier": {
-              "check": "tone_neutral_llm_judge",
-              "args": {}
-            }
-          },
-          {
-            "cid": "B4_C2",
-            "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
-            "verifier": {
-              "check": "min_word_count",
-              "args": {
-                "min_words": 50
-              }
-            }
-          }
-        ],
-        "branch_alt": [
-          {
-            "cid": "B4_ALT_C1",
-            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
-            "verifier": {
-              "check": "tone_negative_llm_judge",
-              "args": {}
-            }
-          },
-          {
-            "cid": "B4_ALT_C2",
-            "desc": "Propose at least one concrete next-step action to address the identified problems.",
-            "verifier": {
-              "check": "actionability_judge",
-              "args": {}
-            }
-          }
-        ],
-        "scoring_rule": {
-          "must_choose_one_branch": true,
-          "branch_real_logic": "AND",
-          "branch_alt_logic": "AND"
-        }
-      },
-      {
-        "sid": "SEL_B5",
-        "where": "B5 TBD",
-        "condition": "If the stance is critical/negative",
-        "selection_type": "local",
+        "sid": "SEL_B3",
+        "where": "B3 TBD",
+        "condition": "If a radically different storyline is required",
+        "selection_type": "global",
         "merge_point": null,
         "truncated": false,
-        "branch_real_block": "B5",
-        "branch_alt_block": "B5_ALT",
+        "branch_real_block": "B3",
+        "branch_alt_block": "B3_ALT",
         "alt_path_blocks": [
-          "B5_ALT"
+          "B3_ALT",
+          "B3_ALT_NEXT1",
+          "B3_ALT_NEXT2"
         ],
         "branch_real": [
           {
-            "cid": "B5_C1",
+            "cid": "B3_C1",
             "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
             "verifier": {
               "check": "tone_neutral_llm_judge",
@@ -252,7 +198,7 @@
             }
           },
           {
-            "cid": "B5_C2",
+            "cid": "B3_C2",
             "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
             "verifier": {
               "check": "min_word_count",
@@ -264,19 +210,68 @@
         ],
         "branch_alt": [
           {
-            "cid": "B5_ALT_C1",
-            "desc": "Adopt an explicitly critical tone highlighting concrete problems or failures.",
+            "cid": "B3_ALT_C1",
+            "desc": "Reimagine this stage with a fundamentally different narrative focus.",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "new path"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B3_ALT_C2",
+            "desc": "Introduce a new conflict that redirects the subsequent storyline.",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "conflict"
+                ]
+              }
+            }
+          },
+          {
+            "cid": "B3_ALT_NEXT1_C1",
+            "desc": "Diagnose at least two critical failures driving the alternate scenario.",
+            "verifier": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "n": 2
+              }
+            }
+          },
+          {
+            "cid": "B3_ALT_NEXT1_C2",
+            "desc": "Maintain an openly critical tone that assigns accountability for those failures.",
             "verifier": {
               "check": "tone_negative_llm_judge",
               "args": {}
             }
           },
           {
-            "cid": "B5_ALT_C2",
-            "desc": "Propose at least one concrete next-step action to address the identified problems.",
+            "cid": "B3_ALT_NEXT2_C1",
+            "desc": "Lay out an urgent recovery plan using numbered steps.",
             "verifier": {
-              "check": "actionability_judge",
-              "args": {}
+              "check": "min_numbered_items",
+              "args": {
+                "n": 2
+              }
+            }
+          },
+          {
+            "cid": "B3_ALT_NEXT2_C2",
+            "desc": "Highlight the need for rapid collaborative action to stabilize the situation.",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "urgent",
+                  "collaboration"
+                ]
+              }
             }
           }
         ],
