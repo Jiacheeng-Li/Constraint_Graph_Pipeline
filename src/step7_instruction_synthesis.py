@@ -71,10 +71,12 @@ def _render_block_plan(block_specs: List[BlockSpec],
     }
 
     # 按照 order_index 排序，保持原回答的真实推进顺序
-    sorted_specs = sorted(block_specs, key=lambda b: b.order_index)
+    sorted_specs = sorted(block_specs, key=lambda b: (b.order_index, b.block_id))
 
     rendered: List[Dict[str, Any]] = []
     for spec in sorted_specs:
+        if spec.is_alternate:
+            continue
         bset = set_map.get(spec.block_id)
         if not bset:
             # 这个 block 没有显式的本地约束（极少数情况也可能出现）
@@ -174,12 +176,35 @@ def _render_selections(selections: List[SelectionNode],
             else:
                 alt_list.append({"cid": cid, "desc": None, "verifier": None})
 
+        # Group alternate-branch constraints by their true owning block via trace_to
+        alt_by_block = {}
+        alt_path_ids = list(sel.alt_path_blocks or [sel.branch_alt.block_id])
+        for block_id in alt_path_ids:
+            grouped = []
+            for cid in sel.branch_alt.constraints:
+                node = cid_to_node.get(cid)
+                if node and node.trace_to == block_id:
+                    grouped.append({
+                        "cid": cid,
+                        "desc": node.desc,
+                        "verifier": node.verifier_spec,
+                    })
+            alt_by_block[block_id] = grouped
+
         rendered.append({
             "sid": sel.sid,
+            "trace_to": sel.trace_to,
             "where": f"{sel.trace_to} {block_intent_map.get(sel.trace_to, '')}",
             "condition": sel.condition,
+            "selection_type": sel.selection_type,
+            "merge_point": sel.merge_point,
+            "truncated": sel.truncated,
+            "branch_real_block": sel.branch_real.block_id,
+            "branch_alt_block": sel.branch_alt.block_id,
+            "alt_path_blocks": list(sel.alt_path_blocks or [sel.branch_alt.block_id]),
             "branch_real": real_list,
             "branch_alt": alt_list,
+            "alt_by_block": alt_by_block,
         })
 
     return rendered
@@ -193,7 +218,8 @@ def _render_selections(selections: List[SelectionNode],
 def _mk_machine_prompt(seed_task: str,
                        global_rules: List[Dict[str, Any]],
                        block_plan: List[Dict[str, Any]],
-                       selections_view: List[Dict[str, Any]]) -> str:
+                       selections_view: List[Dict[str, Any]],
+                       graph: ConstraintGraph) -> str:
     """
     Build the final instruction prompt to feed directly to the evaluated model.
 
@@ -225,52 +251,101 @@ def _mk_machine_prompt(seed_task: str,
     lines.append("Your answer MUST be organized into the following stages / sections.\n" \
                  "You do not need to literally copy these headings, but you MUST perform the listed duties.")
 
-    for blk in block_plan:
+    selection_map = {sel["trace_to"]: sel for sel in selections_view}
+    block_label_lookup = {spec.block_id: spec.intent for spec in graph.block_specs}
+
+    i = 0
+    total_main = len(block_plan)
+    while i < total_main:
+        blk = block_plan[i]
         role = blk["role"] or blk["block_id"]
         logic_type = blk["logic_type"]
         reqs = blk["requirements"]
+        stage_id = blk["block_id"]
 
         if logic_type.lower().startswith("sub"):
-            # sub-chain：这一段内部是按顺序推进的小步骤
-            logic_phrase = "Follow these sub-steps IN ORDER."
+            logic_phrase = "Work through the following steps in order:"
         else:
-            # AND：这一段内部是并列要点，全部都要覆盖
-            logic_phrase = "Cover ALL of the following points (logical AND)."
+            logic_phrase = "Cover all of the following points:"
 
         lines.append("")
-        lines.append(f"Stage {blk['block_id']} — {role}:")
-        lines.append(f"- This stage is '{role}'. You MUST: {logic_phrase}")
-        for r in reqs:
-            rdesc = r["desc"] or "(unspecified requirement)"
-            lines.append(f"  • {rdesc}")
+        heading = role
+        sel = selection_map.get(stage_id)
+        if sel and sel.get("selection_type", "").lower() == "global":
+            condition_text = sel["condition"].strip()
+            condition_clause = condition_text[3:].strip() if condition_text.lower().startswith("if ") else condition_text
+
+            lines.append(f"{heading}:")
+            lines.append("Choose one of the following story paths:")
+            lines.append("If you want to stay with the cooperative storyline:")
+
+            for main_stage in block_plan[i:]:
+                heading_main = main_stage["role"] or main_stage["block_id"]
+                lines.append(f"  {heading_main}:")
+                for requirement in main_stage["requirements"]:
+                    lines.append(f"    • {requirement['desc']}")
+
+            lines.append(f"Otherwise, if {condition_clause}:")
+            alt_sequence = sel.get("alt_path_blocks") or [sel.get("branch_alt_block")]
+            by_block = sel.get("alt_by_block") or {}
+            for block_id in alt_sequence:
+                label = block_label_lookup.get(block_id, block_id)
+                lines.append(f"  {label}:")
+                items = by_block.get(block_id)
+                if items:
+                    for item in items:
+                        lines.append(f"    • {item.get('desc')}")
+                else:
+                    # Fallback to legacy cid-prefix grouping if trace_to-based grouping is unavailable
+                    alt_requirements = [
+                        item for item in sel.get("branch_alt", [])
+                        if item.get("cid", "").startswith(f"{block_id}_")
+                    ]
+                    if alt_requirements:
+                        for item in alt_requirements:
+                            lines.append(f"    • {item.get('desc')}")
+                    else:
+                        lines.append("    • Continue the alternate story in a way that fits this focus.")
+
+            break
+
+        lines.append(f"{heading}:")
+
+        if sel and sel.get("selection_type", "").lower() == "local":
+            condition_text = sel["condition"].strip()
+            condition_clause = condition_text
+            if condition_text.lower().startswith("if "):
+                condition_clause = condition_text[3:].strip()
+            lines.append(f"If {condition_clause}:")
+            alt_requirements = [item for item in sel["branch_alt"]]
+            for item in alt_requirements:
+                lines.append(f"  • {item.get('desc')}")
+            lines.append("Otherwise:")
+            for r in sel["branch_real"]:
+                lines.append(f"  • {r['desc']}")
+        else:
+            lines.append(f"{logic_phrase}")
+            for r in reqs:
+                lines.append(f"  • {r['desc']}")
+        i += 1
     lines.append("")
 
-    # 3. 条件化分支（IF / THEN / ELSE）：模型需要根据条件只选用其中一条路径
     if selections_view:
-        lines.append("CONDITIONAL BRANCH REQUIREMENTS:")
-        lines.append("Some stages include branching logic. You MUST clearly choose ONE branch that applies, "
-                     "and then satisfy ONLY that branch's obligations.")
+        lines.append("SCENARIO CONDITION:")
         for sel in selections_view:
-            cond = sel["condition"].strip() if sel["condition"] else "(no condition text)"
-            where = sel["where"].strip()
-
-            lines.append("")
-            lines.append(f"In stage {where}:")
-            lines.append(f"IF {cond} THEN you MUST satisfy ALL of these requirements:")
-            for item in sel["branch_alt"]:
-                lines.append(f"    • {item.get('desc') or '(unspecified requirement)'}")
-            lines.append("ELSE (if the condition does not apply), you MUST satisfy ALL of these requirements:")
-            for item in sel["branch_real"]:
-                lines.append(f"    • {item.get('desc') or '(unspecified requirement)'}")
+            cond = sel["condition"].strip()
+            stage_label = block_label_lookup.get(sel["trace_to"], sel["trace_to"])
+            condition_clause = cond[3:].strip() if cond.lower().startswith("if ") else cond
+            primary_focus = sel["branch_real"][0]["desc"]
+            lines.append(f"- {stage_label}: ensure the story {primary_focus.lower()}; switch only if {condition_clause}.")
         lines.append("")
 
     # 4. 评测提醒：明确告诉模型它会被自动检查，并且不能混合分支
     lines.append("EVALUATION NOTICE:")
-    lines.append("- Your answer will be automatically checked against the global constraints, the stage duties, "
-                 "and (if applicable) the branch you chose.")
-    lines.append("- You MUST clearly follow EXACTLY ONE branch for each conditional stage. Do NOT merge branches.")
-    lines.append("- Automated verifiers will check things like required language, tone, length, inclusion of "
-                 "specific elements, actionable recommendations, numbered items, etc.")
+    lines.append("- Your answer will be checked against the global requirements, each stage’s duties, "
+                 "and whichever branch you choose for conditional stages.")
+    lines.append("- Pick one branch whenever a stage presents an IF/ELSE choice, and stay consistent with that path.")
+    lines.append("- Automated checks will verify language, tone, required details, and any promised alternate storyline tasks.")
     lines.append("")
 
     return "\n".join(lines).strip() + "\n"
@@ -304,10 +379,14 @@ def _mk_eval_protocol(seed_task: str,
     # 构建按阶段(block)打分的规范：每个阶段有哪些必须满足的要求
     block_specs_eval = []
     for blk in block_plan:
+        if blk.get("is_alternate"):
+            continue
         block_entry = {
             "block_id": blk["block_id"],
             "role": blk["role"],
             "logic_type": blk["logic_type"],
+            "is_alternate": blk.get("is_alternate", False),
+            "origin_block": blk.get("origin_block"),
             "requirements": [],
         }
         for r in blk["requirements"]:
@@ -325,6 +404,12 @@ def _mk_eval_protocol(seed_task: str,
             "sid": sel["sid"],
             "where": sel["where"],
             "condition": sel["condition"],
+            "selection_type": sel.get("selection_type"),
+            "merge_point": sel.get("merge_point"),
+            "truncated": sel.get("truncated"),
+            "branch_real_block": sel.get("branch_real_block"),
+            "branch_alt_block": sel.get("branch_alt_block"),
+            "alt_path_blocks": sel.get("alt_path_blocks"),
             "branch_real": [
                 {
                     "cid": it["cid"],
@@ -402,6 +487,7 @@ def synthesize_instruction_bundle(graph: ConstraintGraph) -> Dict[str, Any]:
         global_rules=global_rules,
         block_plan=block_plan,
         selections_view=selections_view,
+        graph=graph,
     )
 
     eval_protocol = _mk_eval_protocol(
@@ -557,14 +643,45 @@ if __name__ == "__main__":
     }
 
     # SelectionNode 示例：branch_real 代表默认路径，branch_alt 代表在条件成立时的替代路径
+    alt_block_spec_demo = BlockSpec(
+        block_id="B3_ALT",
+        intent="Conclusion / Outlook / Recommendation (alternate)",
+        text_span="Alternate conclusion branch text...",
+        order_index=2,
+        is_alternate=True,
+        origin_block="B3",
+    )
+    block_constraints_demo["B3_ALT"] = [
+        ConstraintNode(
+            cid="B3_ALT_C1",
+            desc="Adopt an explicitly critical tone highlighting concrete failures.",
+            scope="local",
+            verifier_spec={"check": "tone_negative_llm_judge", "args": {}},
+            trace_to="B3_ALT",
+            derived_from="step5",
+        ),
+        ConstraintNode(
+            cid="B3_ALT_C2",
+            desc="Propose at least one concrete next-step action to address the identified problems.",
+            scope="local",
+            verifier_spec={"check": "actionability_judge", "args": {}},
+            trace_to="B3_ALT",
+            derived_from="step5",
+        ),
+    ]
+    block_logic_demo["B3_ALT"] = "AND"
+
     selections_demo = [
         SelectionNode(
             sid="SEL_B3",
             condition="If the stance is critical/negative",
             trace_to="B3",
-            branch_real=SelectionBranch(constraints=["B3_C1", "B3_C2"]),
-            branch_alt=SelectionBranch(constraints=["B3_C3", "B3_C4"]),
+            branch_real=SelectionBranch(block_id="B3", constraints=["B3_C1", "B3_C2"]),
+            branch_alt=SelectionBranch(block_id="B3_ALT", constraints=["B3_ALT_C1", "B3_ALT_C2"]),
             derived_from="step5",
+            selection_type="local",
+            merge_point="B4",
+            alt_path_blocks=["B3_ALT"],
         )
     ]
 
@@ -575,6 +692,7 @@ if __name__ == "__main__":
         "block_constraints": block_constraints_demo,
         "block_logic": block_logic_demo,
         "selections": selections_demo,
+        "extra_blocks": [alt_block_spec_demo],
     }
 
     graph_demo = assemble_constraint_graph(
