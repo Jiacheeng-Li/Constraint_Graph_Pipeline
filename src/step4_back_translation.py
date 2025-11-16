@@ -63,10 +63,64 @@ if _STEP4_RAND_SEED is not None:
     except Exception:
         random.seed(_STEP4_RAND_SEED)
 
+# --- Block-level constraint config ---
+# Maximum number of constraints kept per block (can be overridden via env).
+try:
+    _STEP4_BLOCK_MAX_CONSTRAINTS = int(os.getenv("STEP4_BLOCK_MAX_CONSTRAINTS", "6"))
+except Exception:
+    _STEP4_BLOCK_MAX_CONSTRAINTS = 6
+if _STEP4_BLOCK_MAX_CONSTRAINTS <= 0:
+    _STEP4_BLOCK_MAX_CONSTRAINTS = 1
+
+# Desired fraction of hard constraints among the kept ones (0.0 ~ 1.0).
+# Default is 0.5 (roughly balanced); you can override with env STEP4_BLOCK_HARD_FRACTION.
+try:
+    _STEP4_BLOCK_HARD_FRACTION = float(os.getenv("STEP4_BLOCK_HARD_FRACTION", "0.5"))
+except Exception:
+    _STEP4_BLOCK_HARD_FRACTION = 0.5
+if _STEP4_BLOCK_HARD_FRACTION < 0.0:
+    _STEP4_BLOCK_HARD_FRACTION = 0.0
+if _STEP4_BLOCK_HARD_FRACTION > 1.0:
+    _STEP4_BLOCK_HARD_FRACTION = 1.0
+
 _NUM_LIST = re.compile(r"^\s*(?:\d+[\.\)]|[a-z][\.\)])\s+", re.I | re.M)
 _BULLET_LIST = re.compile(r"^\s*[-*]\s+", re.M)
 _SEQUENCE_CUES = re.compile(r"\b(?:first|second|third|then|next|afterward|finally|step\s*\d+)\b", re.I)
 _PAR_SPLIT = re.compile(r"(?:\r?\n){2,}")
+
+# --- Additional regex helpers and block-suitable hard-constraint helpers ---
+_BULLET_HEAD = re.compile(r"^\s*([-*])\s+\S", re.M)
+_DECIMAL_NUM = re.compile(r"\b\d+\.(\d+)\b")
+
+def _detect_bullet_list(snippet: str) -> Tuple[int, str]:
+    """Return (count, dominant_marker) for bullet-style list lines in the snippet."""
+    markers = _BULLET_HEAD.findall(snippet)
+    if not markers:
+        return 0, ""
+    counts: Dict[str, int] = {}
+    for m in markers:
+        counts[m] = counts.get(m, 0) + 1
+    # dominant marker by frequency
+    dominant = max(counts.items(), key=lambda x: x[1])[0]
+    return len(markers), dominant
+
+def _detect_decimal_places(snippet: str) -> int:
+    """Detect a dominant decimal place count if numbers like 1.23 appear; return 0 if none."""
+    matches = _DECIMAL_NUM.findall(snippet)
+    if len(matches) < 2:
+        return 0
+    freq: Dict[int, int] = {}
+    for m in matches:
+        l = len(m)
+        freq[l] = freq.get(l, 0) + 1
+    places, count = max(freq.items(), key=lambda x: x[1])
+    # require at least two occurrences with the same decimal length
+    return places if count >= 2 else 0
+
+def _count_paragraphs(snippet: str) -> int:
+    """Approximate paragraph count by splitting on blank lines."""
+    parts = [p for p in _PAR_SPLIT.split(snippet) if p.strip()]
+    return len(parts)
 
 def _estimate_word_count(text: str) -> int:
     tokens = re.findall(r"\w+", text)
@@ -137,6 +191,49 @@ _VERIFIER_SYNONYM_MAP = {
     "must_list_two_items": ("must_list_n_subpoints", {"min_items": 2}),
     "must_use_numbered_list": ("min_numbered_items", {"min_items": 2}),
 }
+
+_HARD_VERIFIERS = {
+    "min_word_count",
+    "max_word_count",
+    "word_count_between",
+    "word_count_around",
+    "min_paragraphs",
+    "heading_levels_only",
+    "bullet_style_consistent",
+    "decimal_places",
+    "date_format",
+    "min_numbered_items",
+    "must_list_n_subpoints",
+    "forbid_first_person",
+    "forbid_emojis",
+    "forbid_symbol",
+    "require_language",
+    "has_sections",
+    "must_include_keywords",
+    "keyword_min_frequency",
+    "must_cover_topics",
+    "min_char_count",
+    "must_end_with_template",
+    "citation_style",
+}
+
+def _is_hard_verifier(check: str) -> bool:
+    """Heuristic: decide whether a verifier is hard (structure/content) or soft (tone/preferences)."""
+    if not check:
+        return False
+    # custom:* 默认视为软性
+    if check.startswith("custom:"):
+        return False
+    if check in _HARD_VERIFIERS:
+        return True
+    # tone_* / preference_* 一律当软性
+    if check.startswith("tone_") or check.startswith("preference_"):
+        return False
+    # 一些特定 judge 也视作软性
+    if check in {"non_extremeness_judge", "role_consistency_judge", "actionability_judge"}:
+        return False
+    # 其余默认软性（更保守）
+    return False
 
 def _map_verifier(check: str, args: Dict[str, Any]) -> Tuple[str, Dict[str, Any], bool]:
     """
@@ -339,6 +436,85 @@ def _fallback_block_constraints(block: BlockSpec) -> Dict[str, Any]:
         })
     return {"logic": "AND", "constraints": constraints}
 
+
+# --- Deterministic rule-based local hard constraint extractor ---
+def _extract_local_hard_constraints(block: BlockSpec) -> List[Dict[str, Any]]:
+    """Rule-based extractor for block-level hard constraints.
+
+    These constraints are derived purely from the block text via deterministic functions,
+    not from the LLM. They should capture simple, verifiable obligations such as
+    minimum word count or minimum number of numbered items, as well as paragraph, bullet, and decimal formatting.
+    """
+    snippet = block.text_span or ""
+    snippet_stripped = snippet.strip()
+    if not snippet_stripped:
+        return []
+
+    items: List[Dict[str, Any]] = []
+
+    # Length-based local constraint
+    min_words = _guess_block_min_words(snippet)
+    items.append({
+        "desc": f"Provide a sufficiently detailed explanation in this block with at least {min_words} words.",
+        "verifier_spec": {"check": "min_word_count", "args": {"min_words": min_words}},
+        "evidence_str": "",
+        "_is_custom": False,
+        "origin": "local_rule",
+    })
+
+    # Numbered list constraint if the block appears to use numbered items
+    min_items = _find_numbered_items(snippet)
+    if min_items >= 2:
+        items.append({
+            "desc": f"Provide a numbered list in this block with at least {min_items} items.",
+            "verifier_spec": {"check": "min_numbered_items", "args": {"min_items": min_items}},
+            "evidence_str": "",
+            "_is_custom": False,
+            "origin": "local_rule",
+        })
+
+    # Paragraph-level structure constraint if there are multiple logical paragraphs
+    para_count = _count_paragraphs(snippet)
+    if para_count >= 2:
+        items.append({
+            "desc": f"Organize this block into at least {para_count} logical paragraphs.",
+            "verifier_spec": {"check": "min_paragraphs", "args": {"min_paras": para_count}},
+            "evidence_str": "",
+            "_is_custom": False,
+            "origin": "local_rule",
+        })
+
+    # Bullet-style list constraint if there are multiple bullet lines
+    bullet_count, bullet_marker = _detect_bullet_list(snippet)
+    if bullet_count >= 2 and bullet_marker:
+        items.append({
+            "desc": f"Use a consistent bullet style '{bullet_marker}' for list items in this block.",
+            "verifier_spec": {"check": "bullet_style_consistent", "args": {"marker": bullet_marker}},
+            "evidence_str": "",
+            "_is_custom": False,
+            "origin": "local_rule",
+        })
+        items.append({
+            "desc": f"Provide a bulleted list in this block with at least {bullet_count} items.",
+            "verifier_spec": {"check": "must_list_n_subpoints", "args": {"min_items": bullet_count}},
+            "evidence_str": "",
+            "_is_custom": False,
+            "origin": "local_rule",
+        })
+
+    # Decimal formatting constraint if there is a dominant decimal place count
+    places = _detect_decimal_places(snippet)
+    if places > 0:
+        items.append({
+            "desc": f"Keep numerical values in this block to {places} decimal places consistently.",
+            "verifier_spec": {"check": "decimal_places", "args": {"places": places}},
+            "evidence_str": "",
+            "_is_custom": False,
+            "origin": "local_rule",
+        })
+
+    return items
+
 def extract_block_constraints(segmentation: Dict[str, Any],
                               seed_task: str) -> Dict[str, Any]:
     """
@@ -372,12 +548,14 @@ def extract_block_constraints(segmentation: Dict[str, Any],
             order_index=block_dict.get("order_index", 0),
         )
 
+        from_fallback = False
         raw_str = _call_deepseek_block_constraints(block, seed_task, segmentation)
         parsed = _parse_block_llm_result(raw_str)
         constraints_list = parsed.get("constraints") if isinstance(parsed, dict) else None
         if not parsed or not constraints_list:
             parsed = _fallback_block_constraints(block)
             constraints_list = parsed.get("constraints", [])
+            from_fallback = True
 
         # Heuristic logic audit (block-level)
         logic_tag = parsed.get("logic", "AND")
@@ -397,15 +575,66 @@ def extract_block_constraints(segmentation: Dict[str, Any],
                 continue
             mapped_check, mapped_args, is_custom = _map_verifier(check_name, args_obj)
             evidence_str = (item.get("evidence") or "").strip()
+            origin = "local_rule" if from_fallback else "llm"
             normalized_items.append({
                 "desc": desc,
                 "verifier_spec": {"check": mapped_check, "args": mapped_args},
                 "evidence_str": evidence_str,
                 "_is_custom": is_custom,
+                "origin": origin,
             })
 
-        # Deduplicate and cap
-        filtered_items = _dedup_and_cap(normalized_items, cap=5)
+        # Add deterministic local hard constraints derived from the block text itself
+        normalized_items.extend(_extract_local_hard_constraints(block))
+
+        # Separate into hard vs soft items based on verifier name and origin
+        hard_items: List[Dict[str, Any]] = []
+        soft_items: List[Dict[str, Any]] = []
+        for it in normalized_items:
+            check = it.get("verifier_spec", {}).get("check", "")
+            origin = it.get("origin", "llm")
+            # Only treat as hard if it comes from rule-based extraction (origin == "local_rule")
+            # and its verifier is a known hard-type verifier.
+            if origin == "local_rule" and _is_hard_verifier(check):
+                hard_items.append(it)
+            else:
+                soft_items.append(it)
+
+        # Deduplicate within each group and apply a generous cap before final mixing
+        hard_items = _dedup_and_cap(hard_items, cap=_STEP4_BLOCK_MAX_CONSTRAINTS)
+        soft_items = _dedup_and_cap(soft_items, cap=_STEP4_BLOCK_MAX_CONSTRAINTS)
+
+        # Compute quotas according to configured fraction
+        max_total = _STEP4_BLOCK_MAX_CONSTRAINTS
+        hard_quota = int(round(max_total * _STEP4_BLOCK_HARD_FRACTION))
+        if hard_quota > max_total:
+            hard_quota = max_total
+        if hard_quota < 0:
+            hard_quota = 0
+        soft_quota = max_total - hard_quota
+
+        # Randomly select from each pool up to its quota
+        if len(hard_items) > hard_quota:
+            hard_selected = random.sample(hard_items, hard_quota)
+        else:
+            hard_selected = list(hard_items)
+        if len(soft_items) > soft_quota:
+            soft_selected = random.sample(soft_items, soft_quota)
+        else:
+            soft_selected = list(soft_items)
+
+        # If there is still room, fill remaining slots from whichever group has leftovers
+        combined_selected = hard_selected + soft_selected
+        remaining_slots = max_total - len(combined_selected)
+        if remaining_slots > 0:
+            leftover = [it for it in hard_items + soft_items if it not in combined_selected]
+            if leftover:
+                if len(leftover) > remaining_slots:
+                    leftover = random.sample(leftover, remaining_slots)
+                combined_selected.extend(leftover)
+
+        # Final filtered items for this block
+        filtered_items = combined_selected
 
         # Materialize ConstraintNode list with local scope and correct trace_to
         local_nodes: List[ConstraintNode] = []

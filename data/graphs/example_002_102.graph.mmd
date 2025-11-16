@@ -1,0 +1,141 @@
+%% Mermaid flowchart for sample `example_002_102`
+%% Paste this into any Mermaid renderer to view the graph.
+
+flowchart LR
+    SEED(((Write a detailed Markdownformatted cooking guide for home...)))
+    subgraph GLOBAL[Global Constraints]
+        G1((G1 Aim for roughly 196 words with a tolerance of ±15))
+        G2((G2 Do not use contractions write out full forms))
+        G3((G3 Present the response in no fewer than 13 paragraphs))
+        G4((G4 Use a consistent list marker style do not mix list mar...))
+        G5((G5 Write without firstperson perspective throughout))
+        G6((G6 Prefer clear and sequential stepbystep instructions))
+        G7((G7 Prefer highlighting important notices or warnings prom...))
+        G8((G8 Prefer including practical tips and substitutions for...))
+        G9((G9 Prefer concise and direct phrasing without unnecessary...))
+        G10((G10 Prefer separating ingredients from instructions for c...))
+        G1 --- G2 --- G3 --- G4 --- G5 --- G6 --- G7 --- G8 --- G9 --- G10
+    end
+    SEED --> G1
+    subgraph B1[B1 Opening]
+        B1_C1["B1C1 Provide a sufficiently detailed explanation in this..."]
+        B1_C2["B1C2 Use an emoji in the title to create a friendly tone"]
+        B1_C3["B1C3 Include a descriptive title for the guide"]
+        B1_C1 --- B1_C2 --- B1_C3
+    end
+    subgraph B2[B2 Notice]
+        B2_C1["B2C1 Provide a sufficiently detailed explanation in this..."]
+        B2_C2["B2C2 Use explicit visual markers emojisymbols to draw att..."]
+        B2_C3["B2C3 Issue a dietary restriction warning before proceedin..."]
+        B2_C1 --- B2_C2 --- B2_C3
+    end
+    subgraph B3[B3 Step Instructions]
+        B3_C1["B3C1 Use a consistent bullet style for list items in this..."]
+        B3_C2["B3C2 Provide a sufficiently detailed explanation in this..."]
+        B3_C3["B3C3 Provide a bulleted list in this block with at least..."]
+        B3_C4["B3C4 Include specific time durations for steps where appl..."]
+        B3_C5["B3C5 List required ingredients with quantities and units"]
+        B3_C6["B3C6 Present numbered steps in sequential order"]
+        B3_C1 --> B3_C2 --> B3_C3 --> B3_C4 --> B3_C5 --> B3_C6
+    end
+    subgraph B4[B4 Step Instructions]
+        B4_C1["B4C1 Provide a sufficiently detailed explanation in this..."]
+        B4_C2["B4C2 Use a consistent bullet style for list items in this..."]
+        B4_C3["B4C3 Provide a bulleted list in this block with at least..."]
+        B4_C4["B4C4 Present a numbered step with a clear title"]
+        B4_C5["B4C5 Specify tools or equipment for at least one action"]
+        B4_C6["B4C6 List at least three distinct actions in bullet points"]
+        B4_C1 --- B4_C2 --- B4_C3 --- B4_C4 --- B4_C5 --- B4_C6
+    end
+    subgraph B4_ALT[B4_ALT Step Instructions]
+        B4_ALT_C1["B4ALTC1 Include at least two troubleshooting tips for com..."]
+        B4_ALT_C2["B4ALTC2 Use encouraging reassuring language that addresse..."]
+        B4_ALT_C3["B4ALTC3 Provide visual cues for proper dough texture and..."]
+        B4_ALT_C4["B4ALTC4 Include a minimum word count of 50 words to ensur..."]
+        B4_ALT_C1 --- B4_ALT_C2 --- B4_ALT_C3 --- B4_ALT_C4
+    end
+    subgraph B5[B5 Step Instructions]
+        B5_C1["B5C1 Provide a bulleted list in this block with at least..."]
+        B5_C2["B5C2 Organize this block into at least 2 logical paragraphs"]
+        B5_C3["B5C3 Use a consistent bullet style for list items in this..."]
+        B5_C4["B5C4 Present numbered steps in chronological order"]
+        B5_C5["B5C5 List required ingredients with quantities and prepar..."]
+        B5_C6["B5C6 Specify ingredient preparation states when needed"]
+        B5_C1 --> B5_C2 --> B5_C3 --> B5_C4 --> B5_C5 --> B5_C6
+    end
+    subgraph B5_ALT[B5_ALT Step Instructions]
+        B5_ALT_C1["B5ALTC1 Use descriptive measurements instead of precise q..."]
+        B5_ALT_C2["B5ALTC2 Provide sensory cues and visual indicators for do..."]
+        B5_ALT_C3["B5ALTC3 Include at least 3 optional ingredient variations..."]
+        B5_ALT_C4["B5ALTC4 Use chefs intuition language rather than numbered..."]
+        B5_ALT_C5["B5ALTC5 Maintain a conversational improvisational tone th..."]
+        B5_ALT_C1 --- B5_ALT_C2 --- B5_ALT_C3 --- B5_ALT_C4 --- B5_ALT_C5
+    end
+    subgraph B5_ALT_NEXT1[B5_ALT_NEXT1 Step Instructions]
+        B5_ALT_NEXT1_C1["B5ALTNEXT1C1 Diagnose at least two critical failures driv..."]
+        B5_ALT_NEXT1_C2["B5ALTNEXT1C2 Maintain an openly critical tone that assign..."]
+        B5_ALT_NEXT1_C1 --- B5_ALT_NEXT1_C2
+    end
+    subgraph B6[B6 Step Instructions]
+        B6_C1["B6C1 Provide a sufficiently detailed explanation in this..."]
+        B6_C2["B6C2 Use a consistent bullet style for list items in this..."]
+        B6_C3["B6C3 Provide a bulleted list in this block with at least..."]
+        B6_C4["B6C4 Offer at least one optional ingredient addition"]
+        B6_C5["B6C5 Specify cooking time and doneness target for the pasta"]
+        B6_C6["B6C6 Provide a numbered step title that indicates combini..."]
+        B6_C1 --- B6_C2 --- B6_C3 --- B6_C4 --- B6_C5 --- B6_C6
+    end
+    subgraph B6_ALT[B6_ALT Step Instructions]
+        B6_ALT_C1["B6ALTC1 Include at least two advanced serving techniques..."]
+        B6_ALT_C2["B6ALTC2 Specify pasta water retention technique for bette..."]
+        B6_ALT_C3["B6ALTC3 Recommend finishing technique that involves offhe..."]
+        B6_ALT_C4["B6ALTC4 Provide specific plating recommendation for optim..."]
+        B6_ALT_C1 --- B6_ALT_C2 --- B6_ALT_C3 --- B6_ALT_C4
+    end
+    subgraph B5_ALT_N1[B5_ALT_N1 Advanced Variations]
+        B5_ALT_N1_C1["B5ALTN1C1 Provide at least 3 gourmet variations of the ba..."]
+    end
+    subgraph B5_ALT_NEXT2[B5_ALT_NEXT2 Tips]
+        B5_ALT_NEXT2_C1["B5ALTNEXT2C1 Lay out an urgent recovery plan using number..."]
+        B5_ALT_NEXT2_C2["B5ALTNEXT2C2 Highlight the need for rapid collaborative a..."]
+        B5_ALT_NEXT2_C1 --- B5_ALT_NEXT2_C2
+    end
+    subgraph B7[B7 Tips]
+        B7_C1["B7C1 Provide a sufficiently detailed explanation in this..."]
+        B7_C2["B7C2 Use a consistent bullet style for list items in this..."]
+        B7_C3["B7C3 Provide a bulleted list in this block with at least..."]
+        B7_C4["B7C4 Provide at least one substitution option for a key i..."]
+        B7_C5["B7C5 Include timing or serving recommendation for optimal..."]
+        B7_C1 --- B7_C2 --- B7_C3 --- B7_C4 --- B7_C5
+    end
+    subgraph B7_ALT[B7_ALT Tips]
+        B7_ALT_C1["B7ALTC1 Provide at least three advanced technique tips th..."]
+        B7_ALT_C2["B7ALTC2 Include at least one wine pairing recommendation..."]
+        B7_ALT_C3["B7ALTC3 Suggest at least two garnish options to enhance p..."]
+        B7_ALT_C4["B7ALTC4 Maintain an advanced cooking tone suitable for ex..."]
+        B7_ALT_C1 --- B7_ALT_C2 --- B7_ALT_C3 --- B7_ALT_C4
+    end
+    G10 --> B1_C1
+    B1_C3 --> B2_C1
+    B2_C3 --> B3_C1
+    DEC_SEL_B4{"If the cooking guide is targeted at complete beginners wh..."}
+    B3_C6 --> DEC_SEL_B4
+    DEC_SEL_B4 --> B4_C1
+    DEC_SEL_B4 --> B4_ALT_C1
+    B4_ALT_C4 --> DEC_SEL_B5
+    DEC_SEL_B5{"If the cooking guide is targeted at advanced chefs who pr..."}
+    B4_C6 --> DEC_SEL_B5
+    DEC_SEL_B5 --> B5_C1
+    DEC_SEL_B5 --> B5_ALT_C1
+    B5_ALT_C5 --> B5_ALT_N1_C1
+    B5_ALT_N1_C1 --> B5_ALT_NEXT1_C1
+    B5_ALT_NEXT1_C2 --> B5_ALT_NEXT2_C1
+    DEC_SEL_B6{"If the cooking guide is targeted at advanced home cooks w..."}
+    B5_C6 --> DEC_SEL_B6
+    DEC_SEL_B6 --> B6_C1
+    DEC_SEL_B6 --> B6_ALT_C1
+    B6_ALT_C4 --> DEC_SEL_B7
+    DEC_SEL_B7{"If the cooking guide is targeted at advanced home cooks w..."}
+    B6_C6 --> DEC_SEL_B7
+    DEC_SEL_B7 --> B7_C1
+    DEC_SEL_B7 --> B7_ALT_C1
