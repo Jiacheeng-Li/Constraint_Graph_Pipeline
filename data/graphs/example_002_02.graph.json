@@ -1,0 +1,1340 @@
+{
+  "seed_task": "Write a detailed Markdown-formatted cooking guide for homemade pasta with tomato basil sauce in an instructive yet friendly tone.",
+  "global_constraints": [
+    {
+      "cid": "G1",
+      "desc": "Your answer should be no shorter than 166 and no longer than 235 words.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "word_count_between",
+        "args": {
+          "min_words": 166,
+          "max_words": 235
+        }
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G2",
+      "desc": "Ensure the response is predominantly in English.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "require_language",
+        "args": {
+          "lang": "en"
+        }
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G3",
+      "desc": "Ensure at least 13 distinct paragraphs.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "min_paragraphs",
+        "args": {
+          "min_paras": 13
+        }
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G4",
+      "desc": "Use consistent Markdown heading levels: only [1, 2].",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "heading_levels_only",
+        "args": {
+          "levels": [
+            1,
+            2
+          ]
+        }
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G5",
+      "desc": "Write without first-person perspective throughout.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "forbid_first_person",
+        "args": {}
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    }
+  ],
+  "block_specs": [
+    {
+      "block_id": "B1",
+      "intent": "TBD",
+      "text_span": "# 🍝 Homemade Pasta with Tomato Basil Sauce",
+      "order_index": 0,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B2",
+      "intent": "TBD",
+      "text_span": "## Notice❗️: This recipe is not suitable for vegetarians.",
+      "order_index": 1,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B3",
+      "intent": "TBD",
+      "text_span": "## Step 1: Prepare the Dough\n- **Ingredients**  \n  - 2 cups all-purpose flour  \n  - 3 large eggs  \n  - 1 tsp salt  \n  - 1 tbsp olive oil",
+      "order_index": 2,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B4",
+      "intent": "TBD",
+      "text_span": "1. Make a well in the center of the flour.  \n2. Add eggs, salt, and olive oil.  \n3. Mix until the dough comes together.  \n4. Knead for about 10 minutes until smooth.  \n5. Wrap and rest for 30 minutes.",
+      "order_index": 3,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B4_ALT",
+      "intent": "TBD",
+      "text_span": "1. Make a well in the center of the flour.  \n2. Add eggs, salt, and olive oil.  \n3. Mix until the dough comes together.  \n4. Knead for about 10 minutes until smooth.  \n5. Wrap and rest for 30 minutes.",
+      "order_index": 3,
+      "is_alternate": true,
+      "origin_block": "B4"
+    },
+    {
+      "block_id": "B5",
+      "intent": "TBD",
+      "text_span": "---",
+      "order_index": 4,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B6",
+      "intent": "TBD",
+      "text_span": "## Step 2: Roll & Cut the Pasta\n- Use a pasta roller or rolling pin to flatten the dough.  \n- Cut into thin fettuccine strips.  \n- Sprinkle flour to prevent sticking.",
+      "order_index": 5,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B6_ALT",
+      "intent": "TBD",
+      "text_span": "## Step 2: Roll & Cut the Pasta\n- Use a pasta roller or rolling pin to flatten the dough.  \n- Cut into thin fettuccine strips.  \n- Sprinkle flour to prevent sticking.",
+      "order_index": 5,
+      "is_alternate": true,
+      "origin_block": "B6"
+    },
+    {
+      "block_id": "B6_ALT_NEXT1",
+      "intent": "TBD (alternate path)",
+      "text_span": "Alternate storyline continuation derived from B7.",
+      "order_index": 6,
+      "is_alternate": true,
+      "origin_block": "B7"
+    },
+    {
+      "block_id": "B7",
+      "intent": "TBD",
+      "text_span": "---",
+      "order_index": 6,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B6_ALT_NEXT2",
+      "intent": "TBD (alternate path)",
+      "text_span": "Alternate storyline continuation derived from B8.",
+      "order_index": 7,
+      "is_alternate": true,
+      "origin_block": "B8"
+    },
+    {
+      "block_id": "B8",
+      "intent": "TBD",
+      "text_span": "## Step 3: Make the Tomato Basil Sauce\n- **Ingredients**  \n  - 2 tbsp olive oil  \n  - 2 cloves garlic, minced  \n  - 3 ripe tomatoes, chopped  \n  - 1/2 tsp salt  \n  - Fresh basil leaves",
+      "order_index": 7,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B6_ALT_NEXT3",
+      "intent": "TBD (alternate path)",
+      "text_span": "Alternate storyline continuation derived from B9.",
+      "order_index": 8,
+      "is_alternate": true,
+      "origin_block": "B9"
+    },
+    {
+      "block_id": "B9",
+      "intent": "TBD",
+      "text_span": "1. Sauté garlic in olive oil until fragrant.  \n2. Add tomatoes and simmer for 15 minutes.  \n3. Stir in salt and chopped basil.",
+      "order_index": 8,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B10",
+      "intent": "TBD",
+      "text_span": "---",
+      "order_index": 9,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B6_ALT_NEXT4",
+      "intent": "TBD (alternate path)",
+      "text_span": "Alternate storyline continuation derived from B10.",
+      "order_index": 9,
+      "is_alternate": true,
+      "origin_block": "B10"
+    },
+    {
+      "block_id": "B11",
+      "intent": "TBD",
+      "text_span": "## Step 4: Combine and Serve\n- Boil pasta for **3–4 minutes** until al dente.  \n- Drain and toss with the sauce.  \n- **Optional:** Add parmesan cheese if you like.",
+      "order_index": 10,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B6_ALT_NEXT5",
+      "intent": "TBD (alternate path)",
+      "text_span": "Alternate storyline continuation derived from B11.",
+      "order_index": 10,
+      "is_alternate": true,
+      "origin_block": "B11"
+    },
+    {
+      "block_id": "B12",
+      "intent": "TBD",
+      "text_span": "---",
+      "order_index": 11,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B6_ALT_NEXT6",
+      "intent": "TBD (alternate path)",
+      "text_span": "Alternate storyline continuation derived from B12.",
+      "order_index": 11,
+      "is_alternate": true,
+      "origin_block": "B12"
+    },
+    {
+      "block_id": "B13",
+      "intent": "TBD",
+      "text_span": "## 🍽️ Tips\n- If you don’t have fresh tomatoes, use canned crushed tomatoes.  \n- Serve immediately for the best texture.",
+      "order_index": 12,
+      "is_alternate": false,
+      "origin_block": null
+    },
+    {
+      "block_id": "B6_ALT_NEXT7",
+      "intent": "TBD (alternate path)",
+      "text_span": "Alternate storyline continuation derived from B13.",
+      "order_index": 12,
+      "is_alternate": true,
+      "origin_block": "B13"
+    }
+  ],
+  "block_constraint_sets": [
+    {
+      "block_id": "B1",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B1_C1",
+          "desc": "Include 'Homemade Pasta with Tomato Basil Sauce' as the title text",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:exact_match",
+            "args": {
+              "text": "Homemade Pasta with Tomato Basil Sauce"
+            }
+          },
+          "trace_to": "B1",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B1_C2",
+          "desc": "Format the title as a level 1 Markdown heading",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:markdown_heading",
+            "args": {
+              "level": 1
+            }
+          },
+          "trace_to": "B1",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B1_C3",
+          "desc": "Use a pasta emoji in the title",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:contains_emoji",
+            "args": {
+              "emoji": "🍝"
+            }
+          },
+          "trace_to": "B1",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B10",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B10_C1",
+          "desc": "Return only the JSON",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:output_format",
+            "args": {
+              "format": "json"
+            }
+          },
+          "trace_to": "B10",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B11",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B11_C1",
+          "desc": "Boil pasta for 3–4 minutes until al dente",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:text_includes",
+            "args": {
+              "text": "Boil pasta for 3–4 minutes until al dente"
+            }
+          },
+          "trace_to": "B11",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B11_C2",
+          "desc": "Mention optional parmesan cheese addition",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:text_includes",
+            "args": {
+              "text": "Optional: Add parmesan cheese"
+            }
+          },
+          "trace_to": "B11",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B11_C3",
+          "desc": "Toss drained pasta with sauce",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:text_includes",
+            "args": {
+              "text": "toss with the sauce"
+            }
+          },
+          "trace_to": "B11",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B11_C4",
+          "desc": "Drain pasta after boiling",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:text_includes",
+            "args": {
+              "text": "Drain"
+            }
+          },
+          "trace_to": "B11",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B12",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B12_C1",
+          "desc": "Return only the JSON",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:output_format",
+            "args": {
+              "format": "json"
+            }
+          },
+          "trace_to": "B12",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B13",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B13_C1",
+          "desc": "Provide canned crushed tomatoes as an alternative if fresh tomatoes are unavailable",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:text_includes",
+            "args": {
+              "required_text": "canned crushed tomatoes"
+            }
+          },
+          "trace_to": "B13",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B13_C2",
+          "desc": "Instruct to serve the pasta immediately for optimal texture",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:text_includes",
+            "args": {
+              "required_text": "Serve immediately"
+            }
+          },
+          "trace_to": "B13",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B2",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B2_C1",
+          "desc": "Include a notice that the recipe is not suitable for vegetarians",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:text_includes",
+            "args": {
+              "text": "not suitable for vegetarians"
+            }
+          },
+          "trace_to": "B2",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B3",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B3_C1",
+          "desc": "Include all-purpose flour as an ingredient",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:includes_ingredient",
+            "args": {
+              "ingredient": "all-purpose flour"
+            }
+          },
+          "trace_to": "B3",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B3_C2",
+          "desc": "List the ingredients for the dough",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:has_ingredients_list",
+            "args": {}
+          },
+          "trace_to": "B3",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B3_C3",
+          "desc": "Include olive oil as an ingredient",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:includes_ingredient",
+            "args": {
+              "ingredient": "olive oil"
+            }
+          },
+          "trace_to": "B3",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B3_C4",
+          "desc": "Specify quantity for olive oil",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:has_quantity",
+            "args": {
+              "ingredient": "olive oil",
+              "quantity": "1 tbsp"
+            }
+          },
+          "trace_to": "B3",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B3_C5",
+          "desc": "Include eggs as an ingredient",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:includes_ingredient",
+            "args": {
+              "ingredient": "eggs"
+            }
+          },
+          "trace_to": "B3",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B4",
+      "logic_type": "sub-chain",
+      "constraints": [
+        {
+          "cid": "B4_C1",
+          "desc": "Knead for about 10 minutes until smooth",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:knead_duration_condition",
+            "args": {
+              "duration_minutes": 10,
+              "condition": "smooth"
+            }
+          },
+          "trace_to": "B4",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B4_C2",
+          "desc": "Make a well in the center of the flour",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:action_performed",
+            "args": {
+              "action": "make_well",
+              "location": "flour_center"
+            }
+          },
+          "trace_to": "B4",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B4_C3",
+          "desc": "Mix until the dough comes together",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:mix_until_condition",
+            "args": {
+              "condition": "dough_comes_together"
+            }
+          },
+          "trace_to": "B4",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B4_C4",
+          "desc": "Add eggs, salt, and olive oil",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:ingredients_added",
+            "args": {
+              "ingredients": [
+                "eggs",
+                "salt",
+                "olive_oil"
+              ]
+            }
+          },
+          "trace_to": "B4",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B4_C5",
+          "desc": "Wrap and rest for 30 minutes",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:wrap_and_rest_duration",
+            "args": {
+              "duration_minutes": 30
+            }
+          },
+          "trace_to": "B4",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B4_ALT",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B4_ALT_C1",
+          "desc": "Include at least 3 specific troubleshooting tips for common dough problems",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_list_n_subpoints",
+            "args": {
+              "min_items": 3
+            }
+          },
+          "trace_to": "B4_ALT",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B4_ALT_C2",
+          "desc": "Provide visual cues for when the dough has reached the right consistency",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "elastic",
+                "springs back",
+                "smooth surface",
+                "no stickiness"
+              ],
+              "min_count": 2
+            }
+          },
+          "trace_to": "B4_ALT",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B4_ALT_C3",
+          "desc": "Explain what to do if the dough is too dry or too wet with specific corrective actions",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_cover_topics",
+            "args": {
+              "topics": [
+                "too dry",
+                "too wet",
+                "add water",
+                "add flour"
+              ]
+            }
+          },
+          "trace_to": "B4_ALT",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B4_ALT_C4",
+          "desc": "Use encouraging, reassuring language suitable for beginners",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "tone_neutral_llm_judge",
+            "args": {}
+          },
+          "trace_to": "B4_ALT",
+          "derived_from": "step5"
+        }
+      ]
+    },
+    {
+      "block_id": "B5",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B5_C1",
+          "desc": "Focus on homemade pasta with tomato basil sauce",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:topic_matches",
+            "args": {
+              "topic": "homemade pasta with tomato basil sauce"
+            }
+          },
+          "trace_to": "B5",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B5_C2",
+          "desc": "Use Markdown formatting",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:contains_markdown",
+            "args": {}
+          },
+          "trace_to": "B5",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B5_C3",
+          "desc": "Use an instructive tone",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:tone_matches",
+            "args": {
+              "tone": "instructive"
+            }
+          },
+          "trace_to": "B5",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B5_C4",
+          "desc": "Write a cooking guide",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:is_cooking_guide",
+            "args": {}
+          },
+          "trace_to": "B5",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B5_C5",
+          "desc": "Use a friendly tone",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:tone_matches",
+            "args": {
+              "tone": "friendly"
+            }
+          },
+          "trace_to": "B5",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B6",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B6_C1",
+          "desc": "Use a pasta roller or rolling pin to flatten the dough",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:action_mentioned",
+            "args": {}
+          },
+          "trace_to": "B6",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B6_C2",
+          "desc": "Cut the flattened dough into thin fettuccine strips",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:action_mentioned",
+            "args": {}
+          },
+          "trace_to": "B6",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B6_C3",
+          "desc": "Sprinkle flour on the pasta to prevent sticking",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:action_mentioned",
+            "args": {}
+          },
+          "trace_to": "B6",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B6_ALT",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B6_ALT_C1",
+          "desc": "Reimagine this stage with a fundamentally different narrative focus.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "new path"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B6_ALT_C2",
+          "desc": "Introduce a new conflict that redirects the subsequent storyline.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "conflict"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT",
+          "derived_from": "step5"
+        }
+      ]
+    },
+    {
+      "block_id": "B6_ALT_NEXT1",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B6_ALT_NEXT1_C1",
+          "desc": "Diagnose at least two critical failures driving the alternate scenario.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_list_n_subpoints",
+            "args": {
+              "n": 2
+            }
+          },
+          "trace_to": "B6_ALT_NEXT1",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B6_ALT_NEXT1_C2",
+          "desc": "Maintain an openly critical tone that assigns accountability for those failures.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "tone_negative_llm_judge",
+            "args": {}
+          },
+          "trace_to": "B6_ALT_NEXT1",
+          "derived_from": "step5"
+        }
+      ]
+    },
+    {
+      "block_id": "B6_ALT_NEXT2",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B6_ALT_NEXT2_C1",
+          "desc": "Lay out an urgent recovery plan using numbered steps.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "min_numbered_items",
+            "args": {
+              "n": 2
+            }
+          },
+          "trace_to": "B6_ALT_NEXT2",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B6_ALT_NEXT2_C2",
+          "desc": "Highlight the need for rapid collaborative action to stabilize the situation.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "urgent",
+                "collaboration"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT2",
+          "derived_from": "step5"
+        }
+      ]
+    },
+    {
+      "block_id": "B6_ALT_NEXT3",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B6_ALT_NEXT3_C1",
+          "desc": "Close with a cautious outlook that stresses long-term vigilance.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "vigilance",
+                "long-term"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT3",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B6_ALT_NEXT3_C2",
+          "desc": "Warn about the risks if corrective measures are not executed swiftly.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "risk",
+                "swiftly"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT3",
+          "derived_from": "step5"
+        }
+      ]
+    },
+    {
+      "block_id": "B6_ALT_NEXT4",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B6_ALT_NEXT4_C1",
+          "desc": "Close with a cautious outlook that stresses long-term vigilance.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "vigilance",
+                "long-term"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT4",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B6_ALT_NEXT4_C2",
+          "desc": "Warn about the risks if corrective measures are not executed swiftly.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "risk",
+                "swiftly"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT4",
+          "derived_from": "step5"
+        }
+      ]
+    },
+    {
+      "block_id": "B6_ALT_NEXT5",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B6_ALT_NEXT5_C1",
+          "desc": "Close with a cautious outlook that stresses long-term vigilance.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "vigilance",
+                "long-term"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT5",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B6_ALT_NEXT5_C2",
+          "desc": "Warn about the risks if corrective measures are not executed swiftly.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "risk",
+                "swiftly"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT5",
+          "derived_from": "step5"
+        }
+      ]
+    },
+    {
+      "block_id": "B6_ALT_NEXT6",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B6_ALT_NEXT6_C1",
+          "desc": "Close with a cautious outlook that stresses long-term vigilance.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "vigilance",
+                "long-term"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT6",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B6_ALT_NEXT6_C2",
+          "desc": "Warn about the risks if corrective measures are not executed swiftly.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "risk",
+                "swiftly"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT6",
+          "derived_from": "step5"
+        }
+      ]
+    },
+    {
+      "block_id": "B6_ALT_NEXT7",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B6_ALT_NEXT7_C1",
+          "desc": "Close with a cautious outlook that stresses long-term vigilance.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "vigilance",
+                "long-term"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT7",
+          "derived_from": "step5"
+        },
+        {
+          "cid": "B6_ALT_NEXT7_C2",
+          "desc": "Warn about the risks if corrective measures are not executed swiftly.",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "must_include_keywords",
+            "args": {
+              "keywords": [
+                "risk",
+                "swiftly"
+              ]
+            }
+          },
+          "trace_to": "B6_ALT_NEXT7",
+          "derived_from": "step5"
+        }
+      ]
+    },
+    {
+      "block_id": "B7",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B7_C1",
+          "desc": "Focus on homemade pasta with tomato basil sauce",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:topic_is_pasta_sauce",
+            "args": {
+              "pasta_type": "homemade",
+              "sauce_type": "tomato basil"
+            }
+          },
+          "trace_to": "B7",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B7_C2",
+          "desc": "Write the guide in Markdown format",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:format_is_markdown",
+            "args": {}
+          },
+          "trace_to": "B7",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B7_C3",
+          "desc": "Use an instructive tone",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:tone_is_instructive",
+            "args": {}
+          },
+          "trace_to": "B7",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B7_C4",
+          "desc": "Make the guide detailed",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:is_detailed",
+            "args": {}
+          },
+          "trace_to": "B7",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B7_C5",
+          "desc": "Write a cooking guide",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:is_cooking_guide",
+            "args": {}
+          },
+          "trace_to": "B7",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B8",
+      "logic_type": "AND",
+      "constraints": [
+        {
+          "cid": "B8_C1",
+          "desc": "List the ingredients for the tomato basil sauce",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:list_contains",
+            "args": {
+              "items": [
+                "olive oil",
+                "garlic",
+                "tomatoes",
+                "salt",
+                "basil leaves"
+              ]
+            }
+          },
+          "trace_to": "B8",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B8_C2",
+          "desc": "Specify 3 ripe tomatoes, chopped",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:quantity_matches",
+            "args": {
+              "ingredient": "tomatoes",
+              "amount": "3",
+              "condition": "ripe",
+              "preparation": "chopped"
+            }
+          },
+          "trace_to": "B8",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B8_C3",
+          "desc": "Specify 2 cloves garlic, minced",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:quantity_matches",
+            "args": {
+              "ingredient": "garlic",
+              "amount": "2",
+              "unit": "cloves",
+              "preparation": "minced"
+            }
+          },
+          "trace_to": "B8",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B8_C4",
+          "desc": "Specify fresh basil leaves",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:ingredient_specified",
+            "args": {
+              "ingredient": "basil leaves",
+              "condition": "fresh"
+            }
+          },
+          "trace_to": "B8",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B8_C5",
+          "desc": "Specify 2 tbsp olive oil",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:quantity_matches",
+            "args": {
+              "ingredient": "olive oil",
+              "amount": "2",
+              "unit": "tbsp"
+            }
+          },
+          "trace_to": "B8",
+          "derived_from": "step4"
+        }
+      ]
+    },
+    {
+      "block_id": "B9",
+      "logic_type": "sub-chain",
+      "constraints": [
+        {
+          "cid": "B9_C1",
+          "desc": "Sauté garlic in olive oil until fragrant",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:step_contains",
+            "args": {
+              "step": "Sauté garlic in olive oil until fragrant"
+            }
+          },
+          "trace_to": "B9",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B9_C2",
+          "desc": "Add tomatoes and simmer for 15 minutes",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:step_contains",
+            "args": {
+              "step": "Add tomatoes and simmer for 15 minutes"
+            }
+          },
+          "trace_to": "B9",
+          "derived_from": "step4"
+        },
+        {
+          "cid": "B9_C3",
+          "desc": "Stir in salt and chopped basil",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:step_contains",
+            "args": {
+              "step": "Stir in salt and chopped basil"
+            }
+          },
+          "trace_to": "B9",
+          "derived_from": "step4"
+        }
+      ]
+    }
+  ],
+  "selections": [
+    {
+      "sid": "SEL_B4",
+      "condition": "If the user is a beginner cook who needs more detailed guidance and troubleshooting tips",
+      "trace_to": "B4",
+      "branch_real": {
+        "block_id": "B4",
+        "constraints": [
+          "B4_C1",
+          "B4_C2",
+          "B4_C3",
+          "B4_C4",
+          "B4_C5"
+        ]
+      },
+      "branch_alt": {
+        "block_id": "B4_ALT",
+        "constraints": [
+          "B4_ALT_C1",
+          "B4_ALT_C2",
+          "B4_ALT_C3",
+          "B4_ALT_C4"
+        ]
+      },
+      "derived_from": "step5",
+      "selection_type": "local",
+      "merge_point": "B5",
+      "truncated": false,
+      "alt_path_blocks": [
+        "B4_ALT"
+      ]
+    },
+    {
+      "sid": "SEL_B6",
+      "condition": "If a radically different storyline is required",
+      "trace_to": "B6",
+      "branch_real": {
+        "block_id": "B6",
+        "constraints": [
+          "B6_C1",
+          "B6_C2",
+          "B6_C3"
+        ]
+      },
+      "branch_alt": {
+        "block_id": "B6_ALT",
+        "constraints": [
+          "B6_ALT_C1",
+          "B6_ALT_C2",
+          "B6_ALT_NEXT1_C1",
+          "B6_ALT_NEXT1_C2",
+          "B6_ALT_NEXT2_C1",
+          "B6_ALT_NEXT2_C2",
+          "B6_ALT_NEXT3_C1",
+          "B6_ALT_NEXT3_C2",
+          "B6_ALT_NEXT4_C1",
+          "B6_ALT_NEXT4_C2",
+          "B6_ALT_NEXT5_C1",
+          "B6_ALT_NEXT5_C2",
+          "B6_ALT_NEXT6_C1",
+          "B6_ALT_NEXT6_C2",
+          "B6_ALT_NEXT7_C1",
+          "B6_ALT_NEXT7_C2"
+        ]
+      },
+      "derived_from": "step5",
+      "selection_type": "global",
+      "merge_point": null,
+      "truncated": false,
+      "alt_path_blocks": [
+        "B6_ALT",
+        "B6_ALT_NEXT1",
+        "B6_ALT_NEXT2",
+        "B6_ALT_NEXT3",
+        "B6_ALT_NEXT4",
+        "B6_ALT_NEXT5",
+        "B6_ALT_NEXT6",
+        "B6_ALT_NEXT7"
+      ]
+    }
+  ],
+  "meta": {
+    "assembled_from": {
+      "step1": "seed_task",
+      "step2": "segmentation",
+      "step3": "global_constraints",
+      "step4": "block_constraints + block_logic",
+      "step5": "selections + augmented block_constraints"
+    }
+  }
+}

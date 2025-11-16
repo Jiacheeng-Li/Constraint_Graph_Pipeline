@@ -1,0 +1,90 @@
+SYSTEM INSTRUCTIONS:
+
+OVERALL TASK:
+- Write a detailed Markdown-formatted cooking guide for homemade pasta with tomato basil sauce in an instructive yet friendly tone.
+
+GLOBAL MANDATORY CONSTRAINTS:
+You MUST satisfy ALL of the following properties throughout the entire answer:
+- Limit the response to a maximum of 235 words.
+- Do not use contractions; write out full forms.
+- Write a minimum of 13 paragraphs.
+- Keep heading hierarchy consistent; allow levels [1, 2] only.
+- Incorporate the keywords exactly as listed: "pasta", "basil", "step".
+- Use clear, step-by-step instructional language with imperative verbs
+- Include ingredient lists and measurements for each recipe component
+- Provide practical tips and alternatives for ingredient substitutions
+- Highlight important notices or warnings prominently at the beginning
+- Use emojis and symbols for visual emphasis and section identification
+- Specify cooking times and doneness indicators (e.g., 'al dente')
+- Offer optional serving suggestions for customization
+
+REQUIRED OUTPUT STRUCTURE (STAGED PLAN):
+Your answer MUST be organized into the following stages / sections.
+You do not need to literally copy these headings, but you MUST perform the listed duties.
+
+Opening:
+Cover all of the following points:
+  • Include a heading with the text 'Homemade Pasta with Tomato Basil Sauce'
+  • Use a Markdown heading format for the title
+  • Include an emoji (🍝) in the heading
+
+Notice:
+Cover all of the following points:
+  • State that the recipe is not suitable for vegetarians
+  • Include a notice section with a warning header
+
+Step Instructions:
+Work through the following steps in order:
+  • Knead for about 10 minutes until smooth
+  • Make a well in the center of the flour
+  • Mix until the dough comes together
+  • Add eggs, salt, and olive oil
+  • Wrap and rest for 30 minutes
+
+Step Instructions:
+Branch conditions and obligations:
+  • When The cooking guide is targeted at beginners who may not have specialized pasta-making equipment:
+    - Provide detailed rolling pin technique with thickness guidance
+    - Demonstrate multiple cutting options beyond fettuccine
+    - Include troubleshooting tips for common dough handling issues
+  • When the condition is not satisfied:
+    - Use a pasta roller or rolling pin to flatten the dough
+    - Cut the flattened dough into thin fettuccine strips
+    - Sprinkle flour to prevent sticking
+
+Step Instructions:
+Branch conditions and obligations:
+  • When The cooking guide targets complete beginners who need extra reassurance and encouragement:
+    - Step Instructions:
+      • Include encouraging language and reassurance phrases for novice cooks
+      • Provide troubleshooting tips for common sauce-making mistakes
+      • Use first-person plural pronouns to create a collaborative tone
+    - Step Instructions (alternate path):
+      • Diagnose at least two critical failures driving the alternate scenario.
+      • Maintain an openly critical tone that assigns accountability for those failures.
+    - Tips (alternate path):
+      • Lay out an urgent recovery plan using numbered steps.
+      • Highlight the need for rapid collaborative action to stabilize the situation.
+  • When the condition is not satisfied:
+    - Step Instructions:
+      • Maintain a neutral, analytical tone without emotional or inflammatory language.
+      • Provide a numbered list with at least 3 items.
+    - Step Instructions:
+      • Boil pasta for 3–4 minutes until al dente
+      • Toss pasta with sauce after draining
+      • Mention parmesan cheese as optional
+      • Drain pasta after boiling
+    - Tips:
+      • Provide canned crushed tomatoes as an alternative when fresh tomatoes are unavailable
+      • Recommend serving the dish immediately to achieve the best texture
+
+CONDITION FOR THIS RESPONSE:
+- Step Instructions: The cooking guide is not targeted at beginners who may not have specialized pasta-making equipment.
+- Step Instructions: It is not the case that the cooking guide targets complete beginners who need extra reassurance and encouragement.
+- Step Instructions: The cooking guide is not for advanced cooks who want to enhance flavor complexity.
+- Tips: The cooking guide is not intended for meal prep or make-ahead scenarios.
+
+EVALUATION NOTICE:
+- Your answer will be checked against the global requirements, each stage’s duties, and the branch obligations implied by the stated condition.
+- Alternate branch requirements only apply when their corresponding condition is satisfied; otherwise use the duties listed for the condition not being satisfied.
+- Automated checks will verify language, tone, required details, and branch-specific requirements.

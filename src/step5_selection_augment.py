@@ -71,7 +71,6 @@ Fallback：
 """
 
 import json
-import requests
 import random
 import hashlib
 import copy
@@ -84,9 +83,10 @@ from .graph_schema import (
 )
 from .utils.text_clean import make_snippet, clip
 
-_DEEPSEEK_API_KEY_DEFAULT = "sk-4bb3e24d26674a30b2cc7e2ff1bfc763"
-_DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
-_DEEPSEEK_MODEL = "deepseek-chat"
+from .utils.deepseek_client import call_chat_completions, DeepSeekError
+_DEEPSEEK_API_KEY_DEFAULT = ""
+_DEEPSEEK_ENDPOINT = ""
+_DEEPSEEK_MODEL = ""
 
 # Selection configuration (can be tuned for experiments)
 SELECTION_CONFIG = {
@@ -339,35 +339,20 @@ def _call_deepseek_selection_aug(block_id: str,
         "Return ONLY the JSON spec described above.\n"
     )
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {_DEEPSEEK_API_KEY_DEFAULT}",
-    }
-
-    payload = {
-        "model": _DEEPSEEK_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.3,
-        "max_tokens": 900,
-    }
-
     try:
-        resp = requests.post(
-            _DEEPSEEK_ENDPOINT, headers=headers, data=json.dumps(payload), timeout=20
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        content = data["choices"][0]["message"]["content"].strip()
-
+        content = call_chat_completions(
+            messages=[{"role": "user", "content": user_prompt}],
+            system_prompt=system_prompt,
+            temperature=0.3,
+            max_tokens=900,
+            timeout=20,
+        ).strip()
         start = content.find("{")
         end = content.rfind("}") + 1
         json_str = content[start:end]
         parsed = json.loads(json_str)
         return parsed
-    except Exception:
+    except (DeepSeekError, Exception):
         return {}
 
 
@@ -428,7 +413,7 @@ def _build_global_followup_fallback(base_alt_block_id: str,
         new_block_id = f"{base_alt_block_id}_NEXT{idx}"
         original_info = block_info_map.get(original_bid, {})
         base_intent = original_info.get("intent") or original_bid
-        new_intent = f"{base_intent} (alternate path)"
+        new_intent = base_intent
 
         current_order += 1
         new_spec = BlockSpec(

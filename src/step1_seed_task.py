@@ -25,12 +25,12 @@ Step 1: 种子任务抽取 (Seed Task Extraction)
 
 from typing import Optional
 import re
-import requests
-import json
+from .utils.deepseek_client import call_chat_completions, DeepSeekError
 
-_DEEPSEEK_API_KEY_DEFAULT = "sk-4bb3e24d26674a30b2cc7e2ff1bfc763"
-_DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
-_DEEPSEEK_MODEL = "deepseek-chat"
+# Deprecated per-unified client configuration kept only for signature compatibility
+_DEEPSEEK_API_KEY_DEFAULT = ""
+_DEEPSEEK_ENDPOINT = ""
+_DEEPSEEK_MODEL = ""
 
 
 # ---------- 基础清洗（仅用于 fallback） ----------
@@ -135,33 +135,22 @@ def _call_deepseek_seed_task_full_context(instruction_text: str,
         "Now output the single distilled task sentence."
     )
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key or _DEEPSEEK_API_KEY_DEFAULT}",
-    }
-
-    payload = {
-        "model": model or _DEEPSEEK_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": user_prompt},
-        ],
-        "temperature": 0.0,
-        "max_tokens": 64,
-    }
-
     try:
-        resp = requests.post(endpoint or _DEEPSEEK_ENDPOINT,
-                             headers=headers,
-                             data=json.dumps(payload),
-                             timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        content = data["choices"][0]["message"]["content"].strip()
-        # 取第一行，确保只保留一行
+        content = call_chat_completions(
+            messages=[
+                {"role": "user", "content": user_prompt},
+            ],
+            system_prompt=system_prompt,
+            model=model or None,
+            api_key=api_key or None,
+            endpoint=endpoint or None,
+            temperature=0.0,
+            max_tokens=64,
+            timeout=10,
+        ).strip()
         first_line = content.splitlines()[0].strip()
         return first_line
-    except Exception:
+    except DeepSeekError:
         return ""
 
 

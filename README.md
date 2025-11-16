@@ -254,6 +254,8 @@ Pipeline_10.25/
 │  ├─ scoring_runner.py             # Step 8: 评分执行与自动评估结果生成
 │  │
 │  ├─ utils/
+│  │   ├─ templates.py              # 硬性/格式化模板池
+│  │   ├─ prompts.py                # 软性/LLM 提示词池
 │  │   ├─ parsing.py                # 解析LLM输出，提取block与约束信息
 │  │   ├─ verifier_registry.py      # 注册并管理verifier_spec对应的检测函数
 │  │   ├─ text_clean.py             # 文本清理与规范化工具
@@ -265,7 +267,8 @@ Pipeline_10.25/
 │  │   ├─ soft_checks.py            # 软性验证（语气、风格、一致性）
 │  │   └─ evaluate.py               # 约束满足度评测与C-node检查
 │  │
-│  └─ pipeline_runner.py            # 主调度脚本，顺序执行1~7步
+│  ├─ pipeline_runner.py            # 主调度脚本，顺序执行1~7步 
+│  └─ scoring_runner.py             # 测试评分脚本
 │
 └─ examples/
    ├─ example_instruction.txt

@@ -38,14 +38,15 @@ DeepSeek API（deepseek-chat）
 """
 
 import json
-import requests
 from typing import Dict, Any
+from .utils.deepseek_client import call_chat_completions, DeepSeekError
 
 from .utils.parsing import extract_blocks
 
-_DEEPSEEK_API_KEY_DEFAULT = "sk-4bb3e24d26674a30b2cc7e2ff1bfc763"
-_DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
-_DEEPSEEK_MODEL = "deepseek-chat"
+# Deprecated per-unified client configuration (kept for minimal diff)
+_DEEPSEEK_API_KEY_DEFAULT = ""
+_DEEPSEEK_ENDPOINT = ""
+_DEEPSEEK_MODEL = ""
 
 
 def _call_deepseek_segmentation(response_text: str) -> str:
@@ -82,31 +83,18 @@ def _call_deepseek_segmentation(response_text: str) -> str:
         f"ANSWER TEXT:\n{response_text.strip()}"
     )
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {_DEEPSEEK_API_KEY_DEFAULT}",
-    }
-
-    payload = {
-        "model": _DEEPSEEK_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.0,
-        "max_tokens": 800,
-    }
-
     try:
-        resp = requests.post(
-            _DEEPSEEK_ENDPOINT, headers=headers, data=json.dumps(payload), timeout=20
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        content = data["choices"][0]["message"]["content"].strip()
+        content = call_chat_completions(
+            messages=[
+                {"role": "user", "content": user_prompt},
+            ],
+            system_prompt=system_prompt,
+            temperature=0.0,
+            max_tokens=800,
+            timeout=20,
+        ).strip()
         return content
-    except Exception:
-        # 兜底：直接返回原始 response_text，让上层 fallback
+    except DeepSeekError:
         return "{}"
 
 

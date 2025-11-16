@@ -1,0 +1,154 @@
+SYSTEM INSTRUCTIONS:
+
+1. MISSION BRIEF & DELIVERABLE
+   - Primary directive: Write a detailed Markdown-formatted cooking guide for homemade pasta with tomato basil sauce in an instructive yet friendly tone.
+
+2. NON-NEGOTIABLE GLOBAL RULES
+   Respect every rule simultaneously across the full response:
+   1. Maintain an approximate length near 196 words (±15%).
+   2. Contractions are disallowed; prefer full phrases.
+   3. Break the content into 13+ paragraphs.
+   4. Use a consistent list marker style ('-'); do not mix list markers.
+   5. Include the following keywords: "pasta", "basil", "step".
+   6. Include clear dietary or suitability notices when relevant
+   7. Use numbered steps and bullet points for structured instructions
+   8. Provide optional or alternative ingredient suggestions
+   9. Include practical tips for ingredient substitution or serving
+
+3. STRUCTURED RESPONSE BLUEPRINT
+   Work through each stage in order; the logic cue tells you whether the bullets act in parallel or as a mini-sequence.
+
+   Stage 1 – Title (B1)
+      Logic cue: Parallel coverage (hit every bullet for this stage).
+      Required duties:
+        • Include a title with the text 'Homemade Pasta with Tomato Basil Sauce'
+        • Format the title as a level 1 heading using Markdown syntax
+        • Include a pasta emoji (🍝) in the title
+
+   Stage 2 – Notice (B2)
+      Logic cue: Parallel coverage (hit every bullet for this stage).
+      Required duties:
+        • State that the recipe is not suitable for vegetarians
+        • Include a notice section with a warning symbol
+
+   Stage 3 – Step Instruction (B3)
+      Logic cue: Sequential micro-steps (address each bullet in a flowing order).
+      Required duties:
+        • Knead for about 10 minutes until smooth
+        • Make a well in the center of the flour
+        • Mix until the dough comes together
+        • Add eggs, salt, and olive oil
+        • Wrap and rest for 30 minutes
+
+   Stage 4 – Step Instruction (B4)
+      Logic cue: Parallel coverage (hit every bullet for this stage).
+      Required duties:
+        • Use a pasta roller or rolling pin to flatten the dough
+        • Cut the flattened dough into thin fettuccine strips
+        • Sprinkle flour to prevent sticking
+      Conditional hook(s): Refer to branch playbook entries SEL_B4.
+
+   Stage 5 – Step Instruction (B5)
+      Logic cue: Sequential micro-steps (address each bullet in a flowing order).
+      Required duties:
+        • List tomatoes as an ingredient with quantity 3 ripe chopped
+        • List garlic as an ingredient with quantity 2 cloves minced
+        • List olive oil as an ingredient with quantity 2 tbsp
+        • Instruct to sauté garlic in olive oil until fragrant
+        • Instruct to add tomatoes and simmer for 15 minutes
+      Conditional hook(s): Refer to branch playbook entries SEL_B5.
+
+   Stage 6 – Step Instruction (B6)
+      Logic cue: Parallel coverage (hit every bullet for this stage).
+      Required duties:
+        • Boil pasta for 3–4 minutes until al dente
+        • Mention optional parmesan cheese addition
+        • Drain the pasta after boiling
+        • Toss pasta with the sauce
+      Conditional hook(s): Refer to branch playbook entries SEL_B6.
+
+   Stage 7 – Tips (B7)
+      Logic cue: Parallel coverage (hit every bullet for this stage).
+      Required duties:
+        • Suggest using canned crushed tomatoes if fresh tomatoes are unavailable
+        • Recommend serving the pasta immediately for optimal texture
+      Conditional hook(s): Refer to branch playbook entries SEL_B7.
+
+4. CONDITIONAL BRANCH PLAYBOOK
+   Each entry below is an IF/THEN/ELSE obligation. Follow nested chains exactly as laid out.
+
+   4.1 Selection SEL_B4 – LOCAL at Step Instruction
+      Trigger signal: The cooking guide is targeted at beginners who may not have specialized pasta-making equipment.
+      IF the condition holds THEN:
+         - Step Instruction:
+            • Provide detailed rolling pin technique with thickness guidance
+            • Offer multiple cutting options beyond fettuccine for beginners
+            • Include troubleshooting tips for common beginner mistakes
+            • Use encouraging, reassuring language about imperfect results
+      OTHERWISE (condition not met):
+         - Step Instruction:
+            • Use a pasta roller or rolling pin to flatten the dough
+            • Cut the flattened dough into thin fettuccine strips
+            • Sprinkle flour to prevent sticking
+
+   4.2 Selection SEL_B5 – GLOBAL at Step Instruction
+      Trigger signal: The cooking guide is for a quick 15-minute meal version.
+      IF the condition holds THEN:
+         - Step Instruction:
+            • Use canned crushed tomatoes instead of fresh tomatoes to save preparation time
+            • Specify using dried basil instead of fresh basil for convenience
+            • Reduce simmering time to 5-7 minutes for faster preparation
+            • Include garlic powder as an alternative to fresh garlic for quicker prep
+            • Emphasize time-saving aspect in the instructions
+         - Step Instruction:
+            • Diagnose at least two critical failures driving the alternate scenario.
+            • Maintain an openly critical tone that assigns accountability for those failures.
+         - Tips:
+            • Lay out an urgent recovery plan using numbered steps.
+            • Highlight the need for rapid collaborative action to stabilize the situation.
+      OTHERWISE (condition not met):
+         - Step Instruction:
+            • List tomatoes as an ingredient with quantity 3 ripe chopped
+            • List garlic as an ingredient with quantity 2 cloves minced
+            • List olive oil as an ingredient with quantity 2 tbsp
+            • Instruct to sauté garlic in olive oil until fragrant
+            • Instruct to add tomatoes and simmer for 15 minutes
+         - Continue executing all downstream stages exactly as written in the Structured Response Blueprint unless another selection overrides them.
+
+   4.3 Selection SEL_B6 – LOCAL at Step Instruction
+      Trigger signal: The cooking guide is for advanced cooks who want to enhance flavor complexity.
+      IF the condition holds THEN:
+         - Step Instruction:
+            • Reserve 1/4 cup of pasta water before draining to adjust sauce consistency
+            • Instruct to toss pasta with sauce over low heat for 30 seconds to meld flavors
+            • Recommend finishing with fresh basil chiffonade instead of just parmesan
+            • Specify to use tongs for tossing to ensure even coating
+      OTHERWISE (condition not met):
+         - Step Instruction:
+            • Boil pasta for 3–4 minutes until al dente
+            • Mention optional parmesan cheese addition
+            • Drain the pasta after boiling
+            • Toss pasta with the sauce
+
+   4.4 Selection SEL_B7 – LOCAL at Tips
+      Trigger signal: The cooking guide is targeted at advanced home cooks who want to experiment with variations and storage options.
+      IF the condition holds THEN:
+         - Tips:
+            • Suggest roasting canned tomatoes with garlic and olive oil for deeper flavor instead of using them directly
+            • Provide instructions for storing and reheating leftovers while maintaining quality
+      OTHERWISE (condition not met):
+         - Tips:
+            • Suggest using canned crushed tomatoes if fresh tomatoes are unavailable
+            • Recommend serving the pasta immediately for optimal texture
+
+5. CURRENT CONDITION ASSUMPTION
+   When crafting the answer, assume each condition below is currently NOT satisfied unless the evaluation run-time specifies otherwise.
+   - Step Instruction: The cooking guide is not targeted at beginners who may not have specialized pasta-making equipment.
+   - Step Instruction: The cooking guide is not for a quick 15-minute meal version.
+   - Step Instruction: The cooking guide is not for advanced cooks who want to enhance flavor complexity.
+   - Tips: The cooking guide is not targeted at advanced home cooks who want to experiment with variations and storage options.
+
+6. EVALUATION NOTICE
+- Automated checks will verify every global rule, each stage’s duties, and the branch-specific obligations you triggered.
+- Once you pick a branch, treat all bullets under that branch as mandatory, and do not mix incompatible paths unless explicitly told to merge.
+- Language, tone, structural cues, and conditional behaviors are all inspected.

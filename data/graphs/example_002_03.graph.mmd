@@ -1,0 +1,120 @@
+%% Mermaid flowchart for sample `example_002_03`
+%% Paste this into any Mermaid renderer to view the graph.
+
+flowchart LR
+    SEED(((Write a detailed Markdown-formatted cooking guide for hom...)))
+    subgraph GLOBAL[Global Constraints]
+        G1((G1: Limit the response to a maximum of 235 words.))
+        G2((G2: Do not use contractions; write out full forms.))
+        G3((G3: Write a minimum of 13 paragraphs.))
+        G4((G4: Keep heading hierarchy consistent; allow levels [1, 2...))
+        G5((G5: Incorporate the keywords exactly as listed: "pasta",...))
+        G6((G6: Use clear, step-by-step instructional language with i...))
+        G7((G7: Include ingredient lists and measurements for each re...))
+        G8((G8: Provide practical tips and alternatives for ingredien...))
+        G9((G9: Highlight important notices or warnings prominently a...))
+        G10((G10: Use emojis and symbols for visual emphasis and secti...))
+        G11((G11: Specify cooking times and doneness indicators e.g.,...))
+        G12((G12: Offer optional serving suggestions for customization))
+        G1 --- G2 --- G3 --- G4 --- G5 --- G6 --- G7 --- G8 --- G9 --- G10 --- G11 --- G12
+    end
+    SEED --> G1
+    subgraph B1[B1 Opening]
+        B1_C1["B1_C1: Include a heading with the text 'Homemade Pasta wi..."]
+        B1_C2["B1_C2: Use a Markdown heading format for the title"]
+        B1_C3["B1_C3: Include an emoji 🍝 in the heading"]
+        B1_C1 --- B1_C2 --- B1_C3
+    end
+    subgraph B2[B2 Notice]
+        B2_C1["B2_C1: State that the recipe is not suitable for vegetarians"]
+        B2_C2["B2_C2: Include a notice section with a warning header"]
+        B2_C1 --- B2_C2
+    end
+    subgraph B3[B3 Step Instructions]
+        B3_C1["B3_C1: Knead for about 10 minutes until smooth"]
+        B3_C2["B3_C2: Make a well in the center of the flour"]
+        B3_C3["B3_C3: Mix until the dough comes together"]
+        B3_C4["B3_C4: Add eggs, salt, and olive oil"]
+        B3_C5["B3_C5: Wrap and rest for 30 minutes"]
+        B3_C1 --> B3_C2 --> B3_C3 --> B3_C4 --> B3_C5
+    end
+    subgraph B4[B4 Step Instructions]
+        B4_C1["B4_C1: Use a pasta roller or rolling pin to flatten the d..."]
+        B4_C2["B4_C2: Cut the flattened dough into thin fettuccine strips"]
+        B4_C3["B4_C3: Sprinkle flour to prevent sticking"]
+        B4_C1 --- B4_C2 --- B4_C3
+    end
+    subgraph B4_ALT[B4_ALT Step Instructions]
+        B4_ALT_C1["B4_ALT_C1: Provide detailed rolling pin technique with th..."]
+        B4_ALT_C2["B4_ALT_C2: Demonstrate multiple cutting options beyond fe..."]
+        B4_ALT_C3["B4_ALT_C3: Include troubleshooting tips for common dough..."]
+        B4_ALT_C1 --- B4_ALT_C2 --- B4_ALT_C3
+    end
+    subgraph B5[B5 Step Instructions]
+        B5_C1["B5_C1: Maintain a neutral, analytical tone without emotio..."]
+        B5_C2["B5_C2: Provide a numbered list with at least 3 items."]
+        B5_C1 --> B5_C2
+    end
+    subgraph B5_ALT[B5_ALT Step Instructions]
+        B5_ALT_C1["B5_ALT_C1: Include encouraging language and reassurance p..."]
+        B5_ALT_C2["B5_ALT_C2: Provide troubleshooting tips for common sauce-..."]
+        B5_ALT_C3["B5_ALT_C3: Use first-person plural pronouns to create a c..."]
+        B5_ALT_C1 --- B5_ALT_C2 --- B5_ALT_C3
+    end
+    subgraph B5_ALT_NEXT1[B5_ALT_NEXT1 Step Instructions alternate path]
+        B5_ALT_NEXT1_C1["B5_ALT_NEXT1_C1: Diagnose at least two critical failures..."]
+        B5_ALT_NEXT1_C2["B5_ALT_NEXT1_C2: Maintain an openly critical tone that as..."]
+        B5_ALT_NEXT1_C1 --- B5_ALT_NEXT1_C2
+    end
+    subgraph B6[B6 Step Instructions]
+        B6_C1["B6_C1: Boil pasta for 3–4 minutes until al dente"]
+        B6_C2["B6_C2: Toss pasta with sauce after draining"]
+        B6_C3["B6_C3: Mention parmesan cheese as optional"]
+        B6_C4["B6_C4: Drain pasta after boiling"]
+        B6_C1 --- B6_C2 --- B6_C3 --- B6_C4
+    end
+    subgraph B6_ALT[B6_ALT Step Instructions]
+        B6_ALT_C1["B6_ALT_C1: Reserve 1/4 cup pasta water before draining an..."]
+        B6_ALT_C2["B6_ALT_C2: Specify tossing pasta with sauce in the warm p..."]
+        B6_ALT_C3["B6_ALT_C3: Include fresh basil chiffonade as a finishing..."]
+        B6_ALT_C4["B6_ALT_C4: Recommend letting pasta rest for 1 minute afte..."]
+        B6_ALT_C1 --- B6_ALT_C2 --- B6_ALT_C3 --- B6_ALT_C4
+    end
+    subgraph B5_ALT_NEXT2[B5_ALT_NEXT2 Tips alternate path]
+        B5_ALT_NEXT2_C1["B5_ALT_NEXT2_C1: Lay out an urgent recovery plan using nu..."]
+        B5_ALT_NEXT2_C2["B5_ALT_NEXT2_C2: Highlight the need for rapid collaborati..."]
+        B5_ALT_NEXT2_C1 --- B5_ALT_NEXT2_C2
+    end
+    subgraph B7[B7 Tips]
+        B7_C1["B7_C1: Provide canned crushed tomatoes as an alternative..."]
+        B7_C2["B7_C2: Recommend serving the dish immediately to achieve..."]
+        B7_C1 --- B7_C2
+    end
+    subgraph B7_ALT[B7_ALT Tips]
+        B7_ALT_C1["B7_ALT_C1: Provide storage instructions for both pasta an..."]
+        B7_ALT_C2["B7_ALT_C2: Include reheating recommendations to restore o..."]
+        B7_ALT_C1 --- B7_ALT_C2
+    end
+    G12 --> B1_C1
+    B1_C3 --> B2_C1
+    B2_C2 --> B3_C1
+    DEC_SEL_B4{"If the cooking guide is targeted at beginners who may not..."}
+    B3_C5 --> DEC_SEL_B4
+    DEC_SEL_B4 --> B4_C1
+    DEC_SEL_B4 --> B4_ALT_C1
+    B4_ALT_C3 --> DEC_SEL_B5
+    DEC_SEL_B5{"If the cooking guide targets complete beginners who need..."}
+    B4_C3 --> DEC_SEL_B5
+    DEC_SEL_B5 --> B5_C1
+    DEC_SEL_B5 --> B5_ALT_C1
+    B5_ALT_C3 --> B5_ALT_NEXT1_C1
+    B5_ALT_NEXT1_C2 --> B5_ALT_NEXT2_C1
+    DEC_SEL_B6{"If the cooking guide is for advanced cooks who want to en..."}
+    B5_C2 --> DEC_SEL_B6
+    DEC_SEL_B6 --> B6_C1
+    DEC_SEL_B6 --> B6_ALT_C1
+    B6_ALT_C4 --> DEC_SEL_B7
+    DEC_SEL_B7{"If the cooking guide is intended for meal prep or make-ah..."}
+    B6_C4 --> DEC_SEL_B7
+    DEC_SEL_B7 --> B7_C1
+    DEC_SEL_B7 --> B7_ALT_C1

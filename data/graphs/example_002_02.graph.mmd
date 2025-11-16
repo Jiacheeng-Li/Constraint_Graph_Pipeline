@@ -1,0 +1,167 @@
+%% Mermaid flowchart for sample `example_002_02`
+%% Paste this into any Mermaid renderer to view the graph.
+
+flowchart LR
+    SEED(((Write a detailed Markdown-formatted cooking guide for hom...)))
+    subgraph GLOBAL[Global Constraints]
+        G1((G1: Your answer should be no shorter than 166 and no long...))
+        G2((G2: Ensure the response is predominantly in English.))
+        G3((G3: Ensure at least 13 distinct paragraphs.))
+        G4((G4: Use consistent Markdown heading levels: only [1, 2].))
+        G5((G5: Write without first-person perspective throughout.))
+        G1 --- G2 --- G3 --- G4 --- G5
+    end
+    SEED --> G1
+    subgraph B1[B1 TBD]
+        B1_C1["B1_C1: Include 'Homemade Pasta with Tomato Basil Sauce' a..."]
+        B1_C2["B1_C2: Format the title as a level 1 Markdown heading"]
+        B1_C3["B1_C3: Use a pasta emoji in the title"]
+        B1_C1 --- B1_C2 --- B1_C3
+    end
+    subgraph B2[B2 TBD]
+        B2_C1["B2_C1: Include a notice that the recipe is not suitable f..."]
+    end
+    subgraph B3[B3 TBD]
+        B3_C1["B3_C1: Include all-purpose flour as an ingredient"]
+        B3_C2["B3_C2: List the ingredients for the dough"]
+        B3_C3["B3_C3: Include olive oil as an ingredient"]
+        B3_C4["B3_C4: Specify quantity for olive oil"]
+        B3_C5["B3_C5: Include eggs as an ingredient"]
+        B3_C1 --- B3_C2 --- B3_C3 --- B3_C4 --- B3_C5
+    end
+    subgraph B4[B4 TBD]
+        B4_C1["B4_C1: Knead for about 10 minutes until smooth"]
+        B4_C2["B4_C2: Make a well in the center of the flour"]
+        B4_C3["B4_C3: Mix until the dough comes together"]
+        B4_C4["B4_C4: Add eggs, salt, and olive oil"]
+        B4_C5["B4_C5: Wrap and rest for 30 minutes"]
+        B4_C1 --> B4_C2 --> B4_C3 --> B4_C4 --> B4_C5
+    end
+    subgraph B4_ALT[B4_ALT TBD]
+        B4_ALT_C1["B4_ALT_C1: Include at least 3 specific troubleshooting ti..."]
+        B4_ALT_C2["B4_ALT_C2: Provide visual cues for when the dough has rea..."]
+        B4_ALT_C3["B4_ALT_C3: Explain what to do if the dough is too dry or..."]
+        B4_ALT_C4["B4_ALT_C4: Use encouraging, reassuring language suitable..."]
+        B4_ALT_C1 --- B4_ALT_C2 --- B4_ALT_C3 --- B4_ALT_C4
+    end
+    subgraph B5[B5 TBD]
+        B5_C1["B5_C1: Focus on homemade pasta with tomato basil sauce"]
+        B5_C2["B5_C2: Use Markdown formatting"]
+        B5_C3["B5_C3: Use an instructive tone"]
+        B5_C4["B5_C4: Write a cooking guide"]
+        B5_C5["B5_C5: Use a friendly tone"]
+        B5_C1 --- B5_C2 --- B5_C3 --- B5_C4 --- B5_C5
+    end
+    subgraph B6[B6 TBD]
+        B6_C1["B6_C1: Use a pasta roller or rolling pin to flatten the d..."]
+        B6_C2["B6_C2: Cut the flattened dough into thin fettuccine strips"]
+        B6_C3["B6_C3: Sprinkle flour on the pasta to prevent sticking"]
+        B6_C1 --- B6_C2 --- B6_C3
+    end
+    subgraph B6_ALT[B6_ALT TBD]
+        B6_ALT_C1["B6_ALT_C1: Reimagine this stage with a fundamentally diff..."]
+        B6_ALT_C2["B6_ALT_C2: Introduce a new conflict that redirects the su..."]
+        B6_ALT_C1 --- B6_ALT_C2
+    end
+    subgraph B6_ALT_NEXT1[B6_ALT_NEXT1 TBD alternate path]
+        B6_ALT_NEXT1_C1["B6_ALT_NEXT1_C1: Diagnose at least two critical failures..."]
+        B6_ALT_NEXT1_C2["B6_ALT_NEXT1_C2: Maintain an openly critical tone that as..."]
+        B6_ALT_NEXT1_C1 --- B6_ALT_NEXT1_C2
+    end
+    subgraph B7[B7 TBD]
+        B7_C1["B7_C1: Focus on homemade pasta with tomato basil sauce"]
+        B7_C2["B7_C2: Write the guide in Markdown format"]
+        B7_C3["B7_C3: Use an instructive tone"]
+        B7_C4["B7_C4: Make the guide detailed"]
+        B7_C5["B7_C5: Write a cooking guide"]
+        B7_C1 --- B7_C2 --- B7_C3 --- B7_C4 --- B7_C5
+    end
+    subgraph B6_ALT_NEXT2[B6_ALT_NEXT2 TBD alternate path]
+        B6_ALT_NEXT2_C1["B6_ALT_NEXT2_C1: Lay out an urgent recovery plan using nu..."]
+        B6_ALT_NEXT2_C2["B6_ALT_NEXT2_C2: Highlight the need for rapid collaborati..."]
+        B6_ALT_NEXT2_C1 --- B6_ALT_NEXT2_C2
+    end
+    subgraph B8[B8 TBD]
+        B8_C1["B8_C1: List the ingredients for the tomato basil sauce"]
+        B8_C2["B8_C2: Specify 3 ripe tomatoes, chopped"]
+        B8_C3["B8_C3: Specify 2 cloves garlic, minced"]
+        B8_C4["B8_C4: Specify fresh basil leaves"]
+        B8_C5["B8_C5: Specify 2 tbsp olive oil"]
+        B8_C1 --- B8_C2 --- B8_C3 --- B8_C4 --- B8_C5
+    end
+    subgraph B6_ALT_NEXT3[B6_ALT_NEXT3 TBD alternate path]
+        B6_ALT_NEXT3_C1["B6_ALT_NEXT3_C1: Close with a cautious outlook that stres..."]
+        B6_ALT_NEXT3_C2["B6_ALT_NEXT3_C2: Warn about the risks if corrective measu..."]
+        B6_ALT_NEXT3_C1 --- B6_ALT_NEXT3_C2
+    end
+    subgraph B9[B9 TBD]
+        B9_C1["B9_C1: Sauté garlic in olive oil until fragrant"]
+        B9_C2["B9_C2: Add tomatoes and simmer for 15 minutes"]
+        B9_C3["B9_C3: Stir in salt and chopped basil"]
+        B9_C1 --> B9_C2 --> B9_C3
+    end
+    subgraph B10[B10 TBD]
+        B10_C1["B10_C1: Return only the JSON"]
+    end
+    subgraph B6_ALT_NEXT4[B6_ALT_NEXT4 TBD alternate path]
+        B6_ALT_NEXT4_C1["B6_ALT_NEXT4_C1: Close with a cautious outlook that stres..."]
+        B6_ALT_NEXT4_C2["B6_ALT_NEXT4_C2: Warn about the risks if corrective measu..."]
+        B6_ALT_NEXT4_C1 --- B6_ALT_NEXT4_C2
+    end
+    subgraph B11[B11 TBD]
+        B11_C1["B11_C1: Boil pasta for 3–4 minutes until al dente"]
+        B11_C2["B11_C2: Mention optional parmesan cheese addition"]
+        B11_C3["B11_C3: Toss drained pasta with sauce"]
+        B11_C4["B11_C4: Drain pasta after boiling"]
+        B11_C1 --- B11_C2 --- B11_C3 --- B11_C4
+    end
+    subgraph B6_ALT_NEXT5[B6_ALT_NEXT5 TBD alternate path]
+        B6_ALT_NEXT5_C1["B6_ALT_NEXT5_C1: Close with a cautious outlook that stres..."]
+        B6_ALT_NEXT5_C2["B6_ALT_NEXT5_C2: Warn about the risks if corrective measu..."]
+        B6_ALT_NEXT5_C1 --- B6_ALT_NEXT5_C2
+    end
+    subgraph B12[B12 TBD]
+        B12_C1["B12_C1: Return only the JSON"]
+    end
+    subgraph B6_ALT_NEXT6[B6_ALT_NEXT6 TBD alternate path]
+        B6_ALT_NEXT6_C1["B6_ALT_NEXT6_C1: Close with a cautious outlook that stres..."]
+        B6_ALT_NEXT6_C2["B6_ALT_NEXT6_C2: Warn about the risks if corrective measu..."]
+        B6_ALT_NEXT6_C1 --- B6_ALT_NEXT6_C2
+    end
+    subgraph B13[B13 TBD]
+        B13_C1["B13_C1: Provide canned crushed tomatoes as an alternative..."]
+        B13_C2["B13_C2: Instruct to serve the pasta immediately for optim..."]
+        B13_C1 --- B13_C2
+    end
+    subgraph B6_ALT_NEXT7[B6_ALT_NEXT7 TBD alternate path]
+        B6_ALT_NEXT7_C1["B6_ALT_NEXT7_C1: Close with a cautious outlook that stres..."]
+        B6_ALT_NEXT7_C2["B6_ALT_NEXT7_C2: Warn about the risks if corrective measu..."]
+        B6_ALT_NEXT7_C1 --- B6_ALT_NEXT7_C2
+    end
+    G5 --> B1_C1
+    B1_C3 --> B2_C1
+    B2_C1 --> B3_C1
+    B4_C5 --> B5_C1
+    B6_C3 --> B7_C1
+    B7_C5 --> B8_C1
+    B8_C5 --> B9_C1
+    B9_C3 --> B10_C1
+    B10_C1 --> B11_C1
+    B11_C4 --> B12_C1
+    B12_C1 --> B13_C1
+    DEC_SEL_B4{"If the user is a beginner cook who needs more detailed gu..."}
+    B3_C5 --> DEC_SEL_B4
+    DEC_SEL_B4 --> B4_C1
+    DEC_SEL_B4 --> B4_ALT_C1
+    B4_ALT_C4 --> B5_C1
+    DEC_SEL_B6{"If a radically different storyline is required"}
+    B5_C5 --> DEC_SEL_B6
+    DEC_SEL_B6 --> B6_C1
+    DEC_SEL_B6 --> B6_ALT_C1
+    B6_ALT_C2 --> B6_ALT_NEXT1_C1
+    B6_ALT_NEXT1_C2 --> B6_ALT_NEXT2_C1
+    B6_ALT_NEXT2_C2 --> B6_ALT_NEXT3_C1
+    B6_ALT_NEXT3_C2 --> B6_ALT_NEXT4_C1
+    B6_ALT_NEXT4_C2 --> B6_ALT_NEXT5_C1
+    B6_ALT_NEXT5_C2 --> B6_ALT_NEXT6_C1
+    B6_ALT_NEXT6_C2 --> B6_ALT_NEXT7_C1

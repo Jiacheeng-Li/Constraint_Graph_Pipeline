@@ -33,6 +33,7 @@ Step 6: 组装完整的 ConstraintGraph
 - 我们不会在这里修改/扩展约束本身，避免引入和 Step3/4/5 不一致的内容。
 """
 
+import string
 from typing import Dict, Any, List
 from .graph_schema import (
     ConstraintGraph,
@@ -284,8 +285,11 @@ def make_mermaid(graph: ConstraintGraph, max_desc_len: int = 60) -> str:
     lines.append("flowchart LR")
 
     # helper: shorten long text for node labels
+    punctuation_table = str.maketrans("", "", string.punctuation + "，。！？、“”‘’：；（）【】《》—…·|")
+
     def _clean_text(txt: str) -> str:
-        return txt.replace("(", "").replace(")", "")
+        cleaned = (txt or "").translate(punctuation_table)
+        return " ".join(cleaned.split())
 
     def _short(txt: str) -> str:
         t = _clean_text(txt.strip().replace("\n", " "))
@@ -612,7 +616,7 @@ if __name__ == "__main__":
     extra_blocks_demo = [
         BlockSpec(
             block_id="B3_ALT",
-            intent="Conclusion / Outlook / Recommendation (alternate)",
+            intent="Conclusion / Outlook / Recommendation",
             text_span="Alternate conclusion branch text...",
             order_index=2,
             is_alternate=True,

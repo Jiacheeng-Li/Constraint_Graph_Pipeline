@@ -37,7 +37,8 @@ step7_instruction_synthesis.py
     - 每个阶段按功能职责而非具体措辞进行描述
 """
 
-from typing import Dict, Any, List, Tuple
+from collections import defaultdict
+from typing import Dict, Any, List, Tuple, Optional
 from .graph_schema import ConstraintGraph, BlockSpec, BlockConstraintSet, ConstraintNode, SelectionNode
 from .step6_graph_assembly import serialize_graph
 
@@ -177,19 +178,46 @@ def _render_selections(selections: List[SelectionNode],
                 alt_list.append({"cid": cid, "desc": None, "verifier": None})
 
         # Group alternate-branch constraints by their true owning block via trace_to
-        alt_by_block = {}
+        alt_by_block: Dict[str, List[Dict[str, Any]]] = {}
         alt_path_ids = list(sel.alt_path_blocks or [sel.branch_alt.block_id])
         for block_id in alt_path_ids:
-            grouped = []
+            grouped: List[Dict[str, Any]] = []
             for cid in sel.branch_alt.constraints:
                 node = cid_to_node.get(cid)
-                if node and node.trace_to == block_id:
+                node_block = node.trace_to if (node and node.trace_to) else sel.branch_alt.block_id
+                if node and node_block == block_id:
                     grouped.append({
                         "cid": cid,
                         "desc": node.desc,
                         "verifier": node.verifier_spec,
                     })
+            if not grouped:
+                fallback_items = [
+                    item for item in alt_list
+                    if item.get("cid", "").startswith(f"{block_id}_")
+                ]
+                grouped.extend(fallback_items)
             alt_by_block[block_id] = grouped
+
+        # Group real-path constraints for later hierarchical rendering
+        real_by_block: Dict[str, List[Dict[str, Any]]] = {}
+        real_path_blocks: List[str] = []
+        default_real_block = sel.branch_real.block_id or sel.trace_to
+        real_path_blocks.append(default_real_block)
+        for cid in sel.branch_real.constraints:
+            node = cid_to_node.get(cid)
+            if not node:
+                continue
+            block_id = node.trace_to or default_real_block
+            real_by_block.setdefault(block_id, []).append({
+                "cid": cid,
+                "desc": node.desc,
+                "verifier": node.verifier_spec,
+            })
+            if block_id not in real_path_blocks:
+                real_path_blocks.append(block_id)
+        if sel.trace_to and sel.trace_to not in real_path_blocks:
+            real_path_blocks.insert(0, sel.trace_to)
 
         rendered.append({
             "sid": sel.sid,
@@ -205,6 +233,8 @@ def _render_selections(selections: List[SelectionNode],
             "branch_real": real_list,
             "branch_alt": alt_list,
             "alt_by_block": alt_by_block,
+            "real_by_block": real_by_block,
+            "real_path_blocks": real_path_blocks,
         })
 
     return rendered
@@ -271,118 +301,224 @@ def _mk_machine_prompt(seed_task: str,
     lines.append("SYSTEM INSTRUCTIONS:")
     lines.append("")
 
-    # 0. 总任务（seed_task）：告诉模型它要完成的核心目标
-    lines.append("OVERALL TASK:")
-    lines.append(f"- {seed_task.strip()}")
+    mission = seed_task.strip()
+    lines.append("1. MISSION BRIEF & DELIVERABLE")
+    if mission:
+        lines.append(f"   - Primary directive: {mission}")
+    else:
+        lines.append("   - Follow the staged plan and constraints below to construct the final answer.")
     lines.append("")
 
-    # 1. 全局硬性/软性约束：整篇回答必须同时满足的条件
-    lines.append("GLOBAL MANDATORY CONSTRAINTS:")
-    lines.append("You MUST satisfy ALL of the following properties throughout the entire answer:")
-    for rule in global_rules:
-        desc = rule.get("desc", "").strip()
-        if desc:
-            lines.append(f"- {desc}")
+    lines.append("2. NON-NEGOTIABLE GLOBAL RULES")
+    if global_rules:
+        lines.append("   Respect every rule simultaneously across the full response:")
+        for idx, rule in enumerate(global_rules, start=1):
+            desc = (rule.get("desc") or "").strip()
+            if desc:
+                lines.append(f"   {idx}. {desc}")
+    else:
+        lines.append("   - No additional global constraints were supplied.")
     lines.append("")
 
-    # 2. 分阶段的输出结构约束：逐段落告诉模型在每个阶段必须完成什么职责
-    lines.append("REQUIRED OUTPUT STRUCTURE (STAGED PLAN):")
-    lines.append("Your answer MUST be organized into the following stages / sections.\n" \
-                 "You do not need to literally copy these headings, but you MUST perform the listed duties.")
+    selection_map: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for sel in selections_view:
+        selection_map[sel["trace_to"]].append(sel)
 
-    selection_map = {sel["trace_to"]: sel for sel in selections_view}
     block_label_lookup = {spec.block_id: spec.intent for spec in graph.block_specs}
 
-    i = 0
-    total_main = len(block_plan)
-    while i < total_main:
-        blk = block_plan[i]
-        role = blk["role"] or blk["block_id"]
-        logic_type = blk["logic_type"]
-        reqs = blk["requirements"]
-        stage_id = blk["block_id"]
+    lines.append("3. STRUCTURED RESPONSE BLUEPRINT")
+    lines.append("   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.")
 
-        if logic_type.lower().startswith("sub"):
-            logic_phrase = "Work through the following steps in order:"
-        else:
-            logic_phrase = "Cover all of the following points:"
+    def _append_path(block_ids: List[str],
+                     grouped: Dict[str, List[Dict[str, Any]]],
+                     default_msg: str,
+                     indent: str,
+                     show_steps: bool = True,
+                     target: Optional[List[str]] = None) -> None:
+        target_list = target if target is not None else lines
+        for order, block_id in enumerate(block_ids, start=1):
+            label = block_label_lookup.get(block_id, block_id)
+            obligations = grouped.get(block_id, [])
+            if show_steps:
+                target_list.append(f"{indent}- Step {order}: {label}")
+                if obligations:
+                    for item in obligations:
+                        desc = (item.get("desc") or "").strip()
+                        if desc:
+                            target_list.append(f"{indent}    • {desc}")
+                else:
+                    target_list.append(f"{indent}    • {default_msg.format(stage=label)}")
+            else:
+                if obligations:
+                    for item in obligations:
+                        desc = (item.get("desc") or "").strip()
+                        if desc:
+                            target_list.append(f"{indent}• {desc}")
+                else:
+                    target_list.append(f"{indent}• {default_msg.format(stage=label)}")
+
+    def _inline_stage_block(stage_idx: int,
+                            indent: str,
+                            step_no: int) -> Tuple[List[str], str]:
+        blk = block_plan[stage_idx]
+        block_id = blk["block_id"]
+        role = blk["role"] or block_id
+        logic_type = (blk["logic_type"] or "AND").lower()
+        logic_hint = "Parallel coverage: hit every bullet for this stage." \
+            if not logic_type.startswith("sub") else \
+            "Sequential micro-steps: address bullets in a flowing order."
+        reqs = blk["requirements"]
+        stage_selections = selection_map.get(block_id, [])
+
+        snippet: List[str] = []
+        snippet.append(f"{indent}- Step {step_no}: {role}")
+        snippet.append(f"{indent}    Logic cue: {logic_hint}")
+        body_indent = indent + "    "
+
+        if not stage_selections:
+            if reqs:
+                snippet.append(f"{body_indent}Duties:")
+                for r in reqs:
+                    desc = (r.get("desc") or "").strip()
+                    if desc:
+                        snippet.append(f"{body_indent}  • {desc}")
+            else:
+                snippet.append(f"{body_indent}Duties: Follow the intent of this stage even if no explicit bullet exists.")
+            return snippet, block_id
+
+        for sel in stage_selections:
+            sel_type = (sel.get("selection_type") or "local").upper()
+            condition_text = _condition_statement(sel.get("condition", ""))
+            condition_clause = condition_text or "the described condition applies"
+
+            snippet.append(f"{body_indent}{sel_type} branch – when {condition_clause.rstrip('.')}:")
+            alt_blocks = sel.get("alt_path_blocks") or [sel.get("branch_alt_block")]
+            alt_by_block = sel.get("alt_by_block") or {}
+            _append_path(
+                alt_blocks,
+                alt_by_block,
+                "Carry out the alternate storyline requirements for {stage}.",
+                indent=body_indent + "  ",
+                show_steps=(sel_type == "GLOBAL"),
+                target=snippet,
+            )
+            snippet.append(f"{body_indent}Otherwise at this same decision point:")
+            real_blocks = sel.get("real_path_blocks") or [sel.get("branch_real_block") or sel["trace_to"]]
+            real_by_block = sel.get("real_by_block") or {}
+            _append_path(
+                real_blocks,
+                real_by_block,
+                "Return to the duties defined for {stage}.",
+                indent=body_indent + "  ",
+                show_steps=(sel_type == "GLOBAL"),
+                target=snippet,
+            )
+            if (sel.get("selection_type") or "").lower() == "global":
+                snippet.append(f"{body_indent}Global path note: When this condition reshapes the storyline, continue following the nested steps immediately below.")
+        return snippet, block_id
+
+    def _inline_followups_from(start_idx: int,
+                               indent: str,
+                               start_step: int,
+                               consumed: set) -> List[str]:
+        """Inline downstream stages when a global branch stays on the default path."""
+        timeline: List[str] = []
+        next_step = start_step
+        for future_idx in range(start_idx + 1, len(block_plan)):
+            future_block = block_plan[future_idx]["block_id"]
+            if future_block in consumed:
+                continue
+            lines_chunk, consumed_id = _inline_stage_block(future_idx, indent, next_step)
+            if lines_chunk:
+                timeline.extend(lines_chunk)
+                consumed.add(consumed_id)
+                next_step += 1
+        return timeline
+
+    consumed_blocks: set = set()
+
+    for idx, blk in enumerate(block_plan, start=1):
+        stage_id = blk["block_id"]
+        if stage_id in consumed_blocks:
+            continue
+        role = blk["role"] or f"Stage {idx}"
+        logic_type = (blk["logic_type"] or "AND").lower()
+        logic_hint = "Parallel coverage: hit every bullet for this stage." \
+            if not logic_type.startswith("sub") else \
+            "Sequential micro-steps: address bullets in a flowing order."
+        reqs = blk["requirements"]
 
         lines.append("")
-        heading = role
-        sel = selection_map.get(stage_id)
-        if sel and sel.get("selection_type", "").lower() == "global":
-            condition_text = sel["condition"].strip()
-            condition_statement = _condition_statement(condition_text)
+        lines.append(f"   Stage {idx} – {role}")
+        lines.append(f"      Logic cue: {logic_hint}")
+        stage_selections = selection_map.get(stage_id, [])
+        if not stage_selections:
+            if reqs:
+                lines.append("      Timeline duties:")
+                for r in reqs:
+                    desc = (r.get("desc") or "").strip()
+                    if desc:
+                        lines.append(f"        • {desc}")
+            else:
+                lines.append("      Timeline duties: Follow the intent of this stage even if no explicit bullet exists.")
+            consumed_blocks.add(stage_id)
+            continue
 
-            lines.append(f"{heading}:")
-            lines.append("Branch conditions and obligations:")
+        for sel in stage_selections:
+            sel_type = (sel.get("selection_type") or "local").upper()
+            condition_text = _condition_statement(sel.get("condition", ""))
+            condition_clause = condition_text or "the described condition applies"
 
-            satisfied_label = condition_statement or "Condition satisfied."
-            lines.append(f"  • When {satisfied_label.rstrip('.')}:")
-            alt_sequence = sel.get("alt_path_blocks") or [sel.get("branch_alt_block")]
-            by_block = sel.get("alt_by_block") or {}
-            for block_id in alt_sequence:
-                label = block_label_lookup.get(block_id, block_id)
-                lines.append(f"    - {label}:")
-                items = by_block.get(block_id)
-                if items:
-                    for item in items:
-                        lines.append(f"      • {item.get('desc')}")
-                else:
-                    alt_requirements = [
-                        item for item in sel.get("branch_alt", [])
-                        if item.get("cid", "").startswith(f"{block_id}_")
-                    ]
-                    if alt_requirements:
-                        for item in alt_requirements:
-                            lines.append(f"      • {item.get('desc')}")
-                    else:
-                        lines.append("      • Continue the alternate storyline in a manner consistent with this block.")
-
-            lines.append("  • When the condition is not satisfied:")
-            for main_stage in block_plan[i:]:
-                heading_main = main_stage["role"] or main_stage["block_id"]
-                lines.append(f"    - {heading_main}:")
-                for requirement in main_stage["requirements"]:
-                    lines.append(f"      • {requirement['desc']}")
-
-            break
-
-        lines.append(f"{heading}:")
-
-        if sel and sel.get("selection_type", "").lower() == "local":
-            condition_text = sel["condition"].strip()
-            condition_statement = _condition_statement(condition_text)
-            satisfied_label = condition_statement or "Condition satisfied."
-            lines.append("Branch conditions and obligations:")
-            lines.append(f"  • When {satisfied_label.rstrip('.')}:")
-            for item in sel["branch_alt"]:
-                lines.append(f"    - {item.get('desc')}")
-            lines.append("  • When the condition is not satisfied:")
-            for r in sel["branch_real"]:
-                lines.append(f"    - {r['desc']}")
-        else:
-            lines.append(f"{logic_phrase}")
-            for r in reqs:
-                lines.append(f"  • {r['desc']}")
-        i += 1
+            lines.append(f"      {sel_type} branch – when {condition_clause.rstrip('.')}:")
+            alt_blocks = sel.get("alt_path_blocks") or [sel.get("branch_alt_block")]
+            alt_by_block = sel.get("alt_by_block") or {}
+            _append_path(
+                alt_blocks,
+                alt_by_block,
+                "Carry out the alternate storyline requirements for {stage}.",
+                indent="        ",
+                show_steps=(sel_type == "GLOBAL"),
+            )
+            lines.append("      Otherwise at this same decision point:")
+            real_blocks = sel.get("real_path_blocks") or [sel.get("branch_real_block") or sel["trace_to"]]
+            real_by_block = sel.get("real_by_block") or {}
+            _append_path(
+                real_blocks,
+                real_by_block,
+                "Return to the duties defined for {stage}.",
+                indent="        ",
+                show_steps=(sel_type == "GLOBAL"),
+            )
+            if (sel.get("selection_type") or "").lower() == "global":
+                followup = _inline_followups_from(
+                    idx - 1,
+                    indent="        ",
+                    start_step=len(real_blocks) + 1,
+                    consumed=consumed_blocks,
+                )
+                if followup:
+                    lines.append("        Continue executing the timeline under this branch:")
+                    lines.extend(followup)
+                lines.append("      Global path note: Once you enter this alternate storyline, remain on it until it naturally merges back into the main sequence.")
+        consumed_blocks.add(stage_id)
     lines.append("")
 
     if selections_view:
-        lines.append("CONDITION FOR THIS RESPONSE:")
+        lines.append("4. CURRENT CONDITION ASSUMPTION")
+        lines.append("   Unless the evaluator states otherwise, assume each trigger below is currently FALSE.")
         for sel in selections_view:
-            cond = sel["condition"].strip()
+            cond = (sel.get("condition") or "").strip()
             stage_label = block_label_lookup.get(sel["trace_to"], sel["trace_to"])
             negated = _negated_condition_statement(cond)
-            statement = negated or "The specified condition is not satisfied."
-            lines.append(f"- {stage_label}: {statement}")
+            statement = negated or "The specified condition does not apply."
+            lines.append(f"   - {stage_label}: {statement}")
         lines.append("")
 
-    # 4. 评测提醒：明确告诉模型它会被自动检查，并且不能混合分支
-    lines.append("EVALUATION NOTICE:")
-    lines.append("- Your answer will be checked against the global requirements, each stage’s duties, and the branch obligations implied by the stated condition.")
-    lines.append("- Alternate branch requirements only apply when their corresponding condition is satisfied; otherwise use the duties listed for the condition not being satisfied.")
-    lines.append("- Automated checks will verify language, tone, required details, and branch-specific requirements.")
+    # Evaluation reminder
+    lines.append("5. EVALUATION NOTICE")
+    lines.append("- Automated checks will verify every global rule, each stage’s duties, and the branch-specific obligations you triggered.")
+    lines.append("- Once you pick a branch, treat all bullets under that branch as mandatory, and do not mix incompatible paths unless explicitly told to merge.")
+    lines.append("- Language, tone, structural cues, and conditional behaviors are all inspected.")
     lines.append("")
 
     return "\n".join(lines).strip() + "\n"
@@ -682,7 +818,7 @@ if __name__ == "__main__":
     # SelectionNode 示例：branch_real 代表默认路径，branch_alt 代表在条件成立时的替代路径
     alt_block_spec_demo = BlockSpec(
         block_id="B3_ALT",
-        intent="Conclusion / Outlook / Recommendation (alternate)",
+        intent="Conclusion / Outlook / Recommendation",
         text_span="Alternate conclusion branch text...",
         order_index=2,
         is_alternate=True,

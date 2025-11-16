@@ -41,9 +41,38 @@ from .graph_schema import ConstraintNode
 from .utils.parsing import extract_constraints
 from .utils.text_clean import make_snippet, summarize_blocks_outline, clip
 
-_DEEPSEEK_API_KEY_DEFAULT = "sk-4bb3e24d26674a30b2cc7e2ff1bfc763"
-_DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
-_DEEPSEEK_MODEL = "deepseek-chat"
+# Optional description templates (user-provided). We gracefully fall back if unavailable.
+try:
+    from .utils.templates import DESCS as _DESC_TEMPLATES  # type: ignore
+except Exception:
+    _DESC_TEMPLATES = {}
+
+def _desc_from_tpl(key: str, default: str, **kwargs) -> str:
+    """
+    Pull a description template by key from user-provided templates. If the template value
+    is a list or tuple, randomly select one candidate. Fall back to `default` if key not found.
+    """
+    tpl = _DESC_TEMPLATES.get(key, default)
+    import random
+    if isinstance(tpl, (list, tuple)) and tpl:
+        tpl = random.choice(list(tpl))
+    try:
+        return str(tpl).format(**kwargs)
+    except Exception:
+        # final fallback: use default
+        return default.format(**kwargs)
+
+# Regex utilities for new hard constraints
+import re
+_PAR_SPLIT = re.compile(r"(?:\r?\n){2,}")
+_MD_HEADING = re.compile(r"^(#{1,6})\s+\S", re.M)
+_BULLET_MARK = re.compile(r"^(?:[-*]\s+|\d+\.\s+)", re.M)
+_EMOJI = re.compile(r"[\U00010000-\U0010ffff]", re.UNICODE)
+
+from .utils.deepseek_client import call_chat_completions, DeepSeekError
+_DEEPSEEK_API_KEY_DEFAULT = ""
+_DEEPSEEK_ENDPOINT = ""
+_DEEPSEEK_MODEL = ""
 
 
 # -------------------------------------------------
@@ -51,21 +80,25 @@ _DEEPSEEK_MODEL = "deepseek-chat"
 # -------------------------------------------------
 
 def _estimate_word_count(text: str) -> int:
-    import re
+    """
+    Estimate word count robustly for mixed Latin/CJK:
+    - Latin tokens: \\w+ matches words/numbers/underscore
+    - CJK: count individual Han characters (rough proxy)
+    """
     tokens = re.findall(r"\w+", text)
-    return len(tokens)
+    zh_chars = re.findall(r"[\u4e00-\u9fff]", text)
+    return len(tokens) + len(zh_chars)
 
 
 def _guess_language(text: str) -> str:
     """
-    粗暴判断文本主要语言：
-    - 如果包含较多中文汉字 => 'zh'
-    - 否则默认 'en'
-    我们不做复杂检测，这只是为了构造 require_language。
+    Heuristic primary language guess:
+    - If Han characters dominate (≥ 25 and ≥ 40% of visible letters), return 'zh'
+    - Otherwise 'en'
     """
-    import re
     zh_chars = re.findall(r"[\u4e00-\u9fff]", text)
-    if len(zh_chars) >= 10:
+    letters = re.findall(r"[A-Za-z\u4e00-\u9fff]", text)
+    if len(zh_chars) >= 25 and len(zh_chars) >= 0.4 * max(1, len(letters)):
         return "zh"
     return "en"
 
@@ -91,6 +124,98 @@ def _has_intro_body_conclusion(segmentation: Dict[str, Any]) -> bool:
 
     return has_opening and has_body and has_conclusion
 
+# ---- New hard constraint detectors ----
+def _count_paragraphs(text: str) -> int:
+    paras = [p for p in _PAR_SPLIT.split(text.strip()) if p.strip()]
+    return len(paras)
+
+def _detect_heading_levels(text: str):
+    levels = set()
+    for m in _MD_HEADING.finditer(text):
+        levels.add(len(m.group(1)))
+    return levels
+
+def _detect_bullet_marker(text: str):
+    marks = re.findall(r"^([-*]|\d+\.)\s+", text, re.M)
+    if not marks:
+        return None, False
+    first = marks[0]
+    mixed = any(m != first for m in marks[1:])
+    return first, mixed
+
+def _has_emojis(text: str) -> bool:
+    return bool(_EMOJI.search(text))
+
+def _detect_citation_style(text: str):
+    # numeric [1], [12] vs author-year (Smith, 2021)
+    has_numeric = bool(re.search(r"\[\d{1,3}\]", text))
+    has_author_year = bool(re.search(r"\([A-Z][A-Za-z]+,?\s+\d{4}\)", text))
+    if has_numeric and not has_author_year:
+        return "numeric"
+    if has_author_year and not has_numeric:
+        return "author_year"
+    return None
+
+def _detect_decimal_places(text: str):
+    nums = re.findall(r"\b\d+\.(\d+)\b", text)
+    if len(nums) < 3:
+        return None
+    from collections import Counter
+    cnt = Counter(len(s) for s in nums)
+    most, freq = cnt.most_common(1)[0]
+    if freq >= max(3, int(0.6 * len(nums))):
+        return most
+    return None
+
+def _detect_date_format(text: str):
+    if re.search(r"\b\d{4}-\d{2}-\d{2}\b", text):
+        return "yyyy-mm-dd"
+    if re.search(r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},\s+\d{4}\b", text):
+        return "mon dd, yyyy"
+    return None
+
+def _detect_contractions_en(text: str) -> int:
+    # count common English contractions as a proxy
+    return len(re.findall(r"\b(?:don't|doesn't|can't|won't|I'm|it's|that's|we're|they're|I've|you've|isn't|aren't|weren't|hasn't|haven't|shouldn't|couldn't|wouldn't)\b", text, re.I))
+
+# --- Keyword and symbol format helpers ---
+_EN_STOP = set("""
+a an the and or but if then else when while for to of in on at by from as is are was were be been being this that these those with without into within across over under between among can could should would may might must do does did done doing have has had having not no nor so such very more most other same own just also than too rather quite
+""".split())
+
+def _extract_keywords_simple(text: str, lang: str) -> List[str]:
+    """
+    Lightweight keyword extractor to avoid heavy deps:
+    - EN: count word frequencies, remove short tokens (<=3) & stopwords, pick top 1-3 distinct
+    - ZH: return [] (we avoid low-quality heuristics for now)
+    """
+    if lang == "zh":
+        return []
+    words = re.findall(r"[A-Za-z][A-Za-z\-']+", text.lower())
+    # strip apostrophes at the ends
+    words = [w.strip("'").strip("-") for w in words]
+    words = [w for w in words if len(w) > 3 and w not in _EN_STOP]
+    if not words:
+        return []
+    from collections import Counter
+    top = [w for (w, c) in Counter(words).most_common(8)]
+    # keep order, take up to 3 unique
+    out: List[str] = []
+    for w in top:
+        if w not in out:
+            out.append(w)
+        if len(out) == 3:
+            break
+    return out
+
+_SYMBOL_CANDIDATES = [",", ":", "?", "!"]
+
+def _choose_forbid_symbol(text: str) -> str | None:
+    for s in _SYMBOL_CANDIDATES:
+        if s not in text:
+            return s
+    return None
+
 
 def _build_hard_global_constraints(response_text: str,
                                    segmentation: Dict[str, Any]) -> List[ConstraintNode]:
@@ -105,81 +230,320 @@ def _build_hard_global_constraints(response_text: str,
     """
     nodes: List[ConstraintNode] = []
     cid_counter = 1
+    added_categories: set[str] = set()
+    def _add_node(category: str, node: ConstraintNode) -> bool:
+        """
+        Add a node only if this category hasn't been used yet.
+        Returns True if added, False if skipped due to category cap.
+        """
+        if category in added_categories:
+            return False
+        nodes.append(node)
+        added_categories.add(category)
+        return True
 
-    # 1. 字数下限约束
+    import random
+    def _add_random_from(category: str, candidates: List[ConstraintNode]) -> int:
+        """
+        From a non-empty list of candidate nodes belonging to the same super-category,
+        randomly select ONE and add it via _add_node. Returns 1 if added, else 0.
+        """
+        if not candidates:
+            return 0
+        choice = random.choice(candidates)
+        if _add_node(category, choice):
+            return 1
+        return 0
+
+    # -----------------------------
+    # Phase A: collect candidates
+    # -----------------------------
+
+    length_candidates: List[ConstraintNode] = []
+    language_candidates: List[ConstraintNode] = []
+    structure_candidates: List[ConstraintNode] = []
+    format_candidates: List[ConstraintNode] = []
+    style_safety_candidates: List[ConstraintNode] = []
+
+    # A1) Length candidates
     wc = _estimate_word_count(response_text)
     if wc > 0:
-        target_min = max(100, int(wc * 0.8))
-        nodes.append(
-            ConstraintNode(
-                cid=f"G{cid_counter}",
-                desc=f"The answer must be at least {target_min} words long (approximately comparable length to the provided reference).",
-                scope="global",
-                verifier_spec={
-                    "check": "min_word_count",
-                    "args": {"min_words": target_min},
-                },
-                trace_to=None,
-                derived_from="step3",
-            )
-        )
-        cid_counter += 1
+        min_words = max(100, int(wc * 0.85))
+        max_words = int(wc * 1.20)
+        has_minmax = "digit_format_min_max" in _DESC_TEMPLATES
+        has_around = "digit_format_around" in _DESC_TEMPLATES
+        has_min = "digit_format_min" in _DESC_TEMPLATES
+        has_max = "digit_format_max" in _DESC_TEMPLATES
 
-    # 2. 主语言约束
+        if has_minmax:
+            length_candidates.append(ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "digit_format_min_max",
+                    "Keep the answer length between {min_words} and {max_words} words.",
+                    min_words=min_words, max_words=max_words,
+                ),
+                scope="global",
+                verifier_spec={"check": "word_count_between", "args": {"min_words": min_words, "max_words": max_words}},
+                trace_to=None, derived_from="step3",
+            ))
+        if has_around:
+            center = int(round(wc)); tol = 0.15
+            length_candidates.append(ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "digit_format_around",
+                    "Keep the answer length around {center} words (±{tol_pct}%).",
+                    center=center, tol_pct=int(tol * 100),
+                ),
+                scope="global",
+                verifier_spec={"check": "word_count_around", "args": {"center": center, "tolerance_pct": tol}},
+                trace_to=None, derived_from="step3",
+            ))
+        if has_min:
+            length_candidates.append(ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "digit_format_min",
+                    "The answer must be at least {min_words} words long.",
+                    min_words=min_words,
+                ),
+                scope="global",
+                verifier_spec={"check": "min_word_count", "args": {"min_words": min_words}},
+                trace_to=None, derived_from="step3",
+            ))
+        if has_max:
+            length_candidates.append(ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "digit_format_max",
+                    "Keep the answer under {max_words} words.",
+                    max_words=max_words,
+                ),
+                scope="global",
+                verifier_spec={"check": "max_word_count", "args": {"max_words": max_words}},
+                trace_to=None, derived_from="step3",
+            ))
+        if not (has_minmax or has_around or has_min or has_max):
+            length_candidates.append(ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "min_word_count",
+                    "The answer must be at least {min_words} words long.",
+                    min_words=min_words,
+                ),
+                scope="global",
+                verifier_spec={"check": "min_word_count", "args": {"min_words": min_words}},
+                trace_to=None, derived_from="step3",
+            ))
+
+    # A2) Language candidates
     lang = _guess_language(response_text)
-    nodes.append(
+    language_candidates.append(
         ConstraintNode(
             cid=f"G{cid_counter}",
-            desc=("The answer must be written primarily in Chinese." if lang == "zh"
-                  else "The answer must be written primarily in English."),
+            desc=_desc_from_tpl(
+                "require_language_zh" if lang == "zh" else "require_language_en",
+                ("The answer must be written primarily in Chinese." if lang == "zh"
+                 else "The answer must be written primarily in English."),
+            ),
             scope="global",
-            verifier_spec={
-                "check": "require_language",
-                "args": {"lang": lang},
-            },
-            trace_to=None,
-            derived_from="step3",
+            verifier_spec={"check": "require_language", "args": {"lang": lang}},
+            trace_to=None, derived_from="step3",
         )
     )
-    cid_counter += 1
+    if lang == "en":
+        contractions = _detect_contractions_en(response_text)
+        if contractions == 0:
+            language_candidates.append(
+                ConstraintNode(
+                    cid=f"G{cid_counter}",
+                    desc=_desc_from_tpl(
+                        "avoid_contractions",
+                        "Avoid contractions (use 'do not' instead of 'don't').",
+                    ),
+                    scope="global",
+                    verifier_spec={"check": "avoid_contractions", "args": {}},
+                    trace_to=None, derived_from="step3",
+                )
+            )
 
-    # 3. 结构性约束（仅当回答真的有明显结构）
+    # A3) Structure candidates
     if _has_intro_body_conclusion(segmentation):
-        nodes.append(
+        structure_candidates.append(
             ConstraintNode(
                 cid=f"G{cid_counter}",
-                desc="The answer must include an Opening/Intro section, a Main Analysis/Body section, and a Conclusion/Outlook section in logical progression.",
+                desc=_desc_from_tpl(
+                    "has_sections_intro_body_conclusion",
+                    "The answer must include an Opening/Intro section, a Body/Main Analysis section, and a Conclusion/Outlook section in logical progression.",
+                ),
                 scope="global",
-                verifier_spec={
-                    "check": "has_sections",
-                    "args": {"sections": ["Opening", "Body", "Conclusion"]},
-                },
-                trace_to=None,
-                derived_from="step3",
+                verifier_spec={"check": "has_sections", "args": {"sections": ["Opening", "Body", "Conclusion"]}},
+                trace_to=None, derived_from="step3",
             )
         )
-        cid_counter += 1
+    para_cnt = _count_paragraphs(response_text)
+    if para_cnt >= 3:
+        structure_candidates.append(
+            ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "min_paragraphs",
+                    "Organize the answer into at least {min_paras} paragraphs.",
+                    min_paras=para_cnt,
+                ),
+                scope="global",
+                verifier_spec={"check": "min_paragraphs", "args": {"min_paras": para_cnt}},
+                trace_to=None, derived_from="step3",
+            )
+        )
 
-    # 4. 禁用第一人称（只在回答主要是第三人称分析风格时添加）
-    # 启发式：如果文本里几乎没有 "I " / "we ", 我们假定它是客观第三人称分析，
-    # 那么我们就可以把 forbid_first_person 设为一个约束。
-    lower_txt = response_text.lower()
-    first_person_hits = any(token in lower_txt for token in [" i ", " we ", " my ", " our "])  # 粗暴启发式
-    if not first_person_hits:
-        nodes.append(
+    # A4) Format consistency candidates
+    heading_levels = _detect_heading_levels(response_text)
+    if heading_levels:
+        levels_sorted = sorted(heading_levels)
+        format_candidates.append(
             ConstraintNode(
                 cid=f"G{cid_counter}",
-                desc="The answer should maintain an objective, third-person analytic voice without using first-person pronouns.",
+                desc=_desc_from_tpl(
+                    "heading_levels_only",
+                    "Use consistent Markdown heading levels: only {levels}.",
+                    levels=levels_sorted,
+                ),
                 scope="global",
-                verifier_spec={
-                    "check": "forbid_first_person",
-                    "args": {},
-                },
-                trace_to=None,
-                derived_from="step3",
+                verifier_spec={"check": "heading_levels_only", "args": {"levels": levels_sorted}},
+                trace_to=None, derived_from="step3",
             )
         )
-        cid_counter += 1
+    bullet, mixed = _detect_bullet_marker(response_text)
+    if bullet:
+        format_candidates.append(
+            ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "bullet_style_consistent",
+                    "Use a consistent list marker style ('{marker}'); do not mix list markers.",
+                    marker=bullet,
+                ),
+                scope="global",
+                verifier_spec={"check": "bullet_style_consistent", "args": {"marker": bullet}},
+                trace_to=None, derived_from="step3",
+            )
+        )
+    dec = _detect_decimal_places(response_text)
+    if dec is not None:
+        format_candidates.append(
+            ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "decimal_places",
+                    "Keep numeric values to {places} decimal places consistently.",
+                    places=dec,
+                ),
+                scope="global",
+                verifier_spec={"check": "decimal_places", "args": {"places": dec}},
+                trace_to=None, derived_from="step3",
+            )
+        )
+    dfmt = _detect_date_format(response_text)
+    if dfmt:
+        format_candidates.append(
+            ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "date_format_iso" if dfmt=="yyyy-mm-dd" else "date_format_long",
+                    ("Use the date format YYYY-MM-DD." if dfmt=="yyyy-mm-dd"
+                     else "Use the date format 'Month DD, YYYY'."),
+                ),
+                scope="global",
+                verifier_spec={"check": "date_format", "args": {"style": dfmt}},
+                trace_to=None, derived_from="step3",
+            )
+        )
+
+    # A5) Style & safety candidates
+    lower_txt = response_text.lower()
+    first_person_hits = any(token in lower_txt for token in [" i ", " we ", " my ", " our "])
+    if not first_person_hits:
+        style_safety_candidates.append(
+            ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "forbid_first_person",
+                    "Maintain an objective, third-person analytic voice; do not use first-person pronouns.",
+                ),
+                scope="global",
+                verifier_spec={"check": "forbid_first_person", "args": {}},
+                trace_to=None, derived_from="step3",
+            )
+        )
+    if not _has_emojis(response_text):
+        style_safety_candidates.append(
+            ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "forbid_emojis",
+                    "Do not use emojis or decorative unicode symbols.",
+                ),
+                scope="global",
+                verifier_spec={"check": "forbid_emojis", "args": {}},
+                trace_to=None, derived_from="step3",
+            )
+        )
+    sym = _choose_forbid_symbol(response_text)
+    if sym:
+        style_safety_candidates.append(
+            ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "symbol_format",
+                    "Do not use the symbol '{symbol}'.",
+                    symbol=sym,
+                ),
+                scope="global",
+                verifier_spec={"check": "forbid_symbol", "args": {"symbol": sym}},
+                trace_to=None, derived_from="step3",
+            )
+        )
+    kws = _extract_keywords_simple(response_text, lang)
+    if kws:
+        style_safety_candidates.append(
+            ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "keyword_format",
+                    "Include the following keywords: {keywords}.",
+                    keywords=", ".join(f"\"{k}\"" for k in kws),
+                ),
+                scope="global",
+                verifier_spec={"check": "must_include_keywords", "args": {"keywords": kws}},
+                trace_to=None, derived_from="step3",
+            )
+        )
+    cite_style = _detect_citation_style(response_text)
+    if cite_style:
+        style_safety_candidates.append(
+            ConstraintNode(
+                cid=f"G{cid_counter}",
+                desc=_desc_from_tpl(
+                    "citation_style_numeric" if cite_style=="numeric" else "citation_style_author_year",
+                    ("Use numeric bracket citations like [1], [2]." if cite_style=="numeric"
+                     else "Use author–year citations like (Smith, 2021)."),
+                ),
+                scope="global",
+                verifier_spec={"check": "citation_style", "args": {"style": cite_style}},
+                trace_to=None, derived_from="step3",
+            )
+        )
+
+    # -----------------------------
+    # Phase B: randomly select one per super-category
+    # -----------------------------
+    cid_counter += _add_random_from("length", length_candidates)
+    cid_counter += _add_random_from("language", language_candidates)
+    cid_counter += _add_random_from("structure", structure_candidates)
+    cid_counter += _add_random_from("format_consistency", format_candidates)
+    cid_counter += _add_random_from("style_safety", style_safety_candidates)
 
     return nodes
 
@@ -270,31 +634,18 @@ Rules:
         "Return ONLY the JSON list.\n"
     )
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {_DEEPSEEK_API_KEY_DEFAULT}",
-    }
-
-    payload = {
-        "model": _DEEPSEEK_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.0,
-        "max_tokens": 800,
-    }
-
     try:
-        resp = requests.post(
-            _DEEPSEEK_ENDPOINT, headers=headers, data=json.dumps(payload), timeout=20
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        content = data["choices"][0]["message"]["content"].strip()
+        content = call_chat_completions(
+            messages=[
+                {"role": "user", "content": user_prompt},
+            ],
+            system_prompt=system_prompt,
+            temperature=0.0,
+            max_tokens=800,
+            timeout=20,
+        ).strip()
         return content
-    except Exception:
-        # 兜底：返回一个空 JSON list 字符串，让上层解析时得到 []
+    except DeepSeekError:
         return "[]"
 
 

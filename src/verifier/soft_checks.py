@@ -23,17 +23,17 @@ soft_checks.py
 """
 
 from typing import Optional, Any, Dict
-import requests
 import json
 import re
+from ..utils.deepseek_client import call_chat_completions, DeepSeekError
 
 # -----------------------
 # DeepSeek 接口配置
 # -----------------------
 
-_DEEPSEEK_API_KEY_DEFAULT = "sk-4bb3e24d26674a30b2cc7e2ff1bfc763"
-_DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
-_DEEPSEEK_MODEL = "deepseek-chat"  # 如需更换模型，可集中改这里
+_DEEPSEEK_API_KEY_DEFAULT = ""
+_DEEPSEEK_ENDPOINT = ""
+_DEEPSEEK_MODEL = ""  # centralized via utils.deepseek_client
 
 
 def _call_deepseek_classifier(system_prompt: str,
@@ -52,36 +52,20 @@ def _call_deepseek_classifier(system_prompt: str,
     - 一个字符串标签（例如 "NEUTRAL" / "NOT_NEUTRAL" / "YES" / "NO" / "MATCH" / "MISMATCH"）。
       如果 deepseek 没返回符合预期的内容，我们会回落到空字符串。    
     """
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key or _DEEPSEEK_API_KEY_DEFAULT}",
-    }
-
-    payload = {
-        "model": model or _DEEPSEEK_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": user_prompt},
-        ],
-        # 我们要求 deterministic / 可复现：
-        "temperature": 0.0,
-        "max_tokens": 16,
-    }
-
     try:
-        resp = requests.post(endpoint or _DEEPSEEK_ENDPOINT,
-                             headers=headers,
-                             data=json.dumps(payload),
-                             timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        # deepseek-chat 返回: {choices: [{message: {content: "..."}}], ...}
-        content = data["choices"][0]["message"]["content"].strip()
-        # 只取第一行，避免LLM多说话
+        content = call_chat_completions(
+            messages=[{"role": "user", "content": user_prompt}],
+            system_prompt=system_prompt,
+            model=model or None,
+            api_key=api_key or None,
+            endpoint=endpoint or None,
+            temperature=0.0,
+            max_tokens=16,
+            timeout=10,
+        ).strip()
         first_line = content.splitlines()[0].strip()
         return first_line
-    except Exception:
-        # 如果API请求失败，返回空字符串，让上层根据空字符串决定降级策略
+    except DeepSeekError:
         return ""
 
 

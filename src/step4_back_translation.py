@@ -42,17 +42,152 @@ B. fallback：
 """
 
 import json
-import requests
-from typing import Dict, Any, List
+import os
+import time
+import random
+import re
+from .utils.deepseek_client import call_chat_completions, DeepSeekError
+from typing import Dict, Any, List, Tuple
 
 from .graph_schema import ConstraintNode, BlockSpec
 from .utils.parsing import extract_constraints, safe_json_load
 from .utils.text_clean import make_snippet, summarize_blocks_outline, clip
 
-_DEEPSEEK_API_KEY_DEFAULT = "sk-4bb3e24d26674a30b2cc7e2ff1bfc763"
-_DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"
-_DEEPSEEK_MODEL = "deepseek-chat"
+_DEEPSEEK_API_KEY_DEFAULT = os.getenv("DEEPSEEK_API_KEY", "")
+_DEEPSEEK_ENDPOINT = os.getenv("DEEPSEEK_ENDPOINT", "")
+_DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "")
+_STEP4_RAND_SEED = os.getenv("STEP4_RAND_SEED")
+if _STEP4_RAND_SEED is not None:
+    try:
+        random.seed(int(_STEP4_RAND_SEED))
+    except Exception:
+        random.seed(_STEP4_RAND_SEED)
 
+_NUM_LIST = re.compile(r"^\s*(?:\d+[\.\)]|[a-z][\.\)])\s+", re.I | re.M)
+_BULLET_LIST = re.compile(r"^\s*[-*]\s+", re.M)
+_SEQUENCE_CUES = re.compile(r"\b(?:first|second|third|then|next|afterward|finally|step\s*\d+)\b", re.I)
+_PAR_SPLIT = re.compile(r"(?:\r?\n){2,}")
+
+def _estimate_word_count(text: str) -> int:
+    tokens = re.findall(r"\w+", text)
+    zh = re.findall(r"[\u4e00-\u9fff]", text)
+    return len(tokens) + len(zh)
+
+def _extract_max_json(s: str) -> str:
+    """
+    Extract the largest plausible JSON object substring from s (from first '{' to last '}').
+    Returns the substring or original s if not found.
+    """
+    try:
+        start = s.index("{")
+        end = s.rindex("}")
+        if start < end:
+            return s[start:end+1]
+    except ValueError:
+        pass
+    return s
+
+def _heuristic_logic(snippet: str, llm_logic: str) -> str:
+    """
+    Heuristic audit for logic type: returns 'sub-chain' or 'AND'.
+    Uses numbered/bulleted lists and sequence cue words.
+    """
+    score_chain = 0
+    score_and = 0
+    if _SEQUENCE_CUES.search(snippet):
+        score_chain += 2
+    if _NUM_LIST.search(snippet):
+        score_chain += 2
+    if _BULLET_LIST.search(snippet):
+        score_and += 1
+    # dense parallel clauses: semicolons or many commas in a single paragraph
+    if snippet.count(";") >= 2:
+        score_and += 1
+    # decide
+    if score_chain - score_and >= 2:
+        return "sub-chain"
+    if score_and - score_chain >= 2:
+        return "AND"
+    # fallback to LLM
+    return "sub-chain" if str(llm_logic).lower().startswith("sub") else "AND"
+
+_VERIFIER_WHITELIST = {
+    "tone_neutral_llm_judge",
+    "tone_negative_llm_judge",
+    "non_extremeness_judge",
+    "role_consistency_judge",
+    "actionability_judge",
+    "forbid_first_person",
+    "min_word_count",
+    "must_list_n_subpoints",
+    "min_numbered_items",
+    "must_include_keywords",
+    "keyword_min_frequency",
+    "must_cover_topics",
+    "min_char_count",
+    "require_language",
+    "has_sections",
+    "must_end_with_template",
+}
+
+_VERIFIER_SYNONYM_MAP = {
+    # LLM free-form names -> (canonical_name, args_patch)
+    "must_present_two_examples": ("must_list_n_subpoints", {"min_items": 2}),
+    "must_present_three_examples": ("must_list_n_subpoints", {"min_items": 3}),
+    "must_list_two_items": ("must_list_n_subpoints", {"min_items": 2}),
+    "must_use_numbered_list": ("min_numbered_items", {"min_items": 2}),
+}
+
+def _map_verifier(check: str, args: Dict[str, Any]) -> Tuple[str, Dict[str, Any], bool]:
+    """
+    Map a possibly custom verifier name to whitelist, else prefix 'custom:'.
+    Returns (mapped_check, mapped_args, is_custom)
+    """
+    if check in _VERIFIER_WHITELIST:
+        return check, args or {}, False
+    if check in _VERIFIER_SYNONYM_MAP:
+        base, patch = _VERIFIER_SYNONYM_MAP[check]
+        merged = dict(args or {})
+        merged.update(patch)
+        return base, merged, False
+    return f"custom:{check}", args or {}, True
+
+def _dedup_and_cap(items: List[Dict[str, Any]], cap: int = 5) -> List[Dict[str, Any]]:
+    """
+    Deduplicate by normalized desc and cap to 'cap' items.
+    Priority:
+      1) programmatic (verifier not custom)
+      2) with evidence_str present
+      3) longer desc
+    """
+    def norm(s: str) -> str:
+        s = s.lower()
+        s = re.sub(r"[^a-z0-9\s]", " ", s)
+        s = re.sub(r"\s+", " ", s).strip()
+        return s
+
+    seen = set()
+    scored = []
+    for it in items:
+        desc = it.get("desc", "")
+        key = norm(desc)
+        if not desc or key in seen:
+            continue
+        seen.add(key)
+        is_custom = it.get("_is_custom", False)
+        ev = 1 if it.get("evidence_str") else 0
+        scored.append(( (0 if not is_custom else 1, -ev, -len(desc)), it ))
+    scored.sort(key=lambda x: x[0])
+    out = [it for _, it in scored[:cap]]
+    return out
+
+def _find_numbered_items(snippet: str) -> int:
+    # approximate count of numbered items
+    return len(re.findall(r"^\s*(?:\d+[\.\)]|[a-z][\.\)])\s+", snippet, re.I | re.M))
+
+def _guess_block_min_words(snippet: str) -> int:
+    wc = _estimate_word_count(snippet)
+    return max(30, int(wc * 0.6))
 
 def _call_deepseek_block_constraints(block: BlockSpec,
                                      seed_task: str,
@@ -61,27 +196,8 @@ def _call_deepseek_block_constraints(block: BlockSpec,
     让 deepseek 针对单个 block 生成：
     - 该 block 的逻辑类型 (logic: "AND" | "sub-chain")
     - 该 block 实际在做/必须做的可验证要求列表 (constraints: [...])
-
-    重要：
-    - 该函数现在只做 LLM 调用并返回原始字符串，不做解析。
-    - 解析逻辑统一放到 utils/parsing (extract_constraints / safe_json_load)。
-
-    我们要求 deepseek 输出严格 JSON：
-    {
-      "logic": "AND" | "sub-chain",
-      "constraints": [
-        {
-          "desc": "Explain historical background in neutral tone.",
-          "verifier": {
-             "check": "tone_neutral_llm_judge",
-             "args": {}
-          }
-        },
-        ...
-      ]
-    }
+    每条约束还需提供一个 evidence 字段（极短原文短语）以便后续定位证据。
     """
-
     # 使用 text_clean 保留原文语义，仅做空白规整；不默认截断
     block_text_clean = make_snippet(block.text_span)
 
@@ -95,105 +211,49 @@ def _call_deepseek_block_constraints(block: BlockSpec,
     system_prompt = (
         "You are an instruction reverse-engineer.\n"
         "Goal: For ONE block of an assistant's answer, infer what concrete obligations that block actually satisfies.\n"
-        "You must ONLY claim obligations that are directly evidenced in the provided TEXT SNIPPET.\n"
-        "Do NOT invent requirements that are not literally supported by that snippet.\n"
-        "The OUTLINE is only high-level context of where this block sits in the full answer.\n"
-        "The SEED TASK is the global assignment.\n"
-        "But your constraints MUST be grounded strictly in the snippet's actual wording/content.\n\n"
-        "Return ONLY valid JSON with this structure:\n"
+        "CRITICAL: You must ONLY claim obligations that are directly evidenced IN the provided TEXT SNIPPET.\n"
+        "The OUTLINE and the SEED TASK are context only; you CANNOT invent constraints from them.\n"
+        "Return ONLY valid JSON. No commentary. No markdown. No code fences.\n\n"
+        "JSON schema:\n"
         "{\n"
-        "  \"logic\": \"AND\" or \"sub-chain\",\n"
+        "  \"logic\": \"AND\" | \"sub-chain\",\n"
         "  \"constraints\": [\n"
         "    {\n"
-        "      \"desc\": \"<what this block MUST accomplish (as evidenced in the text)>\",\n"
-        "      \"verifier\": {\n"
-        "         \"check\": \"<verifier function name>\",\n"
-        "         \"args\": { }\n"
-        "      }\n"
-        "    }, ...\n"
+        "      \"desc\": \"<imperative, concrete, verifiable>\",\n"
+        "      \"verifier\": {\"check\": \"<snake_case>\", \"args\": { }},\n"
+        "      \"evidence\": \"<very short phrase copied from the text>\"\n"
+        "    }\n"
         "  ]\n"
-        "}\n\n"
-        "Rules for 'logic':\n"
-        "- 'logic' = 'AND' if the block lists parallel obligations/facts.\n"
-        "- 'logic' = 'sub-chain' if the block clearly performs a multi-step progression (define -> compare -> conclude).\n\n"
-        "Grounding rules:\n"
-        "- Every constraint MUST be directly supported by evidence in the TEXT SNIPPET.\n"
-        "- You MUST NOT add ideal/aspirational requirements that are not clearly present in the snippet.\n"
-        "- The OUTLINE and the SEED TASK are context only; you CANNOT invent constraints from them.\n\n"
-        "About verifier.check:\n"
-        "- If one of these fits, use it:\n"
-        "    tone_neutral_llm_judge\n"
-        "    tone_negative_llm_judge\n"
-        "    non_extremeness_judge\n"
-        "    role_consistency_judge\n"
-        "    actionability_judge\n"
-        "    forbid_first_person\n"
-        "    min_word_count\n"
-        "    must_list_n_subpoints\n"
-        "    min_numbered_items\n"
-        "    must_include_keywords\n"
-        "    keyword_min_frequency\n"
-        "    must_cover_topics\n"
-        "    min_char_count\n"
-        "    require_language\n"
-        "    has_sections\n"
-        "    must_end_with_template\n"
-        "- Otherwise, you MUST create a new descriptive snake_case name that reflects the requirement actually shown in the snippet, e.g.\n"
-        "    must_compare_policy_options\n"
-        "    must_include_two_examples\n"
-        "    must_reference_timeframe\n"
-        "  This is allowed.\n\n"
-        "Rules for new verifier names:\n"
-        "- snake_case only [a-z0-9_]\n"
-        "- The name must reflect the obligation in 'desc'.\n"
-        "- 'args' must be a JSON object (possibly empty) describing any parameters needed to check, e.g. {\"min_items\": 3}.\n\n"
-        "Rules for 'desc':\n"
-        "- 'desc' must be English, imperative, concrete, and verifiable.\n"
-        "- 'desc' MUST NOT mention block ids.\n"
-        "- 'desc' MUST describe what the block IS doing / MUST accomplish per the snippet, not what it SHOULD do ideally.\n\n"
-        "Output rule:\n"
-        "- Do NOT output any explanation outside JSON.\n"
+        "}\n"
     )
 
     user_prompt = (
-        "GLOBAL OUTLINE (high-level structure only; DO NOT invent obligations from this):\n"
+        "GLOBAL OUTLINE (only high-level; DO NOT invent from this):\n"
         f"{outline_str}\n\n"
         "SEED TASK (the global assignment):\n"
         f"{seed_task.strip()}\n\n"
         "CURRENT BLOCK YOU ARE ANALYZING:\n"
         f"BLOCK ID: {block.block_id}\n"
         f"BLOCK INTENT: {block.intent}\n\n"
-        "TEXT SNIPPET (this is the only allowed evidence; base ALL constraints ONLY on this text):\n"
+        "TEXT SNIPPET (the ONLY allowed evidence; base ALL constraints ONLY on this text):\n"
         f"{block_text_clean}\n\n"
-        "Now produce the JSON.\n"
+        "Now return ONLY the JSON.\n"
     )
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {_DEEPSEEK_API_KEY_DEFAULT}",
-    }
-    payload = {
-        "model": _DEEPSEEK_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.0,
-        "max_tokens": 900,
-    }
-
     try:
-        resp = requests.post(
-            _DEEPSEEK_ENDPOINT, headers=headers, data=json.dumps(payload), timeout=20
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        content = data["choices"][0]["message"]["content"].strip()
+        content = call_chat_completions(
+            messages=[
+                {"role": "user", "content": user_prompt},
+            ],
+            system_prompt=system_prompt,
+            temperature=0.0,
+            max_tokens=900,
+            timeout=20,
+            retries=2,
+        ).strip()
         return content
-    except Exception:
-        # 兜底：返回一个最小可解析 JSON，供上游 safe_json_load 使用
+    except DeepSeekError:
         return "{\n  \"logic\": \"AND\",\n  \"constraints\": []\n}"
-
 
 def _parse_block_llm_result(raw_str: str) -> Dict[str, Any]:
     """
@@ -211,7 +271,7 @@ def _parse_block_llm_result(raw_str: str) -> Dict[str, Any]:
        所以我们把 {"constraints": [...]} 丢给它即可。
     """
     try:
-        parsed_any = safe_json_load(raw_str)
+        parsed_any = safe_json_load(_extract_max_json(raw_str))
     except ValueError:
         return {}
 
@@ -231,40 +291,33 @@ def _parse_block_llm_result(raw_str: str) -> Dict[str, Any]:
         "constraints": cons_items,
     }
 
-
 def _fallback_block_constraints(block: BlockSpec) -> Dict[str, Any]:
     """
     如果 LLM 失败：
-    - 给出两个非常通用但几乎总是合理的局部约束。
+    - 动态兜底：若文本疑似编号列表，则给出 'min_numbered_items'；否则用 'min_word_count'（基于片段长度）。
+    - 始终包含中立语气。
     - logic = "AND"。
-    返回格式与 _parse_block_llm_result() 对齐：
-      {
-        "logic": "AND",
-        "constraints": [
-           {"desc": ..., "verifier_spec": {"check":..., "args":...}}, ...
-        ]
-      }
     """
-    return {
-        "logic": "AND",
-        "constraints": [
-            {
-                "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
-                "verifier_spec": {
-                    "check": "tone_neutral_llm_judge",
-                    "args": {},
-                },
-            },
-            {
-                "desc": "Provide a sufficiently detailed explanation of the topic with at least 50 words.",
-                "verifier_spec": {
-                    "check": "min_word_count",
-                    "args": {"min_words": 50},
-                },
-            },
-        ],
-    }
-
+    snippet = block.text_span or ""
+    min_items = _find_numbered_items(snippet)
+    min_words = _guess_block_min_words(snippet)
+    constraints = [
+        {
+            "desc": "Maintain a neutral, analytical tone without emotional or inflammatory language.",
+            "verifier_spec": {"check": "tone_neutral_llm_judge", "args": {}},
+        }
+    ]
+    if min_items >= 2:
+        constraints.append({
+            "desc": f"Provide a numbered list with at least {min_items} items.",
+            "verifier_spec": {"check": "min_numbered_items", "args": {"min_items": min_items}},
+        })
+    else:
+        constraints.append({
+            "desc": f"Provide a sufficiently detailed explanation with at least {min_words} words.",
+            "verifier_spec": {"check": "min_word_count", "args": {"min_words": min_words}},
+        })
+    return {"logic": "AND", "constraints": constraints}
 
 def extract_block_constraints(segmentation: Dict[str, Any],
                               seed_task: str) -> Dict[str, Any]:
@@ -306,27 +359,44 @@ def extract_block_constraints(segmentation: Dict[str, Any],
             parsed = _fallback_block_constraints(block)
             constraints_list = parsed.get("constraints", [])
 
+        # Heuristic logic audit (block-level)
         logic_tag = parsed.get("logic", "AND")
-        block_logic[block.block_id] = "sub-chain" if str(logic_tag).lower().startswith("sub") else "AND"
+        final_logic = _heuristic_logic(block.text_span or "", logic_tag)
+        block_logic[block.block_id] = final_logic
 
+        # Normalize, map verifiers, attach evidence text if present, keep local scope
+        normalized_items: List[Dict[str, Any]] = []
+        for item in constraints_list:
+            desc = (item.get("desc") or "").strip()
+            if not desc:
+                continue
+            v = item.get("verifier_spec") or item.get("verifier") or {}
+            check_name = (v.get("check") or "").strip()
+            args_obj = v.get("args") or {}
+            if not check_name:
+                continue
+            mapped_check, mapped_args, is_custom = _map_verifier(check_name, args_obj)
+            evidence_str = (item.get("evidence") or "").strip()
+            normalized_items.append({
+                "desc": desc,
+                "verifier_spec": {"check": mapped_check, "args": mapped_args},
+                "evidence_str": evidence_str,
+                "_is_custom": is_custom,
+            })
+
+        # Deduplicate and cap
+        filtered_items = _dedup_and_cap(normalized_items, cap=5)
+
+        # Materialize ConstraintNode list with local scope and correct trace_to
         local_nodes: List[ConstraintNode] = []
         cid_idx = 1
-        for item in constraints_list:
-            # item 可能是 extract_constraints() 的输出风格：
-            # {"cid":..., "desc":..., "verifier_spec":{check,args}, ...}
-            desc = item.get("desc", "").strip()
-            verifier_spec = item.get("verifier_spec", {}) or item.get("verifier", {}) or {}
-            check_name = verifier_spec.get("check")
-            args_obj = verifier_spec.get("args", {}) or {}
-            if not desc or not check_name:
-                continue
-
+        for it in filtered_items:
             node = ConstraintNode(
                 cid=f"{block.block_id}_C{cid_idx}",
-                desc=desc,
-                scope="local",
-                verifier_spec={"check": check_name, "args": args_obj},
-                trace_to=block.block_id,
+                desc=it["desc"],
+                scope="local",  # ensure block-local
+                verifier_spec=it["verifier_spec"],
+                trace_to=block.block_id,  # ensure trace to this block
                 derived_from="step4",
             )
             local_nodes.append(node)

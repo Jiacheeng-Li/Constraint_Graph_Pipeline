@@ -56,6 +56,28 @@ def _register_builtin() -> None:
     _REGISTRY["require_language"] = hard_checks.require_language
     _REGISTRY["must_end_with_template"] = hard_checks.must_end_with_template
 
+    # === Added to align with Step3/Step4 hard verifiers ===
+    # Length variants
+    _REGISTRY["word_count_between"] = hard_checks.word_count_between
+    _REGISTRY["word_count_around"] = hard_checks.word_count_around
+
+    # Structure / paragraphs
+    _REGISTRY["min_paragraphs"] = hard_checks.min_paragraphs
+
+    # Format consistency
+    _REGISTRY["heading_levels_only"] = hard_checks.heading_levels_only
+    _REGISTRY["bullet_style_consistent"] = hard_checks.bullet_style_consistent
+    _REGISTRY["decimal_places"] = hard_checks.decimal_places
+    _REGISTRY["date_format"] = hard_checks.date_format
+
+    # Style / safety
+    _REGISTRY["forbid_emojis"] = hard_checks.forbid_emojis
+    _REGISTRY["avoid_contractions"] = hard_checks.avoid_contractions
+    _REGISTRY["forbid_symbol"] = hard_checks.forbid_symbol
+
+    # Citations
+    _REGISTRY["citation_style"] = hard_checks.citation_style
+
     # 软性规则（soft_checks）——语气、态度、立场等需要语义判断的部分。
     _REGISTRY["tone_neutral_llm_judge"] = soft_checks.tone_neutral_llm_judge
     _REGISTRY["tone_negative_llm_judge"] = soft_checks.tone_negative_llm_judge
