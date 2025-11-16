@@ -1,0 +1,111 @@
+SYSTEM INSTRUCTIONS:
+
+1. MISSION BRIEF & DELIVERABLE
+   - Primary directive: Write a detailed Markdown-formatted cooking guide for homemade pasta with tomato basil sauce in an instructive yet friendly tone.
+
+2. NON-NEGOTIABLE GLOBAL RULES
+   Respect every rule simultaneously across the full response:
+   1. Do not submit under 166 words.
+   2. Use English as the primary language for the answer.
+   3. Organize the answer into at least 13 paragraphs.
+   4. Maintain heading-level consistency; permitted levels are [1, 2].
+   5. Do not use the symbol '?'.
+   6. Prefer clear and sequential step-by-step instructions.
+   7. Prefer including practical tips and alternatives for flexibility.
+   8. Prefer a friendly and accessible tone with simple language.
+   9. Prefer highlighting important notices or warnings upfront.
+   10. Prefer concise ingredient lists and preparation steps without unnecessary detail.
+
+3. STRUCTURED RESPONSE BLUEPRINT
+   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.
+
+   Stage 1 – Title
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      Timeline duties:
+        • Include a descriptive title that identifies the dish
+        • Use an emoji relevant to the topic in the title
+        • Format the title as a top-level heading
+
+   Stage 2 – Notice
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      Timeline duties:
+        • Use an attention-grabbing visual marker in the notice heading
+        • State a clear dietary limitation for the recipe
+        • Include a prominent dietary restriction notice
+
+   Stage 3 – Step Instruction
+      Logic cue: Sequential micro-steps: address bullets in a flowing order.
+      Timeline duties:
+        • List required ingredients with quantities before providing preparation steps
+        • Include specific time durations for time-sensitive steps
+        • Present preparation steps in numbered sequence
+        • Provide clear action verbs for each step
+
+   Stage 4 – Step Instruction
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      LOCAL branch – when The cooking guide is targeted at beginners with limited kitchen equipment:
+        • Provide detailed visual cues for determining proper dough thickness without specialized tools
+        • Offer alternative methods using common household items when specialized equipment is unavailable
+        • Include specific troubleshooting advice for common beginner mistakes in pasta rolling
+        • Use encouraging, reassuring language to build confidence for first-time pasta makers
+      Otherwise at this same decision point:
+        • List at least three distinct preparation actions for the current step
+        • Include at least one preventative measure or troubleshooting tip
+        • Present numbered step instructions with clear action verbs
+        • Specify tools or equipment needed for the step
+
+   Stage 5 – Step Instruction
+      Logic cue: Sequential micro-steps: address bullets in a flowing order.
+      GLOBAL branch – when The cooking guide is targeted at advanced chefs who prefer improvisational cooking with flexible measurements:
+        - Step 1: Step Instruction
+            • Use descriptive measurements instead of precise quantities (e.g., 'a generous drizzle', 'a handful')
+            • Include sensory cues and visual indicators for doneness instead of exact timing
+            • Provide technique variations and optional ingredient substitutions
+            • Frame instructions as suggestions rather than rigid numbered steps
+        - Step 2: Step Instruction
+            • Explain how to develop deeper flavor complexity through extended simmering or ingredient layering
+        - Step 3: Step Instruction
+            • Diagnose at least two critical failures driving the alternate scenario.
+            • Maintain an openly critical tone that assigns accountability for those failures.
+        - Step 4: Tips
+            • Lay out an urgent recovery plan using numbered steps.
+            • Highlight the need for rapid collaborative action to stabilize the situation.
+      Otherwise at this same decision point:
+        - Step 1: Step Instruction
+            • List required ingredients with quantities and preparation notes
+            • Include cooking times or duration indicators where relevant
+            • Present numbered steps in chronological cooking order
+        - Step 2: Step Instruction
+            Logic cue: Parallel coverage: hit every bullet for this stage.
+            LOCAL branch – when The cooking guide is targeted at advanced cooks who prefer detailed technique explanations over basic instructions:
+              • Explain the scientific reason behind the cooking time and technique
+              • Provide alternative cooking methods beyond basic boiling
+              • Include advanced serving and plating techniques
+              • Specify temperature control and water salinity requirements
+            Otherwise at this same decision point:
+              • Offer at least one optional ingredient or variation
+              • Include a visual or textural cue for doneness
+              • Provide a specific cooking time instruction
+              • List sequential preparation steps
+        - Step 3: Tips
+            Logic cue: Parallel coverage: hit every bullet for this stage.
+            LOCAL branch – when The cooking guide is aimed at advanced home cooks who want to optimize flavor complexity:
+              • Provide at least two flavor-enhancing techniques beyond basic substitutions
+              • Include specific ingredient quality recommendations for superior results
+              • Recommend advanced preparation methods that enhance flavor development
+            Otherwise at this same decision point:
+              • Provide at least one substitution option for a core ingredient
+              • Include timing or serving recommendation for optimal results
+      Global path note: Once you enter this alternate storyline, remain on it until it naturally merges back into the main sequence.
+
+4. CURRENT CONDITION ASSUMPTION
+   Unless the evaluator states otherwise, assume each trigger below is currently FALSE.
+   - Step Instruction: The cooking guide is not targeted at beginners with limited kitchen equipment.
+   - Step Instruction: The cooking guide is not targeted at advanced chefs who prefer improvisational cooking with flexible measurements.
+   - Step Instruction: The cooking guide is not targeted at advanced cooks who prefer detailed technique explanations over basic instructions.
+   - Tips: The cooking guide is not aimed at advanced home cooks who want to optimize flavor complexity.
+
+5. EVALUATION NOTICE
+- Automated checks will verify every global rule, each stage’s duties, and the branch-specific obligations you triggered.
+- Once you pick a branch, treat all bullets under that branch as mandatory, and do not mix incompatible paths unless explicitly told to merge.
+- Language, tone, structural cues, and conditional behaviors are all inspected.

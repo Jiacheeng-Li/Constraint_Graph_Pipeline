@@ -196,7 +196,16 @@ def _call_deepseek_block_constraints(block: BlockSpec,
     让 deepseek 针对单个 block 生成：
     - 该 block 的逻辑类型 (logic: "AND" | "sub-chain")
     - 该 block 实际在做/必须做的可验证要求列表 (constraints: [...])
-    每条约束还需提供一个 evidence 字段（极短原文短语）以便后续定位证据。
+
+    注意：
+    - 这些约束是针对该 block 的“局部硬性/软性要求”，但必须是**抽象的、泛化的**，而不是把原文内容逐句复述。
+    - desc 不能泄露具体答案细节（人名、年份、专有名词、具体结论等），而应概括为通用写作义务，如：
+      * "Provide at least one real-world example to illustrate the main point."
+      * "Compare two contrasting viewpoints before giving a judgment."
+      * "Summarize the key causes and their effects in a neutral tone."
+    - 内容、语气、结构上的要求都可以出现，但要写成**模式级别（pattern-level）**，而不是复制当前 block 的具体事实。
+
+    每条约束还需提供一个 evidence 字段（极短原文短语）以便后续定位证据，但 evidence 只用于内部溯源，不应在 desc 中泄露具体细节。
     """
     # 使用 text_clean 保留原文语义，仅做空白规整；不默认截断
     block_text_clean = make_snippet(block.text_span)
@@ -209,17 +218,28 @@ def _call_deepseek_block_constraints(block: BlockSpec,
     outline_str = summarize_blocks_outline(segmentation)
 
     system_prompt = (
-        "You are an instruction reverse-engineer.\n"
-        "Goal: For ONE block of an assistant's answer, infer what concrete obligations that block actually satisfies.\n"
-        "CRITICAL: You must ONLY claim obligations that are directly evidenced IN the provided TEXT SNIPPET.\n"
-        "The OUTLINE and the SEED TASK are context only; you CANNOT invent constraints from them.\n"
-        "Return ONLY valid JSON. No commentary. No markdown. No code fences.\n\n"
+        "You are an instruction reverse-engineer for LOCAL blocks of an answer.\n"
+        "Goal: For ONE block of an assistant's answer, infer what concrete, verifiable OBLIGATIONS that block satisfies,\n"
+        "but write them in an ABSTRACT, PATTERN-LEVEL way, not as a paraphrase of the specific content.\n\n"
+        "CRITICAL RULES:\n"
+        "- You MUST base all obligations on evidence that appears inside the TEXT SNIPPET.\n"
+        "- You MUST NOT simply summarize or restate the snippet.\n"
+        "- You MUST NOT encode specific facts, names, dates, numbers, or conclusions from the snippet into the description.\n"
+        "- Write obligations as generic patterns that could apply to many similar blocks.\n"
+        "- It is OK to mention structure or tone (e.g., \"present at least one real-world example\", \"keep a neutral analytical tone\"),\n"
+        "  but do NOT leak the actual examples or detailed conclusions.\n\n"
+        "Examples of acceptable obligation styles (not tied to specific content):\n"
+        "- \"Provide at least one real-world example to illustrate the main claim.\"\n"
+        "- \"Compare two contrasting cases before giving a judgment.\"\n"
+        "- \"Summarize the key causes and effects in a neutral, analytical tone.\"\n"
+        "- \"Highlight practical implications or next steps for the user.\"\n\n"
+        "You must return ONLY valid JSON. No commentary. No markdown. No code fences.\n\n"
         "JSON schema:\n"
         "{\n"
         "  \"logic\": \"AND\" | \"sub-chain\",\n"
         "  \"constraints\": [\n"
         "    {\n"
-        "      \"desc\": \"<imperative, concrete, verifiable>\",\n"
+        "      \"desc\": \"<imperative, abstract, verifiable obligation; no specific names/dates>\",\n"
         "      \"verifier\": {\"check\": \"<snake_case>\", \"args\": { }},\n"
         "      \"evidence\": \"<very short phrase copied from the text>\"\n"
         "    }\n"

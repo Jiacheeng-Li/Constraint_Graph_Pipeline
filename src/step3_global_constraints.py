@@ -556,20 +556,43 @@ def _build_hard_global_constraints(response_text: str,
 def _call_deepseek_soft_constraints(response_text: str,
                                     segmentation: Dict[str, Any]) -> str:
     """
-    调用 deepseek 让它给出“语气 / 安全 / 风格”类全局约束。
+    调用 deepseek 反推出“抽象软性全局偏好”：
 
-    非常重要：
-    - 我们现在要求它只能根据回答本身已经呈现出来的风格/语气/姿态来提炼约束，
-      不能脑补“理想上应该是什么样”。
-    - 我们提供给它的 TEXT SNIPPET 是原文本身（仅做空白规整），
-      不摘要、不改写、不自动截断；只有在极端过长时才 clip() 以防 token 爆炸。
-    - outline 只是结构位置参考，不能用来发明没出现的要求。
+    目标：从完整回答 (#Response#) 中，推测真实用户在提问时可能隐含的“软性偏好”，例如：
+    - 希望论证结构清晰、有逻辑性
+    - 希望多解释原因或背景
+    - 希望语气更正式 / 更友好
+    - 希望例子更丰富或更贴近日常生活
+    - 希望避免含糊表达，提高可理解性
 
-    期望 deepseek 输出：JSON list，每项类似：
+    要求：
+    - 偏好必须是抽象的（abstract）、人类自然会说的偏好（human-like preference）。
+    - 不包含任何具体结构要求：段落数、列表长度、字数、字符数、符号/格式（粗体、斜体、代码块、顺序号等）。
+    - 不包含 Response 的具体内容、结论或细节；不能让模型看到“答案骨架”然后照着仿写。
+    - 只能从整体风格/写法中抽象出可能的偏好，而不是复述答案本身。
+
+    输出：JSON list，每一项对应一个“抽象软性约束/偏好”，建议条目数在 3–6 条：
         {
-          "desc": "The answer must maintain a neutral, analytical tone.",
-          "verifier": {"check": "tone_neutral_llm_judge", "args": {}}
+          "desc": "<抽象软性偏好，英文>",
+          "verifier": {"check": "<snake_case>", "args": {}}
         }
+
+    desc：
+    - 必须是英文、命令式或规范式语句，但语义上是“偏好/风格”，不是硬性结构规则。
+    - 不得提及段落个数、列表个数、字数、字符数、具体符号、具体结论或样例细节。
+
+    verifier.check：
+    - 若适用，优先使用已有的软性校验器：
+      tone_neutral_llm_judge
+      tone_negative_llm_judge
+      non_extremeness_judge
+      role_consistency_judge
+      actionability_judge
+    - 如需表达新的偏好，可以创建新的 snake_case 名称，如
+      "preference_clear_reasoning", "preference_rich_examples", "preference_formal_tone" 等。
+    - 所有新校验名必须与 desc 语义对应，并且 args 为 JSON object（可为空）。
+
+    若无法抽取合理偏好，可返回空列表 []。
     """
 
     # 处理原文：保持语义，去除多余空白，不默认截断
@@ -581,57 +604,71 @@ def _call_deepseek_soft_constraints(response_text: str,
     outline_str = summarize_blocks_outline(segmentation)
     
     system_prompt = """You are an instruction analyst.
-Your job is to infer ONLY global style/tone/safety requirements that the FULL ANSWER is ALREADY FOLLOWING.
-You MUST base every requirement on observable evidence in the provided TEXT SNIPPET.
-Do NOT invent idealized rules that are not clearly demonstrated in that text.
-The OUTLINE is just structural context (which block does what), NOT evidence.
-If you cannot justify a requirement from the snippet, you must NOT output it.
+Your job is to infer ONLY abstract, human-like soft preferences a user might have had when asking for this answer.
 
-Soft global constraints are about tone, safety, stance, professional voice, neutrality, actionability, or analyst persona consistency across the entire answer.
-Do NOT restate local factual obligations (e.g. "must list three risks") that only apply to one block; those belong to local block constraints, not global style.  🔁
+CRITICAL SCOPE:
+- You MUST base your inferences on the overall style and behavior of the FULL ANSWER text.
+- You MUST NOT restate concrete content, conclusions, or detailed structure from the answer.
+- You MUST keep the preferences abstract and user-like (how a human would describe their preferences), not as a restatement of the answer.
 
-Every constraint must be grounded in observable evidence in the TEXT SNIPPET.
-Do NOT invent requirements that do not clearly appear in the text.
+What is an acceptable soft preference?
+- High-level expectations about style, clarity, and helpfulness, for example:
+  - "Prefer clear and logical reasoning."
+  - "Prefer more explanation of reasons and background."
+  - "Prefer a formal and professional tone." / "Prefer a friendly and accessible tone."
+  - "Prefer using concrete examples drawn from everyday life."
+  - "Prefer avoiding vague, ambiguous phrasing to improve comprehensibility."
 
-You must return ONLY valid JSON: a list of objects.
-Each object MUST have: {desc, verifier:{check,args}}.
+You MUST AVOID:
+- Mentioning paragraph count.
+- Mentioning list length or number of bullet points.
+- Mentioning character counts or word counts.
+- Mentioning explicit formatting (bold, italics, headings, code blocks, numbering).
+- Describing the specific content, conclusions, or structure of the given answer.
+- Any wording that would let a model mimic the exact outline or skeleton of the original answer.
 
-About verifier.check:
-- If one of these fits, use it:
-  tone_neutral_llm_judge
-  tone_negative_llm_judge
-  non_extremeness_judge
-  role_consistency_judge
-  actionability_judge
-- Otherwise, you MUST create a new descriptive snake_case name
-  that reflects the requirement, e.g. "must_include_case_studies", "balanced_argumentation", "risk_mitigation_guidance".
-  This is allowed.
-Any new verifier.check you create MUST still describe a requirement that is clearly exhibited by the TEXT SNIPPET. 🔁
-You are NOT allowed to invent a requirement that the snippet does not follow, just to create a new check name. 🔁
+Your task is to infer only generalized, reasonable user soft preferences which could explain why the answer looks the way it does, but without leaking any concrete answer details.
 
-Rules for new verifier names:
-- snake_case only [a-z0-9_]
-- It must reflect the obligation in desc.
-- args must be a JSON object (possibly empty) describing any parameters needed to check this rule, e.g. {"min_items": 3}.
+OUTPUT FORMAT (STRICT JSON):
+- Return a JSON list (array) of 3 to 6 items.
+- Each item describes ONE abstract soft preference:
+  {
+    "desc": "<imperative, abstract soft preference in English>",
+    "verifier": {"check": "<snake_case>", "args": {}}
+  }
 
-If nothing applies, return an empty JSON list [].
+Rules for desc:
+- English only.
+- Imperative or normative form ("Keep the tone ...", "Provide ...", etc.), but semantically a soft preference.
+- MUST NOT mention counts, explicit formatting, or concrete answer details.
 
-Rules:
-- desc must be English, imperative, concrete, verifiable.
-- desc should describe the style/voice/safety stance the answer actually exhibits.
-- Do NOT include word count, paragraph structure, language choice, or first-person bans here.
-  Those are handled elsewhere.
-- Do NOT output explanations outside JSON."""
+Rules for verifier.check:
+- If suitable, choose from:
+  - tone_neutral_llm_judge
+  - tone_negative_llm_judge
+  - non_extremeness_judge
+  - role_consistency_judge
+  - actionability_judge
+- Otherwise, you MAY create new descriptive snake_case names that reflect the preference,
+  e.g., "preference_clear_reasoning", "preference_rich_examples", "preference_formal_tone".
+- New names must:
+  - be snake_case [a-z0-9_],
+  - clearly reflect the obligation in desc,
+  - include an args JSON object (possibly empty) describing parameters if any.
+
+If nothing reasonable applies, return an empty JSON list [] and no additional text.
+
+You must return ONLY the JSON list, no explanations, no markdown, no code fences."""
 
 
     user_prompt = (
         "GLOBAL OUTLINE (structure only; DO NOT invent rules from this):\n"
         f"{outline_str}\n\n"
-        "TEXT SNIPPET (this is the FULL ANSWER content as given to the user;\n"
-        "ALL requirements MUST be grounded in this text, do NOT hallucinate):\n"
+        "#Response# (this is the FULL ANSWER content as given to the user):\n"
+        "You must infer only abstract, human-like soft preferences from this text, without leaking concrete details.\n\n"
         f"{answer_clean}\n\n"
-        "Extract the global style/tone/safety constraints that the answer is ALREADY following.\n"
-        "Return ONLY the JSON list.\n"
+        "Extract 3 to 6 abstract soft preferences the user might have, following the specification above,\n"
+        "and return ONLY the JSON list.\n"
     )
 
     try:

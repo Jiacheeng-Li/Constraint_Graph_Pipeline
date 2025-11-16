@@ -1,0 +1,1745 @@
+{
+  "sample_id": "example_002_101",
+  "timestamp_utc": "2025-11-16T13:49:44.534933+00:00",
+  "machine_prompt": "SYSTEM INSTRUCTIONS:\n\n1. MISSION BRIEF & DELIVERABLE\n   - Primary directive: Write a detailed Markdown-formatted cooking guide for homemade pasta with tomato basil sauce in an instructive yet friendly tone.\n\n2. NON-NEGOTIABLE GLOBAL RULES\n   Respect every rule simultaneously across the full response:\n   1. Do not submit under 166 words.\n   2. Use English as the primary language for the answer.\n   3. Organize the answer into at least 13 paragraphs.\n   4. Maintain heading-level consistency; permitted levels are [1, 2].\n   5. Do not use the symbol '?'.\n   6. Prefer clear and sequential step-by-step instructions.\n   7. Prefer including practical tips and alternatives for flexibility.\n   8. Prefer a friendly and accessible tone with simple language.\n   9. Prefer highlighting important notices or warnings upfront.\n   10. Prefer concise ingredient lists and preparation steps without unnecessary detail.\n\n3. STRUCTURED RESPONSE BLUEPRINT\n   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.\n\n   Stage 1 – Title\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      Timeline duties:\n        • Include a descriptive title that identifies the dish\n        • Use an emoji relevant to the topic in the title\n        • Format the title as a top-level heading\n\n   Stage 2 – Notice\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      Timeline duties:\n        • Use an attention-grabbing visual marker in the notice heading\n        • State a clear dietary limitation for the recipe\n        • Include a prominent dietary restriction notice\n\n   Stage 3 – Step Instruction\n      Logic cue: Sequential micro-steps: address bullets in a flowing order.\n      Timeline duties:\n        • List required ingredients with quantities before providing preparation steps\n        • Include specific time durations for time-sensitive steps\n        • Present preparation steps in numbered sequence\n        • Provide clear action verbs for each step\n\n   Stage 4 – Step Instruction\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      LOCAL branch – when The cooking guide is targeted at beginners with limited kitchen equipment:\n        • Provide detailed visual cues for determining proper dough thickness without specialized tools\n        • Offer alternative methods using common household items when specialized equipment is unavailable\n        • Include specific troubleshooting advice for common beginner mistakes in pasta rolling\n        • Use encouraging, reassuring language to build confidence for first-time pasta makers\n      Otherwise at this same decision point:\n        • List at least three distinct preparation actions for the current step\n        • Include at least one preventative measure or troubleshooting tip\n        • Present numbered step instructions with clear action verbs\n        • Specify tools or equipment needed for the step\n\n   Stage 5 – Step Instruction\n      Logic cue: Sequential micro-steps: address bullets in a flowing order.\n      GLOBAL branch – when The cooking guide is targeted at advanced chefs who prefer improvisational cooking with flexible measurements:\n        - Step 1: Step Instruction\n            • Use descriptive measurements instead of precise quantities (e.g., 'a generous drizzle', 'a handful')\n            • Include sensory cues and visual indicators for doneness instead of exact timing\n            • Provide technique variations and optional ingredient substitutions\n            • Frame instructions as suggestions rather than rigid numbered steps\n        - Step 2: Step Instruction\n            • Explain how to develop deeper flavor complexity through extended simmering or ingredient layering\n        - Step 3: Step Instruction\n            • Diagnose at least two critical failures driving the alternate scenario.\n            • Maintain an openly critical tone that assigns accountability for those failures.\n        - Step 4: Tips\n            • Lay out an urgent recovery plan using numbered steps.\n            • Highlight the need for rapid collaborative action to stabilize the situation.\n      Otherwise at this same decision point:\n        - Step 1: Step Instruction\n            • List required ingredients with quantities and preparation notes\n            • Include cooking times or duration indicators where relevant\n            • Present numbered steps in chronological cooking order\n        - Step 2: Step Instruction\n            Logic cue: Parallel coverage: hit every bullet for this stage.\n            LOCAL branch – when The cooking guide is targeted at advanced cooks who prefer detailed technique explanations over basic instructions:\n              • Explain the scientific reason behind the cooking time and technique\n              • Provide alternative cooking methods beyond basic boiling\n              • Include advanced serving and plating techniques\n              • Specify temperature control and water salinity requirements\n            Otherwise at this same decision point:\n              • Offer at least one optional ingredient or variation\n              • Include a visual or textural cue for doneness\n              • Provide a specific cooking time instruction\n              • List sequential preparation steps\n        - Step 3: Tips\n            Logic cue: Parallel coverage: hit every bullet for this stage.\n            LOCAL branch – when The cooking guide is aimed at advanced home cooks who want to optimize flavor complexity:\n              • Provide at least two flavor-enhancing techniques beyond basic substitutions\n              • Include specific ingredient quality recommendations for superior results\n              • Recommend advanced preparation methods that enhance flavor development\n            Otherwise at this same decision point:\n              • Provide at least one substitution option for a core ingredient\n              • Include timing or serving recommendation for optimal results\n      Global path note: Once you enter this alternate storyline, remain on it until it naturally merges back into the main sequence.\n\n4. CURRENT CONDITION ASSUMPTION\n   Unless the evaluator states otherwise, assume each trigger below is currently FALSE.\n   - Step Instruction: The cooking guide is not targeted at beginners with limited kitchen equipment.\n   - Step Instruction: The cooking guide is not targeted at advanced chefs who prefer improvisational cooking with flexible measurements.\n   - Step Instruction: The cooking guide is not targeted at advanced cooks who prefer detailed technique explanations over basic instructions.\n   - Tips: The cooking guide is not aimed at advanced home cooks who want to optimize flavor complexity.\n\n5. EVALUATION NOTICE\n- Automated checks will verify every global rule, each stage’s duties, and the branch-specific obligations you triggered.\n- Once you pick a branch, treat all bullets under that branch as mandatory, and do not mix incompatible paths unless explicitly told to merge.\n- Language, tone, structural cues, and conditional behaviors are all inspected.\n",
+  "eval_protocol": {
+    "seed_task": "Write a detailed Markdown-formatted cooking guide for homemade pasta with tomato basil sauce in an instructive yet friendly tone.",
+    "global_scoring": [
+      {
+        "cid": "G1",
+        "desc": "Do not submit under 166 words.",
+        "verifier": {
+          "check": "min_word_count",
+          "args": {
+            "min_words": 166
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G2",
+        "desc": "Use English as the primary language for the answer.",
+        "verifier": {
+          "check": "require_language",
+          "args": {
+            "lang": "en"
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G3",
+        "desc": "Organize the answer into at least 13 paragraphs.",
+        "verifier": {
+          "check": "min_paragraphs",
+          "args": {
+            "min_paras": 13
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G4",
+        "desc": "Maintain heading-level consistency; permitted levels are [1, 2].",
+        "verifier": {
+          "check": "heading_levels_only",
+          "args": {
+            "levels": [
+              1,
+              2
+            ]
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G5",
+        "desc": "Do not use the symbol '?'.",
+        "verifier": {
+          "check": "forbid_symbol",
+          "args": {
+            "symbol": "?"
+          }
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G6",
+        "desc": "Prefer clear and sequential step-by-step instructions.",
+        "verifier": {
+          "check": "preference_sequential_steps",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G7",
+        "desc": "Prefer including practical tips and alternatives for flexibility.",
+        "verifier": {
+          "check": "preference_practical_tips",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G8",
+        "desc": "Prefer a friendly and accessible tone with simple language.",
+        "verifier": {
+          "check": "tone_neutral_llm_judge",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G9",
+        "desc": "Prefer highlighting important notices or warnings upfront.",
+        "verifier": {
+          "check": "preference_notice_highlight",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      },
+      {
+        "cid": "G10",
+        "desc": "Prefer concise ingredient lists and preparation steps without unnecessary detail.",
+        "verifier": {
+          "check": "preference_conciseness",
+          "args": {}
+        },
+        "logic": "MANDATORY_GLOBAL"
+      }
+    ],
+    "block_scoring": [
+      {
+        "block_id": "B1",
+        "role": "Title",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B1_C1",
+            "desc": "Include a descriptive title that identifies the dish",
+            "verifier": {
+              "check": "custom:has_title",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B1_C2",
+            "desc": "Use an emoji relevant to the topic in the title",
+            "verifier": {
+              "check": "custom:has_emoji",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B1_C3",
+            "desc": "Format the title as a top-level heading",
+            "verifier": {
+              "check": "custom:is_top_heading",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B2",
+        "role": "Notice",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B2_C1",
+            "desc": "Use an attention-grabbing visual marker in the notice heading",
+            "verifier": {
+              "check": "custom:has_symbol",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B2_C2",
+            "desc": "State a clear dietary limitation for the recipe",
+            "verifier": {
+              "check": "custom:mentions_restriction",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B2_C3",
+            "desc": "Include a prominent dietary restriction notice",
+            "verifier": {
+              "check": "custom:has_section",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B3",
+        "role": "Step Instruction",
+        "logic_type": "sub-chain",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B3_C1",
+            "desc": "List required ingredients with quantities before providing preparation steps",
+            "verifier": {
+              "check": "custom:has_ingredient_list",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B3_C2",
+            "desc": "Include specific time durations for time-sensitive steps",
+            "verifier": {
+              "check": "custom:has_time_specifications",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B3_C3",
+            "desc": "Present preparation steps in numbered sequence",
+            "verifier": {
+              "check": "custom:has_numbered_steps",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B3_C4",
+            "desc": "Provide clear action verbs for each step",
+            "verifier": {
+              "check": "custom:has_action_verbs",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B4",
+        "role": "Step Instruction",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B4_C1",
+            "desc": "List at least three distinct preparation actions for the current step",
+            "verifier": {
+              "check": "custom:has_multiple_actions",
+              "args": {
+                "min_count": 3
+              }
+            }
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Include at least one preventative measure or troubleshooting tip",
+            "verifier": {
+              "check": "custom:has_preventative_advice",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B4_C3",
+            "desc": "Present numbered step instructions with clear action verbs",
+            "verifier": {
+              "check": "custom:has_numbered_steps",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B4_C4",
+            "desc": "Specify tools or equipment needed for the step",
+            "verifier": {
+              "check": "custom:mentions_tools",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B5",
+        "role": "Step Instruction",
+        "logic_type": "sub-chain",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B5_C1",
+            "desc": "List required ingredients with quantities and preparation notes",
+            "verifier": {
+              "check": "custom:has_ingredients_list",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_C2",
+            "desc": "Include cooking times or duration indicators where relevant",
+            "verifier": {
+              "check": "custom:has_timing_instructions",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_C3",
+            "desc": "Present numbered steps in chronological cooking order",
+            "verifier": {
+              "check": "custom:has_sequential_steps",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B6",
+        "role": "Step Instruction",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B6_C1",
+            "desc": "Offer at least one optional ingredient or variation",
+            "verifier": {
+              "check": "custom:has_optional_element",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B6_C2",
+            "desc": "Include a visual or textural cue for doneness",
+            "verifier": {
+              "check": "custom:has_doneness_cue",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B6_C3",
+            "desc": "Provide a specific cooking time instruction",
+            "verifier": {
+              "check": "custom:has_time_instruction",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B6_C4",
+            "desc": "List sequential preparation steps",
+            "verifier": {
+              "check": "custom:has_sequential_steps",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "block_id": "B7",
+        "role": "Tips",
+        "logic_type": "AND",
+        "is_alternate": false,
+        "origin_block": null,
+        "requirements": [
+          {
+            "cid": "B7_C1",
+            "desc": "Provide at least one substitution option for a core ingredient",
+            "verifier": {
+              "check": "custom:has_substitution",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B7_C2",
+            "desc": "Include timing or serving recommendation for optimal results",
+            "verifier": {
+              "check": "custom:has_timing_recommendation",
+              "args": {}
+            }
+          }
+        ]
+      }
+    ],
+    "conditional_scoring": [
+      {
+        "sid": "SEL_B4",
+        "where": "B4 Step Instruction",
+        "condition": "If the cooking guide is targeted at beginners with limited kitchen equipment",
+        "selection_type": "local",
+        "merge_point": "B5",
+        "truncated": false,
+        "branch_real_block": "B4",
+        "branch_alt_block": "B4_ALT",
+        "alt_path_blocks": [
+          "B4_ALT"
+        ],
+        "branch_real": [
+          {
+            "cid": "B4_C1",
+            "desc": "List at least three distinct preparation actions for the current step",
+            "verifier": {
+              "check": "custom:has_multiple_actions",
+              "args": {
+                "min_count": 3
+              }
+            }
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Include at least one preventative measure or troubleshooting tip",
+            "verifier": {
+              "check": "custom:has_preventative_advice",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B4_C3",
+            "desc": "Present numbered step instructions with clear action verbs",
+            "verifier": {
+              "check": "custom:has_numbered_steps",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B4_C4",
+            "desc": "Specify tools or equipment needed for the step",
+            "verifier": {
+              "check": "custom:mentions_tools",
+              "args": {}
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B4_ALT_C1",
+            "desc": "Provide detailed visual cues for determining proper dough thickness without specialized tools",
+            "verifier": {
+              "check": "must_include_visual_cues",
+              "args": {
+                "min_cues": 2
+              }
+            }
+          },
+          {
+            "cid": "B4_ALT_C2",
+            "desc": "Offer alternative methods using common household items when specialized equipment is unavailable",
+            "verifier": {
+              "check": "must_provide_alternatives",
+              "args": {
+                "min_alternatives": 2
+              }
+            }
+          },
+          {
+            "cid": "B4_ALT_C3",
+            "desc": "Include specific troubleshooting advice for common beginner mistakes in pasta rolling",
+            "verifier": {
+              "check": "must_include_troubleshooting",
+              "args": {
+                "min_tips": 2
+              }
+            }
+          },
+          {
+            "cid": "B4_ALT_C4",
+            "desc": "Use encouraging, reassuring language to build confidence for first-time pasta makers",
+            "verifier": {
+              "check": "tone_encouraging_llm_judge",
+              "args": {}
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      },
+      {
+        "sid": "SEL_B5",
+        "where": "B5 Step Instruction",
+        "condition": "If the cooking guide is targeted at advanced chefs who prefer improvisational cooking with flexible measurements",
+        "selection_type": "global",
+        "merge_point": null,
+        "truncated": false,
+        "branch_real_block": "B5",
+        "branch_alt_block": "B5_ALT",
+        "alt_path_blocks": [
+          "B5_ALT",
+          "B5_ALT_N1",
+          "B5_ALT_NEXT1",
+          "B5_ALT_NEXT2"
+        ],
+        "branch_real": [
+          {
+            "cid": "B5_C1",
+            "desc": "List required ingredients with quantities and preparation notes",
+            "verifier": {
+              "check": "custom:has_ingredients_list",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_C2",
+            "desc": "Include cooking times or duration indicators where relevant",
+            "verifier": {
+              "check": "custom:has_timing_instructions",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_C3",
+            "desc": "Present numbered steps in chronological cooking order",
+            "verifier": {
+              "check": "custom:has_sequential_steps",
+              "args": {}
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B5_ALT_C1",
+            "desc": "Use descriptive measurements instead of precise quantities (e.g., 'a generous drizzle', 'a handful')",
+            "verifier": {
+              "check": "must_use_descriptive_measurements",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_ALT_C2",
+            "desc": "Include sensory cues and visual indicators for doneness instead of exact timing",
+            "verifier": {
+              "check": "must_include_sensory_cues",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_ALT_C3",
+            "desc": "Provide technique variations and optional ingredient substitutions",
+            "verifier": {
+              "check": "must_include_technique_variations",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_ALT_C4",
+            "desc": "Frame instructions as suggestions rather than rigid numbered steps",
+            "verifier": {
+              "check": "forbid_numbered_steps",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_ALT_N1_C1",
+            "desc": "Explain how to develop deeper flavor complexity through extended simmering or ingredient layering",
+            "verifier": {
+              "check": "must_explain_flavor_development",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_ALT_NEXT1_C1",
+            "desc": "Diagnose at least two critical failures driving the alternate scenario.",
+            "verifier": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "n": 2
+              }
+            }
+          },
+          {
+            "cid": "B5_ALT_NEXT1_C2",
+            "desc": "Maintain an openly critical tone that assigns accountability for those failures.",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B5_ALT_NEXT2_C1",
+            "desc": "Lay out an urgent recovery plan using numbered steps.",
+            "verifier": {
+              "check": "min_numbered_items",
+              "args": {
+                "n": 2
+              }
+            }
+          },
+          {
+            "cid": "B5_ALT_NEXT2_C2",
+            "desc": "Highlight the need for rapid collaborative action to stabilize the situation.",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "urgent",
+                  "collaboration"
+                ]
+              }
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      },
+      {
+        "sid": "SEL_B6",
+        "where": "B6 Step Instruction",
+        "condition": "If the cooking guide is targeted at advanced cooks who prefer detailed technique explanations over basic instructions",
+        "selection_type": "local",
+        "merge_point": "B7",
+        "truncated": false,
+        "branch_real_block": "B6",
+        "branch_alt_block": "B6_ALT",
+        "alt_path_blocks": [
+          "B6_ALT"
+        ],
+        "branch_real": [
+          {
+            "cid": "B6_C1",
+            "desc": "Offer at least one optional ingredient or variation",
+            "verifier": {
+              "check": "custom:has_optional_element",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B6_C2",
+            "desc": "Include a visual or textural cue for doneness",
+            "verifier": {
+              "check": "custom:has_doneness_cue",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B6_C3",
+            "desc": "Provide a specific cooking time instruction",
+            "verifier": {
+              "check": "custom:has_time_instruction",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B6_C4",
+            "desc": "List sequential preparation steps",
+            "verifier": {
+              "check": "custom:has_sequential_steps",
+              "args": {}
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B6_ALT_C1",
+            "desc": "Explain the scientific reason behind the cooking time and technique",
+            "verifier": {
+              "check": "must_include_scientific_rationale",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B6_ALT_C2",
+            "desc": "Provide alternative cooking methods beyond basic boiling",
+            "verifier": {
+              "check": "must_list_alternative_methods",
+              "args": {
+                "min_methods": 2
+              }
+            }
+          },
+          {
+            "cid": "B6_ALT_C3",
+            "desc": "Include advanced serving and plating techniques",
+            "verifier": {
+              "check": "must_describe_plating_techniques",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B6_ALT_C4",
+            "desc": "Specify temperature control and water salinity requirements",
+            "verifier": {
+              "check": "must_include_temperature_specs",
+              "args": {}
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      },
+      {
+        "sid": "SEL_B7",
+        "where": "B7 Tips",
+        "condition": "If the cooking guide is aimed at advanced home cooks who want to optimize flavor complexity",
+        "selection_type": "local",
+        "merge_point": "B8",
+        "truncated": false,
+        "branch_real_block": "B7",
+        "branch_alt_block": "B7_ALT",
+        "alt_path_blocks": [
+          "B7_ALT"
+        ],
+        "branch_real": [
+          {
+            "cid": "B7_C1",
+            "desc": "Provide at least one substitution option for a core ingredient",
+            "verifier": {
+              "check": "custom:has_substitution",
+              "args": {}
+            }
+          },
+          {
+            "cid": "B7_C2",
+            "desc": "Include timing or serving recommendation for optimal results",
+            "verifier": {
+              "check": "custom:has_timing_recommendation",
+              "args": {}
+            }
+          }
+        ],
+        "branch_alt": [
+          {
+            "cid": "B7_ALT_C1",
+            "desc": "Provide at least two flavor-enhancing techniques beyond basic substitutions",
+            "verifier": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "min_items": 2
+              }
+            }
+          },
+          {
+            "cid": "B7_ALT_C2",
+            "desc": "Include specific ingredient quality recommendations for superior results",
+            "verifier": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "quality",
+                  "premium",
+                  "artisanal",
+                  "imported"
+                ],
+                "min_count": 2
+              }
+            }
+          },
+          {
+            "cid": "B7_ALT_C3",
+            "desc": "Recommend advanced preparation methods that enhance flavor development",
+            "verifier": {
+              "check": "must_cover_topics",
+              "args": {
+                "topics": [
+                  "marinating",
+                  "slow-cooking",
+                  "flavor layering"
+                ]
+              }
+            }
+          }
+        ],
+        "scoring_rule": {
+          "must_choose_one_branch": true,
+          "branch_real_logic": "AND",
+          "branch_alt_logic": "AND"
+        }
+      }
+    ],
+    "meta": {
+      "assembled_from": {
+        "step1": "seed_task",
+        "step2": "segmentation",
+        "step3": "global_constraints",
+        "step4": "block_constraints + block_logic",
+        "step5": "selections + augmented block_constraints"
+      }
+    }
+  },
+  "graph_serialized": {
+    "seed_task": "Write a detailed Markdown-formatted cooking guide for homemade pasta with tomato basil sauce in an instructive yet friendly tone.",
+    "global_constraints": [
+      {
+        "cid": "G1",
+        "desc": "Do not submit under 166 words.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "min_word_count",
+          "args": {
+            "min_words": 166
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G2",
+        "desc": "Use English as the primary language for the answer.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "require_language",
+          "args": {
+            "lang": "en"
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G3",
+        "desc": "Organize the answer into at least 13 paragraphs.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "min_paragraphs",
+          "args": {
+            "min_paras": 13
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G4",
+        "desc": "Maintain heading-level consistency; permitted levels are [1, 2].",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "heading_levels_only",
+          "args": {
+            "levels": [
+              1,
+              2
+            ]
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G5",
+        "desc": "Do not use the symbol '?'.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "forbid_symbol",
+          "args": {
+            "symbol": "?"
+          }
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G6",
+        "desc": "Prefer clear and sequential step-by-step instructions.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "preference_sequential_steps",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G7",
+        "desc": "Prefer including practical tips and alternatives for flexibility.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "preference_practical_tips",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G8",
+        "desc": "Prefer a friendly and accessible tone with simple language.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "tone_neutral_llm_judge",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G9",
+        "desc": "Prefer highlighting important notices or warnings upfront.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "preference_notice_highlight",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      },
+      {
+        "cid": "G10",
+        "desc": "Prefer concise ingredient lists and preparation steps without unnecessary detail.",
+        "scope": "global",
+        "verifier_spec": {
+          "check": "preference_conciseness",
+          "args": {}
+        },
+        "trace_to": null,
+        "derived_from": "step3"
+      }
+    ],
+    "block_specs": [
+      {
+        "block_id": "B1",
+        "intent": "Title",
+        "text_span": "# 🍝 Homemade Pasta with Tomato Basil Sauce",
+        "order_index": 0,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B2",
+        "intent": "Notice",
+        "text_span": "## Notice❗️: This recipe is not suitable for vegetarians.",
+        "order_index": 1,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B3",
+        "intent": "Step Instruction",
+        "text_span": "## Step 1: Prepare the Dough\n- **Ingredients**\n  - 2 cups all-purpose flour\n  - 3 large eggs\n  - 1 tsp salt\n  - 1 tbsp olive oil\n\n1. Make a well in the center of the flour.\n2. Add eggs, salt, and olive oil.\n3. Mix until the dough comes together.\n4. Knead for about 10 minutes until smooth.\n5. Wrap and rest for 30 minutes.",
+        "order_index": 2,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B4",
+        "intent": "Step Instruction",
+        "text_span": "## Step 2: Roll & Cut the Pasta\n- Use a pasta roller or rolling pin to flatten the dough.\n- Cut into thin fettuccine strips.\n- Sprinkle flour to prevent sticking.",
+        "order_index": 3,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B4_ALT",
+        "intent": "Step Instruction",
+        "text_span": "## Step 2: Roll & Cut the Pasta\n- Use a pasta roller or rolling pin to flatten the dough.\n- Cut into thin fettuccine strips.\n- Sprinkle flour to prevent sticking.",
+        "order_index": 3,
+        "is_alternate": true,
+        "origin_block": "B4"
+      },
+      {
+        "block_id": "B5",
+        "intent": "Step Instruction",
+        "text_span": "## Step 3: Make the Tomato Basil Sauce\n- **Ingredients**\n  - 2 tbsp olive oil\n  - 2 cloves garlic, minced\n  - 3 ripe tomatoes, chopped\n  - 1/2 tsp salt\n  - Fresh basil leaves\n\n1. Sauté garlic in olive oil until fragrant.\n2. Add tomatoes and simmer for 15 minutes.\n3. Stir in salt and chopped basil.",
+        "order_index": 4,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B5_ALT",
+        "intent": "Step Instruction",
+        "text_span": "## Step 3: Make the Tomato Basil Sauce\n- **Ingredients**\n  - 2 tbsp olive oil\n  - 2 cloves garlic, minced\n  - 3 ripe tomatoes, chopped\n  - 1/2 tsp salt\n  - Fresh basil leaves\n\n1. Sauté garlic in olive oil until fragrant.\n2. Add tomatoes and simmer for 15 minutes.\n3. Stir in salt and chopped basil.",
+        "order_index": 4,
+        "is_alternate": true,
+        "origin_block": "B5"
+      },
+      {
+        "block_id": "B5_ALT_NEXT1",
+        "intent": "Step Instruction",
+        "text_span": "Alternate storyline continuation derived from B6.",
+        "order_index": 5,
+        "is_alternate": true,
+        "origin_block": "B6"
+      },
+      {
+        "block_id": "B6",
+        "intent": "Step Instruction",
+        "text_span": "## Step 4: Combine and Serve\n- Boil pasta for **3–4 minutes** until al dente.\n- Drain and toss with the sauce.\n- **Optional:** Add parmesan cheese if you like.",
+        "order_index": 5,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B6_ALT",
+        "intent": "Step Instruction",
+        "text_span": "## Step 4: Combine and Serve\n- Boil pasta for **3–4 minutes** until al dente.\n- Drain and toss with the sauce.\n- **Optional:** Add parmesan cheese if you like.",
+        "order_index": 5,
+        "is_alternate": true,
+        "origin_block": "B6"
+      },
+      {
+        "block_id": "B5_ALT_N1",
+        "intent": "Step Instruction",
+        "text_span": "## Step 3: Make the Tomato Basil Sauce\n- **Ingredients**\n  - 2 tbsp olive oil\n  - 2 cloves garlic, minced\n  - 3 ripe tomatoes, chopped\n  - 1/2 tsp salt\n  - Fresh basil leaves\n\n1. Sauté garlic in olive oil until fragrant.\n2. Add tomatoes and simmer for 15 minutes.\n3. Stir in salt and chopped basil.",
+        "order_index": 6,
+        "is_alternate": true,
+        "origin_block": "B5"
+      },
+      {
+        "block_id": "B5_ALT_NEXT2",
+        "intent": "Tips",
+        "text_span": "Alternate storyline continuation derived from B7.",
+        "order_index": 6,
+        "is_alternate": true,
+        "origin_block": "B7"
+      },
+      {
+        "block_id": "B7",
+        "intent": "Tips",
+        "text_span": "## 🍽️ Tips\n- If you don’t have fresh tomatoes, use canned crushed tomatoes.\n- Serve immediately for the best texture.",
+        "order_index": 6,
+        "is_alternate": false,
+        "origin_block": null
+      },
+      {
+        "block_id": "B7_ALT",
+        "intent": "Tips",
+        "text_span": "## 🍽️ Tips\n- If you don’t have fresh tomatoes, use canned crushed tomatoes.\n- Serve immediately for the best texture.",
+        "order_index": 6,
+        "is_alternate": true,
+        "origin_block": "B7"
+      }
+    ],
+    "block_constraint_sets": [
+      {
+        "block_id": "B1",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B1_C1",
+            "desc": "Include a descriptive title that identifies the dish",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_title",
+              "args": {}
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B1_C2",
+            "desc": "Use an emoji relevant to the topic in the title",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_emoji",
+              "args": {}
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B1_C3",
+            "desc": "Format the title as a top-level heading",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:is_top_heading",
+              "args": {}
+            },
+            "trace_to": "B1",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B2",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B2_C1",
+            "desc": "Use an attention-grabbing visual marker in the notice heading",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_symbol",
+              "args": {}
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B2_C2",
+            "desc": "State a clear dietary limitation for the recipe",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:mentions_restriction",
+              "args": {}
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B2_C3",
+            "desc": "Include a prominent dietary restriction notice",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_section",
+              "args": {}
+            },
+            "trace_to": "B2",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B3",
+        "logic_type": "sub-chain",
+        "constraints": [
+          {
+            "cid": "B3_C1",
+            "desc": "List required ingredients with quantities before providing preparation steps",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_ingredient_list",
+              "args": {}
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B3_C2",
+            "desc": "Include specific time durations for time-sensitive steps",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_time_specifications",
+              "args": {}
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B3_C3",
+            "desc": "Present preparation steps in numbered sequence",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_numbered_steps",
+              "args": {}
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B3_C4",
+            "desc": "Provide clear action verbs for each step",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_action_verbs",
+              "args": {}
+            },
+            "trace_to": "B3",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B4",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B4_C1",
+            "desc": "List at least three distinct preparation actions for the current step",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_multiple_actions",
+              "args": {
+                "min_count": 3
+              }
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B4_C2",
+            "desc": "Include at least one preventative measure or troubleshooting tip",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_preventative_advice",
+              "args": {}
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B4_C3",
+            "desc": "Present numbered step instructions with clear action verbs",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_numbered_steps",
+              "args": {}
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B4_C4",
+            "desc": "Specify tools or equipment needed for the step",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:mentions_tools",
+              "args": {}
+            },
+            "trace_to": "B4",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B4_ALT",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B4_ALT_C1",
+            "desc": "Provide detailed visual cues for determining proper dough thickness without specialized tools",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_visual_cues",
+              "args": {
+                "min_cues": 2
+              }
+            },
+            "trace_to": "B4_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B4_ALT_C2",
+            "desc": "Offer alternative methods using common household items when specialized equipment is unavailable",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_provide_alternatives",
+              "args": {
+                "min_alternatives": 2
+              }
+            },
+            "trace_to": "B4_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B4_ALT_C3",
+            "desc": "Include specific troubleshooting advice for common beginner mistakes in pasta rolling",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_troubleshooting",
+              "args": {
+                "min_tips": 2
+              }
+            },
+            "trace_to": "B4_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B4_ALT_C4",
+            "desc": "Use encouraging, reassuring language to build confidence for first-time pasta makers",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_encouraging_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B4_ALT",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B5",
+        "logic_type": "sub-chain",
+        "constraints": [
+          {
+            "cid": "B5_C1",
+            "desc": "List required ingredients with quantities and preparation notes",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_ingredients_list",
+              "args": {}
+            },
+            "trace_to": "B5",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B5_C2",
+            "desc": "Include cooking times or duration indicators where relevant",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_timing_instructions",
+              "args": {}
+            },
+            "trace_to": "B5",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B5_C3",
+            "desc": "Present numbered steps in chronological cooking order",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_sequential_steps",
+              "args": {}
+            },
+            "trace_to": "B5",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B5_ALT",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B5_ALT_C1",
+            "desc": "Use descriptive measurements instead of precise quantities (e.g., 'a generous drizzle', 'a handful')",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_use_descriptive_measurements",
+              "args": {}
+            },
+            "trace_to": "B5_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B5_ALT_C2",
+            "desc": "Include sensory cues and visual indicators for doneness instead of exact timing",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_sensory_cues",
+              "args": {}
+            },
+            "trace_to": "B5_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B5_ALT_C3",
+            "desc": "Provide technique variations and optional ingredient substitutions",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_technique_variations",
+              "args": {}
+            },
+            "trace_to": "B5_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B5_ALT_C4",
+            "desc": "Frame instructions as suggestions rather than rigid numbered steps",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "forbid_numbered_steps",
+              "args": {}
+            },
+            "trace_to": "B5_ALT",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B5_ALT_N1",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B5_ALT_N1_C1",
+            "desc": "Explain how to develop deeper flavor complexity through extended simmering or ingredient layering",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_explain_flavor_development",
+              "args": {}
+            },
+            "trace_to": "B5_ALT_N1",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B5_ALT_NEXT1",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B5_ALT_NEXT1_C1",
+            "desc": "Diagnose at least two critical failures driving the alternate scenario.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "n": 2
+              }
+            },
+            "trace_to": "B5_ALT_NEXT1",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B5_ALT_NEXT1_C2",
+            "desc": "Maintain an openly critical tone that assigns accountability for those failures.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
+            },
+            "trace_to": "B5_ALT_NEXT1",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B5_ALT_NEXT2",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B5_ALT_NEXT2_C1",
+            "desc": "Lay out an urgent recovery plan using numbered steps.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "min_numbered_items",
+              "args": {
+                "n": 2
+              }
+            },
+            "trace_to": "B5_ALT_NEXT2",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B5_ALT_NEXT2_C2",
+            "desc": "Highlight the need for rapid collaborative action to stabilize the situation.",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "urgent",
+                  "collaboration"
+                ]
+              }
+            },
+            "trace_to": "B5_ALT_NEXT2",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B6",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B6_C1",
+            "desc": "Offer at least one optional ingredient or variation",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_optional_element",
+              "args": {}
+            },
+            "trace_to": "B6",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B6_C2",
+            "desc": "Include a visual or textural cue for doneness",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_doneness_cue",
+              "args": {}
+            },
+            "trace_to": "B6",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B6_C3",
+            "desc": "Provide a specific cooking time instruction",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_time_instruction",
+              "args": {}
+            },
+            "trace_to": "B6",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B6_C4",
+            "desc": "List sequential preparation steps",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_sequential_steps",
+              "args": {}
+            },
+            "trace_to": "B6",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B6_ALT",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B6_ALT_C1",
+            "desc": "Explain the scientific reason behind the cooking time and technique",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_scientific_rationale",
+              "args": {}
+            },
+            "trace_to": "B6_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B6_ALT_C2",
+            "desc": "Provide alternative cooking methods beyond basic boiling",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_list_alternative_methods",
+              "args": {
+                "min_methods": 2
+              }
+            },
+            "trace_to": "B6_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B6_ALT_C3",
+            "desc": "Include advanced serving and plating techniques",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_describe_plating_techniques",
+              "args": {}
+            },
+            "trace_to": "B6_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B6_ALT_C4",
+            "desc": "Specify temperature control and water salinity requirements",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_temperature_specs",
+              "args": {}
+            },
+            "trace_to": "B6_ALT",
+            "derived_from": "step5"
+          }
+        ]
+      },
+      {
+        "block_id": "B7",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B7_C1",
+            "desc": "Provide at least one substitution option for a core ingredient",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_substitution",
+              "args": {}
+            },
+            "trace_to": "B7",
+            "derived_from": "step4"
+          },
+          {
+            "cid": "B7_C2",
+            "desc": "Include timing or serving recommendation for optimal results",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "custom:has_timing_recommendation",
+              "args": {}
+            },
+            "trace_to": "B7",
+            "derived_from": "step4"
+          }
+        ]
+      },
+      {
+        "block_id": "B7_ALT",
+        "logic_type": "AND",
+        "constraints": [
+          {
+            "cid": "B7_ALT_C1",
+            "desc": "Provide at least two flavor-enhancing techniques beyond basic substitutions",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_list_n_subpoints",
+              "args": {
+                "min_items": 2
+              }
+            },
+            "trace_to": "B7_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B7_ALT_C2",
+            "desc": "Include specific ingredient quality recommendations for superior results",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_include_keywords",
+              "args": {
+                "keywords": [
+                  "quality",
+                  "premium",
+                  "artisanal",
+                  "imported"
+                ],
+                "min_count": 2
+              }
+            },
+            "trace_to": "B7_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B7_ALT_C3",
+            "desc": "Recommend advanced preparation methods that enhance flavor development",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "must_cover_topics",
+              "args": {
+                "topics": [
+                  "marinating",
+                  "slow-cooking",
+                  "flavor layering"
+                ]
+              }
+            },
+            "trace_to": "B7_ALT",
+            "derived_from": "step5"
+          }
+        ]
+      }
+    ],
+    "selections": [
+      {
+        "sid": "SEL_B4",
+        "condition": "If the cooking guide is targeted at beginners with limited kitchen equipment",
+        "trace_to": "B4",
+        "branch_real": {
+          "block_id": "B4",
+          "constraints": [
+            "B4_C1",
+            "B4_C2",
+            "B4_C3",
+            "B4_C4"
+          ]
+        },
+        "branch_alt": {
+          "block_id": "B4_ALT",
+          "constraints": [
+            "B4_ALT_C1",
+            "B4_ALT_C2",
+            "B4_ALT_C3",
+            "B4_ALT_C4"
+          ]
+        },
+        "derived_from": "step5",
+        "selection_type": "local",
+        "merge_point": "B5",
+        "truncated": false,
+        "alt_path_blocks": [
+          "B4_ALT"
+        ]
+      },
+      {
+        "sid": "SEL_B5",
+        "condition": "If the cooking guide is targeted at advanced chefs who prefer improvisational cooking with flexible measurements",
+        "trace_to": "B5",
+        "branch_real": {
+          "block_id": "B5",
+          "constraints": [
+            "B5_C1",
+            "B5_C2",
+            "B5_C3"
+          ]
+        },
+        "branch_alt": {
+          "block_id": "B5_ALT",
+          "constraints": [
+            "B5_ALT_C1",
+            "B5_ALT_C2",
+            "B5_ALT_C3",
+            "B5_ALT_C4",
+            "B5_ALT_N1_C1",
+            "B5_ALT_NEXT1_C1",
+            "B5_ALT_NEXT1_C2",
+            "B5_ALT_NEXT2_C1",
+            "B5_ALT_NEXT2_C2"
+          ]
+        },
+        "derived_from": "step5",
+        "selection_type": "global",
+        "merge_point": null,
+        "truncated": false,
+        "alt_path_blocks": [
+          "B5_ALT",
+          "B5_ALT_N1",
+          "B5_ALT_NEXT1",
+          "B5_ALT_NEXT2"
+        ]
+      },
+      {
+        "sid": "SEL_B6",
+        "condition": "If the cooking guide is targeted at advanced cooks who prefer detailed technique explanations over basic instructions",
+        "trace_to": "B6",
+        "branch_real": {
+          "block_id": "B6",
+          "constraints": [
+            "B6_C1",
+            "B6_C2",
+            "B6_C3",
+            "B6_C4"
+          ]
+        },
+        "branch_alt": {
+          "block_id": "B6_ALT",
+          "constraints": [
+            "B6_ALT_C1",
+            "B6_ALT_C2",
+            "B6_ALT_C3",
+            "B6_ALT_C4"
+          ]
+        },
+        "derived_from": "step5",
+        "selection_type": "local",
+        "merge_point": "B7",
+        "truncated": false,
+        "alt_path_blocks": [
+          "B6_ALT"
+        ]
+      },
+      {
+        "sid": "SEL_B7",
+        "condition": "If the cooking guide is aimed at advanced home cooks who want to optimize flavor complexity",
+        "trace_to": "B7",
+        "branch_real": {
+          "block_id": "B7",
+          "constraints": [
+            "B7_C1",
+            "B7_C2"
+          ]
+        },
+        "branch_alt": {
+          "block_id": "B7_ALT",
+          "constraints": [
+            "B7_ALT_C1",
+            "B7_ALT_C2",
+            "B7_ALT_C3"
+          ]
+        },
+        "derived_from": "step5",
+        "selection_type": "local",
+        "merge_point": "B8",
+        "truncated": false,
+        "alt_path_blocks": [
+          "B7_ALT"
+        ]
+      }
+    ],
+    "meta": {
+      "assembled_from": {
+        "step1": "seed_task",
+        "step2": "segmentation",
+        "step3": "global_constraints",
+        "step4": "block_constraints + block_logic",
+        "step5": "selections + augmented block_constraints"
+      }
+    }
+  },
+  "meta": {
+    "assembled_from": {
+      "step1": "seed_task",
+      "step2": "segmentation",
+      "step3": "global_constraints",
+      "step4": "block_constraints + block_logic",
+      "step5": "selections + augmented block_constraints"
+    }
+  }
+}

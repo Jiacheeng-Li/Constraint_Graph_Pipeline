@@ -497,7 +497,6 @@ def _mk_machine_prompt(seed_task: str,
                     consumed=consumed_blocks,
                 )
                 if followup:
-                    lines.append("        Continue executing the timeline under this branch:")
                     lines.extend(followup)
                 lines.append("      Global path note: Once you enter this alternate storyline, remain on it until it naturally merges back into the main sequence.")
         consumed_blocks.add(stage_id)
