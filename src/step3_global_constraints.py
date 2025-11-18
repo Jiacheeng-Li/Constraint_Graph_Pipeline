@@ -1,36 +1,26 @@
 """
-step3_global_constraints.py
+Step 3 - Global Constraint Extraction
 
-Step 3: 全局约束抽取 (Global Constraint Extraction)
+Purpose / 目标
+- Capture document-wide rules (language, structure, tone, safety) that every future answer must honor.
+- Provide verifier specs for each rule so the scoring runner can automatically check compliance.
 
-- 我们把全局约束分成两类：
-  A. 硬性可程序校验的全局约束（hard global constraints）
-     例如：最少词数、必须包含结构段落、禁止第一人称、必须为英文。
-     这些可以直接由我们本地代码给出并附上 verifier_spec，
-     不依赖 LLM，因此总是可用，保证下游评测有稳定基线。
+Constraint sources
+1. Deterministic heuristics ("hard" constraints): infer length bands, language, sectioning, formatting habits, and safety toggles by inspecting the exemplar answer + segmentation metadata.
+2. LLM-backed "soft" constraints: ask DeepSeek to articulate abstract stylistic or quality expectations grounded in the provided text.
 
-  B. 软性 / 语气 / 安全 / 质量类全局约束（soft / semantic global constraints）
-     例如：中立分析语气、不得煽动性攻击、输出必须保持专业而非情绪化。
-     这些需要语用判断，继续调用 deepseek 生成或确认，
-     并为它们附上 LLM-based 的 verifier（如 tone_neutral_llm_judge, non_extremeness_judge）。
+Outputs / 输出
+- List[ConstraintNode] with scope="global", traceability metadata, and verifier_spec.
 
+Why this matters
+- Establishes non-negotiable contract terms before we dive into block-level reasoning.
+- Guarantees at least a baseline of machine-checkable rules even if LLM calls fail (heuristics always emit something).
 
-输出：List[ConstraintNode]
-- 每个 ConstraintNode:
-    cid: 全局唯一ID（G1, G2, ...）
-    desc: 人类可读描述
-    scope: "global"
-    verifier_spec: {"check": <fn-name>, "args": {...}}
-    derived_from: "step3"
-
-依赖：
-- deepseek-chat (用于软性约束)
-- ConstraintNode schema
-- 硬性规则来自我们自己的启发式：
-  - 字数下限 (min_word_count)
-  - 语言判断 (require_language)
-  - 结构段落 (has_sections) [仅当回答明显分块时]
-  - 禁止第一人称 (forbid_first_person) [可选]
+Dependencies
+- graph_schema.ConstraintNode
+- utils.deepseek_client.call_chat_completions for soft constraint generation.
+- utils.parsing.extract_constraints for resilient parsing of LLM JSON.
+- utils.text_clean helpers for outlines/snippets referenced inside prompts.
 """
 
 import json
@@ -528,7 +518,7 @@ def _build_hard_global_constraints(response_text: str,
                 desc=_desc_from_tpl(
                     "citation_style_numeric" if cite_style=="numeric" else "citation_style_author_year",
                     ("Use numeric bracket citations like [1], [2]." if cite_style=="numeric"
-                     else "Use author–year citations like (Smith, 2021)."),
+                     else "Use author-year citations like (Smith, 2021)."),
                 ),
                 scope="global",
                 verifier_spec={"check": "citation_style", "args": {"style": cite_style}},
@@ -571,7 +561,7 @@ def _call_deepseek_soft_constraints(response_text: str,
     - 不包含 Response 的具体内容、结论或细节；不能让模型看到“答案骨架”然后照着仿写。
     - 只能从整体风格/写法中抽象出可能的偏好，而不是复述答案本身。
 
-    输出：JSON list，每一项对应一个“抽象软性约束/偏好”，建议条目数在 3–6 条：
+    输出：JSON list，每一项对应一个“抽象软性约束/偏好”，建议条目数在 3-6 条：
         {
           "desc": "<抽象软性偏好，英文>",
           "verifier": {"check": "<snake_case>", "args": {}}

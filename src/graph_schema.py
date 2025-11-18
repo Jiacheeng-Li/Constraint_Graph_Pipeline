@@ -1,4 +1,15 @@
+"""
+Graph schema definitions for the Constraint Graph pipeline.
 
+Each dataclass below captures one layer of the graph:
+- ConstraintNode: atomic rule with verifier metadata.
+- BlockSpec: ordered segment descriptors from Step 2.
+- BlockConstraintSet: grouping of local constraints + logic per block.
+- SelectionBranch / SelectionNode: conditional IF/ELSE structures referencing constraint IDs.
+- ConstraintGraph: top-level bundle used by Step 7+, including serialization helpers.
+
+Having a single module own these contracts keeps steps 3-8 aligned and avoids ad-hoc dicts.
+"""
 
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field

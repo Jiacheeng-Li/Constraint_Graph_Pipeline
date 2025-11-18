@@ -1,43 +1,33 @@
 """
-step2_segmentation.py
+Step 2 - Response Segmentation
 
-Step 2: 回答分块 (Response Segmentation)
+Purpose / 目标
+- Break a high-quality reference answer into ordered blocks so later stages can reason about local duties.
+- Capture each block's semantic intent (Opening, Background, Analysis, Recommendation, etc.) to drive structure constraints and traceability.
 
-目标：
-将模型的完整回答文本切分为若干语义逻辑块（Block），
-并识别每块的语义功能(intent)，如：
-  - Opening / Introduction
-  - Background / Context
-  - Main Analysis / Discussion
-  - Conclusion / Summary / Outlook
-  - Recommendation / Suggestion
+Workflow
+1. Feed the full answer into DeepSeek with a strict JSON schema request.
+2. Ask for sequential blocks labelled with block_id, intent, text_span, and order_index.
+3. Parse the response with utils.parsing.extract_blocks so we survive minor JSON mistakes.
+4. If the LLM output is empty or invalid, fall back to deterministic paragraph splitting that preserves bullet runs.
 
-为什么要分块：
-- 每个块会在 Step 4 中单独做 back-translation，抽出局部约束；
-- 块的 intent 能帮助后续自动生成结构约束（如 “必须包含开头、主体、结论”）。
+Inputs / 输入
+- response_text: the exemplar answer we are reverse engineering.
 
-本版本 (vLLM):
-使用 DeepSeek LLM 读取整段回答文本，
-要求它：
-  1. 按语义自然边界切块；
-  2. 给出每块的 intent 标签；
-  3. 输出 JSON 格式。
+Outputs / 输出
+- dict with `blocks` (list of block specs) and `order` (array of block_ids).
 
-输出格式：
-{
-  "blocks": [
-    {"block_id": "B1", "intent": "Opening / Context setup", "text_span": "..."},
-    {"block_id": "B2", "intent": "Main Analysis", "text_span": "..."},
-    {"block_id": "B3", "intent": "Conclusion / Outlook", "text_span": "..."}
-  ],
-  "order": ["B1", "B2", "B3"]
-}
+Why this matters
+- Each block feeds Step 4 back-translation, Step 5 selection planning, and Step 6 chain ordering.
+- Intent labels allow Step 3 to infer structural global constraints such as Intro/Body/Conclusion requirements.
 
-依赖：
-DeepSeek API（deepseek-chat）
+Dependencies
+- utils.deepseek_client.call_chat_completions for the primary segmentation.
+- utils.parsing.extract_blocks for resilient parsing and `_split_paragraphs_with_bullet_groups` for fallback.
 """
 
 import json
+import re
 from typing import Dict, Any
 from .utils.deepseek_client import call_chat_completions, DeepSeekError
 
@@ -73,7 +63,7 @@ def _call_deepseek_segmentation(response_text: str) -> str:
         "}\n\n"
         "Rules:\n"
         "- Preserve the original text order.\n"
-        "- Keep each block text_span concise (50–200 words typically).\n"
+        "- Keep each block text_span concise (50-200 words typically).\n"
         "- Do not include explanations outside JSON.\n"
     )
 
@@ -91,11 +81,57 @@ def _call_deepseek_segmentation(response_text: str) -> str:
             system_prompt=system_prompt,
             temperature=0.0,
             max_tokens=800,
-            timeout=20,
+            timeout=60,
         ).strip()
         return content
     except DeepSeekError:
         return "{}"
+
+
+_BULLET_LINE_PATTERN = re.compile(r"^\s*(?:[-*•]+|\d+[\.\)]|[A-Za-z][\.\)])\s+")
+
+
+def _split_paragraphs_with_bullet_groups(response_text: str) -> list[str]:
+    """
+    Split text into paragraphs while merging consecutive bullet lines (and the blank
+    lines between them) into a single paragraph so that list continuity is preserved.
+    """
+    paragraphs: list[str] = []
+    current_lines: list[str] = []
+    bullet_mode = False
+
+    def flush() -> None:
+        nonlocal current_lines, bullet_mode
+        chunk = "\n".join(current_lines).strip()
+        if chunk:
+            paragraphs.append(chunk)
+        current_lines = []
+        bullet_mode = False
+
+    for raw_line in response_text.splitlines():
+        line = raw_line.rstrip()
+        stripped = line.strip()
+        if not stripped:
+            if bullet_mode:
+                current_lines.append("")
+            else:
+                flush()
+            continue
+
+        is_bullet_line = bool(_BULLET_LINE_PATTERN.match(line))
+        if is_bullet_line:
+            if not bullet_mode and current_lines:
+                flush()
+            bullet_mode = True
+            current_lines.append(line)
+            continue
+
+        if bullet_mode:
+            flush()
+        current_lines.append(line)
+
+    flush()
+    return paragraphs
 
 
 def segment_response(response_text: str) -> Dict[str, Any]:
@@ -115,7 +151,7 @@ def segment_response(response_text: str) -> Dict[str, Any]:
 
     # 如果 LLM 没给出可解析结果，则 fallback: 简单按段落切
     if not parsed.get("blocks"):
-        paras = [p.strip() for p in response_text.split("\n\n") if p.strip()]
+        paras = _split_paragraphs_with_bullet_groups(response_text)
         blocks = []
         for i, p in enumerate(paras, start=1):
             blocks.append({

@@ -1,77 +1,30 @@
 
 
 """
-pipeline_runner.py
+Pipeline Runner - Steps 1->8 Orchestrator
 
-Top-level pipeline runner.
-This script wires Steps 1 -> 7 together for ONE (instruction, model_answer) pair.
-It produces:
-    - data/graphs/<sample_id>.graph.json        (Step 6 structured constraint graph snapshot)
-    - data/graphs/<sample_id>.graph.mmd         (Step 6 Mermaid visualization of the constraint graph)
-    - data/instructions/<sample_id>.prompt.txt  (Step 7 machine_prompt: the final complex eval instruction)
-    - data/reports/<sample_id>.eval.json        (Step 7 eval_protocol + meta for scoring)
-    - data/reports/<sample_id>.bundle.json      (Full Step 7 bundle, including graph snapshot, for audit/forensics)
+Purpose
+- Glue the stage modules together for one (instruction, exemplar answer) pair and persist every artifact used later for prompting, graph debugging, or scoring.
 
-Assumptions / contracts between steps:
-    Step1 (step1_seed_task.extract_seed_task)
-        input: original_instruction (str)
-        output: seed_task (str)
+Artifacts produced
+- data/graphs/<sample_id>.graph.json     - serialized ConstraintGraph snapshot.
+- data/graphs/<sample_id>.graph.mmd      - Mermaid visualization of the graph.
+- data/instructions/<sample_id>.prompt.txt - final machine prompt (Step 8 output or Step 7 fallback).
+- data/reports/<sample_id>.eval.json     - eval protocol + meta for scoring.
+- data/reports/<sample_id>.bundle.json   - full Step 7 bundle for audits.
 
-    Step2 (step2_segmentation.segment_response)
-        input: model_answer (str)
-        output: segmentation dict => {"blocks": [{block_id, intent, text_span, order_index}, ...], "order": [...]}
+Contracts
+- Calls each step in order, passing the expected inputs/outputs documented in the step modules.
+- Tracks LLM_CALL_EVENTS for observability and records which steps actually hit the API.
+- Respects CLI flag `--skip-step8-polish` and env `PIPELINE_ENABLE_STEP8` to disable the polish pass.
 
-    Step3 (step3_global_constraints.extract_global_constraints)
-        input: model_answer (str), segmentation (from step2)
-        output: List[ConstraintNode]  (global scope nodes, each has verifier_spec)
-
-    Step4 (step4_back_translation.extract_block_constraints)
-        input: segmentation (from step2), seed_task (from step1)
-        output: {
-            "block_constraints": {block_id: [ConstraintNode,...]},
-            "block_logic": {block_id: "AND" | "sub-chain"}
-        }
-
-    Step5 (step5_selection_augment.generate_selection_branches)
-        input:
-            seed_task (str)
-            segmentation (from step2)
-            step4_output (dict with block_constraints + block_logic)
-        output:
-            {
-                "block_constraints": {block_id: [...]},      # may be augmented with new nodes
-                "block_logic": {block_id: logic},
-                "selections": [SelectionNode,...]
-            }
-
-    Step6 (step6_graph_assembly.assemble_constraint_graph)
-        input: seed_task, segmentation, global_constraints (step3), step5_output
-        output: ConstraintGraph object
-        plus we can call save_graph_outputs(...) to write .graph.json and .graph.mmd
-
-    Step7 (step7_instruction_synthesis.synthesize_instruction_bundle)
-        input: graph (ConstraintGraph)
-        output: {
-            "machine_prompt": str,
-            "eval_protocol": dict,
-            "graph_serialized": dict,
-            "meta": dict,
-        }
-        We persist this bundle as <sample_id>.bundle.json for convenience.
-
-IMPORTANT:
-- We assume any LLM calls / verifiers required by step1..5 have already been implemented
-  using DeepSeek etc. in those modules.
-- Runner itself does not talk to LLM. It only orchestrates.
-
-USAGE (conceptually):
-    python pipeline_runner.py \
-        --sample-id sample_0001 \
-        --instruction-file data/raw/instruction.txt \
-        --answer-file data/raw/answer.txt
-
-This runner is intentionally simple: one sample in, one batch of artifacts out.
-You can wrap this later for multi-sample generation.
+Usage
+```bash
+python -m src.pipeline_runner \
+    --sample-id sample_0001 \
+    --instruction-file data/raw_examples/example_003_instruction.txt \
+    --answer-file data/raw_examples/example_003_answer.txt
+```
 """
 
 import os
@@ -80,6 +33,7 @@ from typing import Dict, Any
 from datetime import datetime, timezone
 
 from .utils.export_utils import write_json, write_text, save_graph_outputs
+from .utils.deepseek_client import LLM_CALL_EVENTS
 
 # Step modules
 from .step1_seed_task import extract_seed_task
@@ -89,6 +43,7 @@ from .step4_back_translation import extract_block_constraints
 from .step5_selection_augment import generate_selection_branches
 from .step6_graph_assembly import assemble_constraint_graph
 from .step7_instruction_synthesis import synthesize_instruction_bundle
+from .step8_prompt_refinement import refine_instruction_prompt
 
 
 # ------------------------------------------------------------
@@ -104,6 +59,19 @@ def _read_file(path: str) -> str:
         return ""
 
 
+def _record_llm_status(status_list, step_name: str, start_index: int) -> None:
+    new_events = LLM_CALL_EVENTS[start_index:]
+    if not new_events:
+        status = "no-llm"
+    else:
+        status = "success" if all(event.get("success") for event in new_events) else "failed"
+    status_list.append({
+        "step": step_name,
+        "status": status,
+        "calls": len(new_events),
+    })
+
+
 
 # ------------------------------------------------------------
 # Core pipeline for one sample
@@ -112,17 +80,19 @@ def _read_file(path: str) -> str:
 def run_pipeline_once(sample_id: str,
                        original_instruction: str,
                        model_answer: str,
-                       base_data_dir: str = "data") -> Dict[str, Any]:
+                       base_data_dir: str = "data",
+                       *,
+                       enable_step8_polish: bool = True) -> Dict[str, Any]:
     """
-    Run Steps 1 -> 7 on a single (instruction, answer) pair.
+    Run Steps 1 -> 8 on a single (instruction, answer) pair.
 
     Returns a dict with useful artifacts and file paths.
     Also writes:
         data/graphs/<sample_id>.graph.json        # Step6 graph snapshot (machine readable)
         data/graphs/<sample_id>.graph.mmd         # Step6 Mermaid visualization
-        data/instructions/<sample_id>.prompt.txt  # Step7 machine_prompt (final eval prompt)
+        data/instructions/<sample_id>.prompt.txt  # Step8 polished machine_prompt
         data/reports/<sample_id>.eval.json        # Step7 eval_protocol (+ meta)
-        data/reports/<sample_id>.bundle.json      # Full Step7 bundle (debug/forensics)
+        data/reports/<sample_id>.bundle.json      # Full bundle (debug/forensics)
     """
 
     # Derive output dirs from base_data_dir according to the project layout
@@ -131,34 +101,47 @@ def run_pipeline_once(sample_id: str,
     reports_dir = os.path.join(base_data_dir, "reports")        # eval protocol / bundle
 
     ts_utc = datetime.now(timezone.utc).isoformat()
+    LLM_CALL_EVENTS.clear()
+
+    llm_step_statuses = []
 
     # Step 1: extract seed task (core imperative task statement)
+    idx_llm = len(LLM_CALL_EVENTS)
     seed_task = extract_seed_task(instruction_text=original_instruction)
+    _record_llm_status(llm_step_statuses, "Step1 seed_task", idx_llm)
 
     # Step 2: segment the answer into ordered blocks
+    idx_llm = len(LLM_CALL_EVENTS)
     segmentation = segment_response(model_answer)
+    _record_llm_status(llm_step_statuses, "Step2 segmentation", idx_llm)
 
     # Step 3: global constraints that should apply to entire answer
     #    We now pass segmentation so the LLM can see structural outline
     #    but is STILL required (in step3 module) to ground every rule in
     #    the actual answer text, not in imagination.
+    idx_llm = len(LLM_CALL_EVENTS)
     global_nodes = extract_global_constraints(
         response_text=model_answer,
         segmentation=segmentation,
     )
+    _record_llm_status(llm_step_statuses, "Step3 global_constraints", idx_llm)
 
     # Step 4: local constraints per block (back-translation)
+    idx_llm = len(LLM_CALL_EVENTS)
     step4_out = extract_block_constraints(
         segmentation=segmentation,
         seed_task=seed_task,
     )
+    _record_llm_status(llm_step_statuses, "Step4 block_constraints", idx_llm)
 
     # Step 5: generate conditional branches / selections
+    idx_llm = len(LLM_CALL_EVENTS)
     step5_out = generate_selection_branches(
         segmentation=segmentation,
         seed_task=seed_task,
         step4_output=step4_out,
     )
+    _record_llm_status(llm_step_statuses, "Step5 selection_augment", idx_llm)
 
     # Step 6: assemble final constraint graph and save .graph.json / .graph.mmd
     graph = assemble_constraint_graph(
@@ -178,7 +161,19 @@ def run_pipeline_once(sample_id: str,
     bundle = synthesize_instruction_bundle(graph)
 
     # Extract machine_prompt (to be used as the eval prompt for the target model)
-    machine_prompt = bundle.get("machine_prompt", "")
+    machine_prompt_raw = bundle.get("machine_prompt", "")
+
+    idx_llm = len(LLM_CALL_EVENTS)
+    polish_result = refine_instruction_prompt(
+        machine_prompt=machine_prompt_raw,
+        seed_task=seed_task,
+        enable=enable_step8_polish,
+    )
+    _record_llm_status(llm_step_statuses, "Step8 prompt_refinement", idx_llm)
+    machine_prompt = polish_result.get("text", machine_prompt_raw)
+    bundle["machine_prompt_original"] = machine_prompt_raw
+    bundle["machine_prompt"] = machine_prompt
+    bundle["step8_polish"] = {k: v for k, v in polish_result.items() if k != "text"}
 
     # Extract eval_protocol (verifier-oriented scoring spec)
     eval_protocol = bundle.get("eval_protocol", {})
@@ -219,6 +214,8 @@ def run_pipeline_once(sample_id: str,
         "eval_path": eval_path,                    # reports/<id>.eval.json
         "bundle_path": bundle_path,                # reports/<id>.bundle.json
         "bundle": bundle,
+        "polish_result": polish_result,
+        "llm_statuses": llm_step_statuses,
     }
 
 
@@ -250,6 +247,11 @@ def main():
         default="data",
         help="Base data directory (expects subdirs: graphs/, instructions/, reports/)",
     )
+    parser.add_argument(
+        "--skip-step8-polish",
+        action="store_true",
+        help="Disable the Step 8 LLM-based polish pass (default enabled, can also set PIPELINE_ENABLE_STEP8=0).",
+    )
 
     args = parser.parse_args()
 
@@ -261,11 +263,16 @@ def main():
     if not model_answer.strip():
         raise ValueError("answer-file is empty or missing")
 
+    env_flag = os.getenv("PIPELINE_ENABLE_STEP8", "1").lower()
+    step8_enabled_default = env_flag not in {"0", "false", "no"}
+    enable_step8 = step8_enabled_default and not args.skip_step8_polish
+
     result = run_pipeline_once(
         sample_id=args.sample_id,
         original_instruction=original_instruction,
         model_answer=model_answer,
         base_data_dir=args.data_dir,
+        enable_step8_polish=enable_step8,
     )
 
     # Print a short human summary to stdout
@@ -280,6 +287,11 @@ def main():
     print(f"prompt_path (to eval LLM)  : {result['prompt_path']}")
     print(f"eval_protocol_path         : {result['eval_path']}")
     print(f"bundle_debug_path          : {result['bundle_path']}")
+    polish_info = result.get("polish_result") or {}
+    print(f"step8_polish_used          : {polish_info.get('used_llm', False)} ({polish_info.get('reason', 'n/a')})")
+    print("--- LLM call status by step ---")
+    for entry in result.get("llm_statuses", []):
+        print(f"{entry['step']:<32}: {entry['status']} (calls={entry['calls']})")
 
 
 if __name__ == "__main__":

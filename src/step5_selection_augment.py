@@ -1,73 +1,27 @@
-"""
-step5_selection_augment.py
+"""Step 5 - Selection Augmentation
 
-Step 5: 基于局部约束构造条件化分支 (Selection Augmentation)
+Purpose / 目标
+- Introduce conditional branches so the final instruction can express realistic IF/ELSE duties instead of a single observed path.
+- Preserve the original block constraints as the \"real\" branch while synthesizing plausible alternate requirements that pivot on an explicit condition.
 
-目标：
-我们目前有：
-- 每个 block 的局部约束 (来自 Step4)，例如：
-    B2_C1: "Provide at least two concrete real-world examples." -> must_list_n_subpoints(n=2)
-    B2_C2: "Maintain a neutral, analytical tone." -> tone_neutral_llm_judge
+Workflow
+1. Start from Step 4 block_constraints and block_logic.
+2. Sample a subset of blocks (configurable caps) that deserve selections and decide whether they represent local or global pivots.
+3. Present the block context + existing constraints to DeepSeek and ask for a contrasting alternate branch using known verifier names.
+4. Materialize new ConstraintNodes for the alternate branch, append them to the owning block, and wire their CIDs into a SelectionNode alongside the original branch.
+5. Guarantee a fallback selection with opinion shift + actionability obligations whenever the LLM fails to respond.
 
-问题：采样得到的真实回答只走了一条路径。我们想要引入“备选路径 / 条件分支”，
-让最终的指令出现 if/else 风格：
-    - 如果场景是 A，则必须满足约束组 A1/A2/A3；
-    - 否则（或如果是 B），必须满足约束组 B1/B2/B3。
+Outputs / 输出
+- Updated block_constraints/block_logic (now including alternate-path nodes).
+- selections: List[SelectionNode] referencing both real and alternate constraint IDs plus merge metadata.
 
-为什么这么做：
-- 复杂指令往往是条件化的要求（"如果用户立场是负面，则…，否则…"、"如果发现严重风险，则…"）。
-- SelectionNode 会变成图里的一类节点，后续在 step6_graph_assembly 中并入 ConstraintGraph。
+Why this matters
+- Multi-path prompts surface nuanced evaluation behaviors and prevent downstream models from overfitting to a single stance.
+- Selections explicitly link alternate requirements to verifiable triggers, enabling deterministic scoring later on.
 
-产物（返回给后续步骤）：
-{
-  "block_constraints": {block_id: [ConstraintNode,...], ...},
-  "block_logic": {block_id: "AND"|"sub-chain"},
-  "selections": [SelectionNode,...]
-}
-
-SelectionNode 结构 (from graph_schema.py):
-@dataclass
-class SelectionNode:
-    sid: str
-    condition: str
-    trace_to: str      # 来自哪个 block
-    branch_real: SelectionBranch  # 真实路径要求（cid 列表）
-    branch_alt:  SelectionBranch  # 我们合成的伪路径要求（cid 列表）
-    derived_from: str = "step5"
-
-SelectionBranch:
-    constraints: List[str]  # cid 列表
-
-在 Step5 中要做两件事：
-1. 先基于 block_constraints 生成一条“真实分支” (branch_real) = 该 block 的现有局部约束。
-2. 调用 LLM，请它基于同一 block 生成一套“对立 / 替代 / 条件化”的分支要求 (branch_alt)，
-   这些要求必须：
-   - 合法可检（使用我们已有的 verifier 函数名）
-   - 在语义上与真实分支形成条件化区别，比如：
-        * branch_real: neutral_tone   vs   branch_alt: negative_tone + actionability
-        * branch_real: third-person   vs   branch_alt: first-person eyewitness style
-        * branch_real: 2 examples    vs   branch_alt: numbered action steps
-   - 不能无中生有完全无关的主题；必须仍然与同一 block intent 对齐。
-
-我们会把 SelectionNode 附加到输出中。
-
-策略：
-- 我们不会为所有 block 都生成 selection，避免爆炸。我们可在这里挑一部分 block：
- 
-- LLM 返回的 branch_alt 是一组约束 (desc + {check,args}...)，我们会把它们注入为全新的 ConstraintNode，
-  并把它们的 cid 记录在 selection.branch_alt.constraints。
-
-- 注意：这些新合成的约束节点也要落进 block_constraints[...]，否则后续组图时 graph 没法引用到它们。
-
-Fallback：
-- 如果 LLM 失败，我们也能人造一个简单的条件分支：
-    condition = "If the stance is critical/negative"
-    branch_real = 原约束cid们
-    branch_alt  = 新增两条约束：
-        - 语气必须体现批评/不满 (tone_negative_llm_judge)
-        - 文末必须提出具体改进步骤 (actionability_judge)
-
-    这样保证我们永远至少输出一个 selection。
+Dependencies
+- graph_schema dataclasses (ConstraintNode, SelectionNode, SelectionBranch, BlockSpec).
+- utils.text_clean for safe snippets, DeepSeek client for alternate-branch synthesis, deterministic fallback templates for reliability.
 """
 
 import json

@@ -1,41 +1,27 @@
 
 
 """
-scoring_runner.py
+Scoring Runner - Execute eval_protocol on a candidate answer
 
-This script runs evaluation for a *candidate answer* produced by a target model
-against the eval protocol generated in Step 7.
+Purpose
+- Grade a target model's output against the verifier specs emitted in Step 7.
+- Complements pipeline_runner: generation happens there, evaluation happens here.
 
-It complements pipeline_runner.py:
-- pipeline_runner.py builds the task, graph, prompt, and eval protocol (Steps 1-7)
-- scoring_runner.py grades a model's answer to that task using the eval protocol
+CLI expectations
+- --sample-id: must match the ID used when running pipeline_runner.
+- --data-dir: base directory (defaults to data/) that now contains reports/<sample_id>.eval.json.
+- --candidate-file (optional): override path to the model's answer; otherwise use reports/<sample_id>.candidate.txt.
 
-Inputs (CLI):
-    --sample-id <ID>
-        The same sample_id you used when running pipeline_runner.py.
+Workflow
+1. Load eval_protocol + metadata from reports/<sample_id>.eval.json.
+2. Read the candidate answer text.
+3. Call verifier.evaluate.run_evaluation to score every constraint and branch.
+4. Persist reports/<sample_id>.score.json with summary statistics and branch selection info.
+5. Print a concise summary to stdout for quick inspection.
 
-    --data-dir <DIR>   (default: "data")
-        Base data directory. Must contain:
-            <DIR>/reports/<sample_id>.eval.json
-            <DIR>/reports/<sample_id>.candidate.txt (unless --candidate-file overrides)
-        Output will be written back into:
-            <DIR>/reports/<sample_id>.score.json
-
-    --candidate-file <PATH>  (optional)
-        If provided, read the candidate answer text from this file instead of
-        <data-dir>/reports/<sample_id>.candidate.txt.
-
-What happens:
-    1. Load eval_protocol from reports/<sample_id>.eval.json
-    2. Load candidate answer from candidate_file (or default path)
-    3. Call verifier.evaluate.run_evaluation(eval_protocol, answer)
-    4. Save the structured score report to reports/<sample_id>.score.json
-    5. Print a short summary to stdout
-
-Note:
-    We intentionally do not call any model here. We assume you've already asked
-    your target model to answer data/instructions/<sample_id>.prompt.txt and saved
-    that answer into reports/<sample_id>.candidate.txt (or a custom file).
+Notes
+- This script never queries an LLM; it operates purely on the stored protocol + answer.
+- Ensure you have already saved the candidate output before invoking scoring_runner.
 """
 
 import os

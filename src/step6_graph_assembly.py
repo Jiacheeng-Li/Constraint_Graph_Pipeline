@@ -1,36 +1,25 @@
 
 
 """
-step6_graph_assembly.py
+Step 6 - Constraint Graph Assembly
 
-Step 6: 组装完整的 ConstraintGraph
+Purpose / 目标
+- Normalize artifacts from Steps 1-5 into a single ConstraintGraph dataclass so later stages can serialize, prompt, or visualize the structure consistently.
+- Preserve ordering, scope, and provenance metadata without inventing new constraints.
 
-到目前为止我们已经有：
-- step1_seed_task.extract_seed_task()          -> seed_task: str
-- step2_segmentation.segment_response()        -> segmentation: {"blocks": [...], "order": [...]}
-- step3_global_constraints.extract_global_constraints() -> global_nodes: List[ConstraintNode]
-- step4_back_traslation.extract_block_constraints()     -> {
-      "block_constraints": {block_id: [ConstraintNode,...]},
-      "block_logic": {block_id: "AND"|"sub-chain"}
-  }
-- step5_selection_augment.generate_selection_branches() -> {
-      "block_constraints": {block_id: [ConstraintNode,...(augmented)]},
-      "block_logic": {block_id: logic},
-      "selections": [SelectionNode,...]
-  }
+Inputs
+- seed_task from Step 1.
+- segmentation from Step 2 (including intents/order).
+- global_constraints from Step 3.
+- step5_output bundle containing augmented block constraints, logic types, selections, and any synthetic alt blocks.
 
-本步骤（Step 6）做三件事：
-1. 把所有这些拼成一个 ConstraintGraph 数据结构（见 graph_schema.py）。
-2. 生成 block-level 的约束组（BlockConstraintSet），并标记逻辑关系（AND / sub-chain）。
-3. 封装 selections (条件分支)，并确保其中引用的 cid 都存在于 block_constraints 里。
+Outputs
+- ConstraintGraph: canonical data object consumed by Step 7+ and exported via utils.export_utils.
+- serialize_graph helper: JSON-safe dict used for persistence/debugging.
 
-产物：
-- ConstraintGraph 实例，可被下游 Step 7 用于生成复杂指令文本。
-- 同时我们会给一个 `serialize_graph(graph)` 用于导出 JSON 结构，方便调试 / 存盘。
-
-注意：
-- 我们不会在 Step6 中做评测；只是结构装配。
-- 我们不会在这里修改/扩展约束本身，避免引入和 Step3/4/5 不一致的内容。
+Why this matters
+- Centralizes the pipeline contract: every downstream consumer reads the same structure rather than juggling step-specific formats.
+- Ensures selection nodes only reference constraint IDs that truly exist and that block order stays deterministic.
 """
 
 import string

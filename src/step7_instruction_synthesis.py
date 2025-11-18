@@ -1,40 +1,26 @@
 
 
 """
-step7_instruction_synthesis.py
+Step 7 - Instruction & Eval Synthesis
 
-第七步：基于约束关系图生成高复杂度指令规范
+Purpose
+- Turn the ConstraintGraph into two deterministic textual artifacts:
+  1) machine_prompt: rigid, verifier-friendly prompt enumerating every rule, stage, and branch.
+  2) eval_protocol: structured manifest that maps each constraint to the checker that will score it.
 
-输入项：
-    - 约束关系图对象（来自step6_graph_assembly.assemble_constraint_graph）
-      或由serialize_graph(graph)生成的JSON安全快照
+Key traits
+- Pure template logic; no LLM calls here.
+- Organizes constraints into clear headings (seed task, global rules, block plans, selections) to maximize auditability.
+- Renders IF/THEN/ELSE branches explicitly so both Step 8 and downstream scoring can trace the logic.
 
-输出项：
-    1. machine_prompt：
-        直接提供给待评估模型的自然语言指令提示。包含：
-        - 整体任务说明
-        - 全局约束条件（风格、安全性、长度、语言等）
-        - 分阶段结构要求（逐模块职责说明）
-        - 条件分支逻辑（if/else执行要求）
+Inputs / 输出
+- ConstraintGraph instance (or serialized dict) assembled in Step 6.
 
-    2. eval_protocol：
-        面向评估器/评判器的结构化评分协议。
-        将每个约束与其验证器规格检查对齐，并说明分支评分规则。
+Outputs
+- dict bundle containing machine_prompt, eval_protocol, serialized graph snapshot, and meta passthrough.
 
-    3. meta：
-        从graph.meta复制的溯源信息。
-
-注意事项：
-    - 第七步不调用任何大语言模型，仅执行确定性模板生成
-    - 不重写/美化用户原始任务，以最可检验、可执行的形式呈现任务与约束
-    - 机器提示语将直接输入被评估模型，非JSON格式，需符合规范式、命令式、显式化要求
-    - 评估协议适用于自动化评估代码、质量审查或裁定流程
-
-机器提示语的风格要求：
-    - 整体框架和标题必须使用英语
-    - 单个约束描述可保留原始语言（通常为英语祈使句）
-    - 分支逻辑必须使用明确的"IF...THEN...ELSE..."句式表达
-    - 每个阶段按功能职责而非具体措辞进行描述
+Why this matters
+- Provides the stable interface between generation (Steps 1-6) and both prompt consumers (Step 8 / model inference) and verifiers (scoring_runner).
 """
 
 from collections import defaultdict
@@ -391,7 +377,7 @@ def _mk_machine_prompt(seed_task: str,
             condition_text = _condition_statement(sel.get("condition", ""))
             condition_clause = condition_text or "the described condition applies"
 
-            snippet.append(f"{body_indent}{sel_type} branch – when {condition_clause.rstrip('.')}:")
+            snippet.append(f"{body_indent}{sel_type} branch - when {condition_clause.rstrip('.')}:")
             alt_blocks = sel.get("alt_path_blocks") or [sel.get("branch_alt_block")]
             alt_by_block = sel.get("alt_by_block") or {}
             _append_path(
@@ -449,7 +435,7 @@ def _mk_machine_prompt(seed_task: str,
         reqs = blk["requirements"]
 
         lines.append("")
-        lines.append(f"   Stage {idx} – {role}")
+        lines.append(f"   Stage {idx} - {role}")
         lines.append(f"      Logic cue: {logic_hint}")
         stage_selections = selection_map.get(stage_id, [])
         if not stage_selections:
@@ -469,7 +455,7 @@ def _mk_machine_prompt(seed_task: str,
             condition_text = _condition_statement(sel.get("condition", ""))
             condition_clause = condition_text or "the described condition applies"
 
-            lines.append(f"      {sel_type} branch – when {condition_clause.rstrip('.')}:")
+            lines.append(f"      {sel_type} branch - when {condition_clause.rstrip('.')}:")
             alt_blocks = sel.get("alt_path_blocks") or [sel.get("branch_alt_block")]
             alt_by_block = sel.get("alt_by_block") or {}
             _append_path(
@@ -513,12 +499,12 @@ def _mk_machine_prompt(seed_task: str,
             lines.append(f"   - {stage_label}: {statement}")
         lines.append("")
 
-    # Evaluation reminder
-    lines.append("5. EVALUATION NOTICE")
-    lines.append("- Automated checks will verify every global rule, each stage’s duties, and the branch-specific obligations you triggered.")
-    lines.append("- Once you pick a branch, treat all bullets under that branch as mandatory, and do not mix incompatible paths unless explicitly told to merge.")
-    lines.append("- Language, tone, structural cues, and conditional behaviors are all inspected.")
-    lines.append("")
+    # # Evaluation reminder
+    # lines.append("5. EVALUATION NOTICE")
+    # lines.append("- Automated checks will verify every global rule, each stage’s duties, and the branch-specific obligations you triggered.")
+    # lines.append("- Once you pick a branch, treat all bullets under that branch as mandatory, and do not mix incompatible paths unless explicitly told to merge.")
+    # lines.append("- Language, tone, structural cues, and conditional behaviors are all inspected.")
+    # lines.append("")
 
     return "\n".join(lines).strip() + "\n"
 

@@ -1,26 +1,28 @@
 """
-step1_seed_task.py
+Step 1 - Seed Task Extraction
 
-Step 1: 种子任务抽取 (Seed Task Extraction)
+Purpose / 目的
+- Distill the user's full instruction into a single imperative English sentence that names the final deliverable.
+- The seed task becomes the root node for every later constraint, so it must capture the actual output request, not just context.
 
-当前版本（vLLM-full-context）：使用 deepseek 直接读取整份指令文本，
-识别“用户最终想要的主要交付物”，并将其压缩成单句英文祈使式任务描述。
+Workflow
+1. Send the entire instruction_text to DeepSeek with strict formatting guidance.
+2. Require exactly one sentence that starts with a strong verb and keeps explicit style constraints (tone, persona, audience).
+3. If the call fails or the output is unusable, fall back to heuristics that grab the first sentence, clean polite prefixes, and force an "Analyze …" imperative.
 
-为什么要这么做：
-- 真实场景里，用户经常先给背景、限制、口径，然后在后面才说真正的任务；
-  如果我们只截第一句，很容易拿到的是背景而不是任务。
-- seed_task 作为整张 ConstraintGraph 的根节点，必须对应“我要你最终产出什么”。
+Inputs / 输入
+- instruction_text: raw multi-paragraph prompt supplied by the user.
 
-策略：
-1. 把完整的 instruction_text（未经截断）喂给 LLM。
-2. 让 LLM 输出 exactly ONE imperative English sentence，描述最终交付义务。
-   - 必须以动词开头 (Analyze / Summarize / Write / Draft / Explain / etc.)
-   - 只能一句话，不要客套，不要多余上下文。
-   - 如果用户要求了特定语气/风格/视角（"neutral tone", "formal", "first-person"），要把这些也放进句子里。
-3. 如果 deepseek 挂了或输出不合法，则 fallback：
-   - 用启发式清洗+前置 "Analyze ..." 生成一个兜底 seed_task。
+Outputs / 输出
+- seed_task: str, trimmed English imperative statement.
 
-返回：string seed_task
+Why this matters
+- Downstream steps treat the seed_task as the canonical task label for graphs, blocks, selections, and prompts.
+- Reading the full context prevents us from confusing background/setup text with the true obligation.
+
+Dependencies
+- utils.deepseek_client.call_chat_completions for the primary path.
+- Local regex helpers for polite prefix removal and imperative fallback.
 """
 
 from typing import Optional

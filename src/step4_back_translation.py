@@ -1,44 +1,31 @@
 """
-step4_back_traslation.py
+Step 4 - Block Back-translation
 
-Step 4: 反向约束抽取 (Back-translation of each block)
+Purpose / 目标
+- For each segmented block, infer the abstract obligations it satisfies so we can reuse them as reusable constraints.
+- Distinguish between parallel requirements ("AND") and sequential reasoning ("sub-chain") to preserve local logic.
 
-目标：
-对 step2 分块得到的每个 block，让 LLM 解释：
-  - 这个 block 在“完成 seed_task 的过程中”到底在做什么？
-  - 这个 block 在内容上、语气上、结构上，满足了哪些具体的可验证要求？
-  - 这些要求哪些是硬性 AND（必须全部做），哪些是内部顺序式 sub-chain（先做A再做B）？
+Workflow
+1. Iterate over segmentation["blocks"] from Step 2.
+2. Provide DeepSeek with the seed task, a structural outline, and the exact block text (cleaned but not summarized).
+3. Ask for JSON describing:
+   - logic: "AND" or "sub-chain"
+   - constraints: desc + verifier spec + short evidence snippet
+4. Normalize/whitelist verifier specs, limit per-block counts, and deduplicate overlapping obligations.
+5. If an LLM call fails, fall back to deterministic neutral-tone + length/numbered-list constraints and mark the logic as AND.
 
-输出：
-我们要返回两部分：
-1. block_constraints: { block_id: [ConstraintNode, ...], ... }
-   - 对于每个 block，抽出它满足的约束，每条约束都带 verifier_spec
-   - scope="local"，trace_to=该 block_id，derived_from="step4"
+Outputs / 输出
+- block_constraints: mapping block_id -> List[ConstraintNode] (scope="local", trace_to=block_id, derived_from="step4").
+- block_logic: mapping block_id -> "AND" or "sub-chain".
 
-2. block_logic: { block_id: "AND" | "sub-chain" }
-   - 如果该块基本是在并列罗列要点/事实/解释 -> AND
-   - 如果该块是明显的多步推进（例如：先定义，再对比，再给结论）-> sub-chain
-   （我们先让模型判断；失败时 fallback=AND）
+Why this matters
+- These nodes become the "real-path" requirements for Step 5 selections and feed directly into the graph.
+- Expressing obligations at pattern-level prevents leaking exemplar-specific facts into downstream prompts.
 
-说明：
-- 这些约束节点后面会进入 Step5 作为候选，生成分支 (Selection)。
-- 我们在这里不会强行 eval 文本，只是生成约束定义 + verifier_spec。
-
-策略：
-A. 遍历 segmentation["blocks"]；对每个block：
-   1. 调用 deepseek，请它输出该 block 的局部约束列表，JSON格式。
-   2. 每条约束包含：desc / verifier.check / verifier.args。
-   3. 还要它告诉我们这个block内部更像 AND 还是 sub-chain。
-
-B. fallback：
-   - 如果 deepseek 挂了，该 block 给两条最宽泛约束：
-       * 中立分析口吻 (tone_neutral_llm_judge)
-       * 至少50词 (min_word_count)
-     block_logic = "AND"
-
-边界：
-- 直接使用 deepseek-chat
-- 注意：本步引用 ConstraintNode 定义
+Dependencies
+- graph_schema.ConstraintNode / BlockSpec dataclasses.
+- utils.deepseek_client.call_chat_completions and parsing helpers.
+- utils.text_clean.make_snippet + summarize_blocks_outline for safe prompt context.
 """
 
 import json
@@ -52,10 +39,6 @@ from typing import Dict, Any, List, Tuple
 from .graph_schema import ConstraintNode, BlockSpec
 from .utils.parsing import extract_constraints, safe_json_load
 from .utils.text_clean import make_snippet, summarize_blocks_outline, clip
-
-_DEEPSEEK_API_KEY_DEFAULT = os.getenv("DEEPSEEK_API_KEY", "")
-_DEEPSEEK_ENDPOINT = os.getenv("DEEPSEEK_ENDPOINT", "")
-_DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "")
 _STEP4_RAND_SEED = os.getenv("STEP4_RAND_SEED")
 if _STEP4_RAND_SEED is not None:
     try:
@@ -64,24 +47,9 @@ if _STEP4_RAND_SEED is not None:
         random.seed(_STEP4_RAND_SEED)
 
 # --- Block-level constraint config ---
-# Maximum number of constraints kept per block (can be overridden via env).
-try:
-    _STEP4_BLOCK_MAX_CONSTRAINTS = int(os.getenv("STEP4_BLOCK_MAX_CONSTRAINTS", "6"))
-except Exception:
-    _STEP4_BLOCK_MAX_CONSTRAINTS = 6
-if _STEP4_BLOCK_MAX_CONSTRAINTS <= 0:
-    _STEP4_BLOCK_MAX_CONSTRAINTS = 1
-
-# Desired fraction of hard constraints among the kept ones (0.0 ~ 1.0).
-# Default is 0.5 (roughly balanced); you can override with env STEP4_BLOCK_HARD_FRACTION.
-try:
-    _STEP4_BLOCK_HARD_FRACTION = float(os.getenv("STEP4_BLOCK_HARD_FRACTION", "0.5"))
-except Exception:
-    _STEP4_BLOCK_HARD_FRACTION = 0.5
-if _STEP4_BLOCK_HARD_FRACTION < 0.0:
-    _STEP4_BLOCK_HARD_FRACTION = 0.0
-if _STEP4_BLOCK_HARD_FRACTION > 1.0:
-    _STEP4_BLOCK_HARD_FRACTION = 1.0
+# Hard caps per requirements: at most 4 constraints per block with no more than 1 hard rule.
+_STEP4_BLOCK_MAX_CONSTRAINTS = 4
+_STEP4_BLOCK_MAX_HARD = 1
 
 _NUM_LIST = re.compile(r"^\s*(?:\d+[\.\)]|[a-z][\.\)])\s+", re.I | re.M)
 _BULLET_LIST = re.compile(r"^\s*[-*]\s+", re.M)
@@ -193,28 +161,13 @@ _VERIFIER_SYNONYM_MAP = {
 }
 
 _HARD_VERIFIERS = {
+    # Only keep verifiers that Step4's deterministic logic actually emits.
     "min_word_count",
-    "max_word_count",
-    "word_count_between",
-    "word_count_around",
     "min_paragraphs",
-    "heading_levels_only",
     "bullet_style_consistent",
     "decimal_places",
-    "date_format",
     "min_numbered_items",
     "must_list_n_subpoints",
-    "forbid_first_person",
-    "forbid_emojis",
-    "forbid_symbol",
-    "require_language",
-    "has_sections",
-    "must_include_keywords",
-    "keyword_min_frequency",
-    "must_cover_topics",
-    "min_char_count",
-    "must_end_with_template",
-    "citation_style",
 }
 
 def _is_hard_verifier(check: str) -> bool:
@@ -587,51 +540,48 @@ def extract_block_constraints(segmentation: Dict[str, Any],
         # Add deterministic local hard constraints derived from the block text itself
         normalized_items.extend(_extract_local_hard_constraints(block))
 
-        # Separate into hard vs soft items based on verifier name and origin
+        # Separate into hard vs soft items based on verifier type (origin-agnostic so LLM + rule-based can mix)
         hard_items: List[Dict[str, Any]] = []
         soft_items: List[Dict[str, Any]] = []
         for it in normalized_items:
             check = it.get("verifier_spec", {}).get("check", "")
-            origin = it.get("origin", "llm")
-            # Only treat as hard if it comes from rule-based extraction (origin == "local_rule")
-            # and its verifier is a known hard-type verifier.
-            if origin == "local_rule" and _is_hard_verifier(check):
+            if _is_hard_verifier(check):
                 hard_items.append(it)
             else:
                 soft_items.append(it)
 
-        # Deduplicate within each group and apply a generous cap before final mixing
+        # Deduplicate within each group and cap
         hard_items = _dedup_and_cap(hard_items, cap=_STEP4_BLOCK_MAX_CONSTRAINTS)
         soft_items = _dedup_and_cap(soft_items, cap=_STEP4_BLOCK_MAX_CONSTRAINTS)
 
-        # Compute quotas according to configured fraction
         max_total = _STEP4_BLOCK_MAX_CONSTRAINTS
-        hard_quota = int(round(max_total * _STEP4_BLOCK_HARD_FRACTION))
-        if hard_quota > max_total:
-            hard_quota = max_total
-        if hard_quota < 0:
-            hard_quota = 0
-        soft_quota = max_total - hard_quota
+        hard_cap = min(_STEP4_BLOCK_MAX_HARD, max_total)
 
-        # Randomly select from each pool up to its quota
-        if len(hard_items) > hard_quota:
-            hard_selected = random.sample(hard_items, hard_quota)
+        # Randomly select up to the hard cap first
+        if len(hard_items) > hard_cap:
+            hard_selected = random.sample(hard_items, hard_cap)
         else:
             hard_selected = list(hard_items)
-        if len(soft_items) > soft_quota:
-            soft_selected = random.sample(soft_items, soft_quota)
+
+        soft_slots = max_total - len(hard_selected)
+        if soft_slots < 0:
+            soft_slots = 0
+
+        if len(soft_items) > soft_slots:
+            soft_selected = random.sample(soft_items, soft_slots)
         else:
             soft_selected = list(soft_items)
 
-        # If there is still room, fill remaining slots from whichever group has leftovers
         combined_selected = hard_selected + soft_selected
+
+        # Fill leftover capacity (if any) with additional soft constraints only
         remaining_slots = max_total - len(combined_selected)
         if remaining_slots > 0:
-            leftover = [it for it in hard_items + soft_items if it not in combined_selected]
-            if leftover:
-                if len(leftover) > remaining_slots:
-                    leftover = random.sample(leftover, remaining_slots)
-                combined_selected.extend(leftover)
+            soft_leftover = [it for it in soft_items if it not in soft_selected]
+            if soft_leftover:
+                if len(soft_leftover) > remaining_slots:
+                    soft_leftover = random.sample(soft_leftover, remaining_slots)
+                combined_selected.extend(soft_leftover)
 
         # Final filtered items for this block
         filtered_items = combined_selected

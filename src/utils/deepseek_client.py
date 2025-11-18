@@ -7,11 +7,28 @@ import requests
 
 DEFAULT_ENDPOINT = os.getenv("DEEPSEEK_ENDPOINT", "https://api.deepseek.com/v1/chat/completions")
 DEFAULT_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
-DEFAULT_API_KEY = os.getenv("DEEPSEEK_API_KEY", "sk-4bb3e24d26674a30b2cc7e2ff1bfc763")
+DEFAULT_API_KEY = os.getenv("DEEPSEEK_API_KEY", "sk-dd6086d7013f4793933893dcf72d17cb")
+
+LLM_CALL_EVENTS: List[Dict[str, Any]] = []
 
 
 class DeepSeekError(Exception):
     pass
+
+
+def _log_llm_event(success: bool,
+                   model: str,
+                   endpoint: str,
+                   duration_sec: Optional[float],
+                   error: Optional[str] = None) -> None:
+    LLM_CALL_EVENTS.append({
+        "success": success,
+        "model": model,
+        "endpoint": endpoint,
+        "duration_sec": duration_sec,
+        "error": error,
+        "timestamp": time.time(),
+    })
 
 
 def call_chat_completions(
@@ -23,7 +40,7 @@ def call_chat_completions(
     endpoint: Optional[str] = None,
     temperature: float = 0.2,
     max_tokens: int = 1024,
-    timeout: int = 20,
+    timeout: int = 120,
     retries: int = 2,
     retry_backoff_sec: float = 0.8,
 ) -> str:
@@ -50,8 +67,10 @@ def call_chat_completions(
     }
 
     last_err: Optional[Exception] = None
+    total_start = time.time()
     for attempt in range(retries + 1):
         try:
+            attempt_start = time.time()
             resp = requests.post(used_endpoint, headers=headers, json=payload, timeout=timeout)
             if resp.status_code != 200:
                 raise DeepSeekError(f"HTTP {resp.status_code}: {resp.text[:500]}")
@@ -63,6 +82,12 @@ def call_chat_completions(
             content = (message or {}).get("content")
             if not content:
                 raise DeepSeekError("Empty content in first choice")
+            _log_llm_event(
+                success=True,
+                model=used_model,
+                endpoint=used_endpoint,
+                duration_sec=time.time() - total_start,
+            )
             return content
         except Exception as e:  # noqa: BLE001
             last_err = e
@@ -71,6 +96,12 @@ def call_chat_completions(
             else:
                 break
 
+    _log_llm_event(
+        success=False,
+        model=used_model,
+        endpoint=used_endpoint,
+        duration_sec=time.time() - total_start,
+        error=str(last_err) if last_err else "Unknown error",
+    )
     raise DeepSeekError(str(last_err) if last_err else "Unknown DeepSeek error")
-
 
