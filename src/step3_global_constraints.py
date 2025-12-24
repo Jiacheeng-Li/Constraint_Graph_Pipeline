@@ -24,6 +24,7 @@ Dependencies
 """
 
 import json
+import math
 import requests
 from typing import List, Dict, Any
 
@@ -36,6 +37,10 @@ try:
     from .utils.templates import DESCS as _DESC_TEMPLATES  # type: ignore
 except Exception:
     _DESC_TEMPLATES = {}
+
+# Sampling config: pick a random count within these ranges (clamped by availability).
+_STEP3_HARD_SAMPLE_RANGE = (3, 5)
+_STEP3_SOFT_SAMPLE_RANGE = (3, 5)
 
 def _desc_from_tpl(key: str, default: str, **kwargs) -> str:
     """
@@ -78,6 +83,26 @@ def _estimate_word_count(text: str) -> int:
     tokens = re.findall(r"\w+", text)
     zh_chars = re.findall(r"[\u4e00-\u9fff]", text)
     return len(tokens) + len(zh_chars)
+
+
+def _round_up_to_ten(value: int) -> int:
+
+    """Round positive integers up to the nearest multiple of 10."""
+
+    value = max(1, value)
+
+    return int(math.ceil(value / 10.0) * 10)
+
+
+
+def _round_nearest_ten(value: int) -> int:
+
+    """Round positive integers to the nearest multiple of 10."""
+
+    value = max(1, value)
+
+    return int(math.floor((value + 5) / 10.0) * 10)
+
 
 
 def _guess_language(text: str) -> str:
@@ -220,30 +245,7 @@ def _build_hard_global_constraints(response_text: str,
     """
     nodes: List[ConstraintNode] = []
     cid_counter = 1
-    added_categories: set[str] = set()
-    def _add_node(category: str, node: ConstraintNode) -> bool:
-        """
-        Add a node only if this category hasn't been used yet.
-        Returns True if added, False if skipped due to category cap.
-        """
-        if category in added_categories:
-            return False
-        nodes.append(node)
-        added_categories.add(category)
-        return True
-
     import random
-    def _add_random_from(category: str, candidates: List[ConstraintNode]) -> int:
-        """
-        From a non-empty list of candidate nodes belonging to the same super-category,
-        randomly select ONE and add it via _add_node. Returns 1 if added, else 0.
-        """
-        if not candidates:
-            return 0
-        choice = random.choice(candidates)
-        if _add_node(category, choice):
-            return 1
-        return 0
 
     # -----------------------------
     # Phase A: collect candidates
@@ -258,8 +260,12 @@ def _build_hard_global_constraints(response_text: str,
     # A1) Length candidates
     wc = _estimate_word_count(response_text)
     if wc > 0:
-        min_words = max(100, int(wc * 0.85))
-        max_words = int(wc * 1.20)
+        raw_min = max(100, int(wc * 0.85))
+        raw_max = max(raw_min + 10, int(wc * 1.20))
+        min_words = _round_up_to_ten(raw_min)
+        max_words = _round_up_to_ten(raw_max)
+        if max_words <= min_words:
+            max_words = min_words + 10
         has_minmax = "digit_format_min_max" in _DESC_TEMPLATES
         has_around = "digit_format_around" in _DESC_TEMPLATES
         has_min = "digit_format_min" in _DESC_TEMPLATES
@@ -278,7 +284,7 @@ def _build_hard_global_constraints(response_text: str,
                 trace_to=None, derived_from="step3",
             ))
         if has_around:
-            center = int(round(wc)); tol = 0.15
+            center = _round_nearest_ten(int(round(wc))); tol = 0.15
             length_candidates.append(ConstraintNode(
                 cid=f"G{cid_counter}",
                 desc=_desc_from_tpl(
@@ -527,13 +533,22 @@ def _build_hard_global_constraints(response_text: str,
         )
 
     # -----------------------------
-    # Phase B: randomly select one per super-category
+    # Phase B: randomly select 3-5 hard constraints total (if available)
     # -----------------------------
-    cid_counter += _add_random_from("length", length_candidates)
-    cid_counter += _add_random_from("language", language_candidates)
-    cid_counter += _add_random_from("structure", structure_candidates)
-    cid_counter += _add_random_from("format_consistency", format_candidates)
-    cid_counter += _add_random_from("style_safety", style_safety_candidates)
+    all_candidates: List[ConstraintNode] = (
+        length_candidates
+        + language_candidates
+        + structure_candidates
+        + format_candidates
+        + style_safety_candidates
+    )
+    if not all_candidates:
+        return nodes
+
+    min_hard, max_hard = _STEP3_HARD_SAMPLE_RANGE
+    target = random.randint(min_hard, max_hard)
+    pick_count = min(len(all_candidates), target)
+    nodes.extend(random.sample(all_candidates, pick_count))
 
     return nodes
 
@@ -722,6 +737,13 @@ def extract_global_constraints(response_text: str,
                 derived_from="step3",
             )
         )
+
+    # Soft sampling: randomly pick 3-5 soft constraints if available
+    import random
+    if soft_nodes:
+        min_soft, max_soft = _STEP3_SOFT_SAMPLE_RANGE
+        target_soft = random.randint(min_soft, max_soft)
+        soft_nodes = random.sample(soft_nodes, min(len(soft_nodes), target_soft))
 
     # 合并并重新编号 cid
     all_nodes: List[ConstraintNode] = []

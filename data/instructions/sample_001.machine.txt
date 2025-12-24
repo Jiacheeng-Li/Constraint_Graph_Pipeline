@@ -1,0 +1,55 @@
+SYSTEM INSTRUCTIONS:
+
+1. MISSION BRIEF & DELIVERABLE
+   - Primary directive: Write a short story (around 200–300 words) showing cooperation among forest animals during a storm.
+
+2. NON-NEGOTIABLE GLOBAL RULES
+   Respect every rule simultaneously across the full response:
+   1. Do not submit under 200 words.
+   2. Contractions are disallowed; prefer full phrases.
+   3. Ensure at least 5 distinct paragraphs.
+   4. The character '?' must not appear in the answer.
+
+3. STRUCTURED RESPONSE BLUEPRINT
+   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.
+
+   Stage 1 - TBD
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      Timeline duties:
+        • Provide a sufficiently detailed explanation with at least 30 words.
+        • Maintain a neutral, analytical tone without emotional or inflammatory language.
+
+   Stage 2 - TBD
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      Timeline duties:
+        • Provide a sufficiently detailed explanation in this block with at least 50 words.
+        • Maintain a neutral, analytical tone without emotional or inflammatory language.
+
+   Stage 3 - TBD
+      Logic cue: Sequential micro-steps: address bullets in a flowing order.
+      Timeline duties:
+        • Provide a sufficiently detailed explanation in this block with at least 50 words.
+        • Maintain a neutral, analytical tone without emotional or inflammatory language.
+
+   Stage 4 - TBD
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      LOCAL branch - when The stance is critical/negative:
+        • Adopt an explicitly critical tone highlighting concrete problems or failures.
+        • Propose at least one concrete next-step action to address the identified problems.
+      Otherwise at this same decision point:
+        • Provide a sufficiently detailed explanation in this block with at least 30 words.
+        • Maintain a neutral, analytical tone without emotional or inflammatory language.
+
+   Stage 5 - TBD
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      LOCAL branch - when The stance is critical/negative:
+        • Adopt an explicitly critical tone highlighting concrete problems or failures.
+        • Propose at least one concrete next-step action to address the identified problems.
+      Otherwise at this same decision point:
+        • Provide a sufficiently detailed explanation with at least 30 words.
+        • Maintain a neutral, analytical tone without emotional or inflammatory language.
+
+4. CURRENT CONDITION ASSUMPTION
+   Unless the evaluator states otherwise, assume each trigger below is currently FALSE.
+   - TBD: The stance is not critical/negative.
+   - TBD: The stance is not critical/negative.

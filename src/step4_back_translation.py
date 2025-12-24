@@ -33,6 +33,8 @@ import os
 import time
 import random
 import re
+import math
+import hashlib
 from .utils.deepseek_client import call_chat_completions, DeepSeekError
 from typing import Dict, Any, List, Tuple
 
@@ -40,16 +42,20 @@ from .graph_schema import ConstraintNode, BlockSpec
 from .utils.parsing import extract_constraints, safe_json_load
 from .utils.text_clean import make_snippet, summarize_blocks_outline, clip
 _STEP4_RAND_SEED = os.getenv("STEP4_RAND_SEED")
+# We still allow a deterministic seed for reproducibility, but sampling should vary per block.
+_STEP4_SEEDER = random.Random()
 if _STEP4_RAND_SEED is not None:
     try:
-        random.seed(int(_STEP4_RAND_SEED))
+        _STEP4_SEEDER.seed(int(_STEP4_RAND_SEED))
     except Exception:
-        random.seed(_STEP4_RAND_SEED)
+        _STEP4_SEEDER.seed(_STEP4_RAND_SEED)
+else:
+    _STEP4_SEEDER.seed(time.time_ns() ^ os.getpid())
 
 # --- Block-level constraint config ---
-# Hard caps per requirements: at most 4 constraints per block with no more than 1 hard rule.
-_STEP4_BLOCK_MAX_CONSTRAINTS = 4
-_STEP4_BLOCK_MAX_HARD = 1
+# Per-block randomized sampling: pick a random mix of hard/soft, total up to 5.
+_STEP4_TOTAL_MAX = 5
+_STEP4_DEDUP_CAP = 10  # keep enough candidates to allow variety before sampling
 
 _NUM_LIST = re.compile(r"^\s*(?:\d+[\.\)]|[a-z][\.\)])\s+", re.I | re.M)
 _BULLET_LIST = re.compile(r"^\s*[-*]\s+", re.M)
@@ -231,13 +237,26 @@ def _dedup_and_cap(items: List[Dict[str, Any]], cap: int = 5) -> List[Dict[str, 
     out = [it for _, it in scored[:cap]]
     return out
 
+
+def _rng_for_block(block_id: str) -> random.Random:
+    """
+    Create a per-block RNG so that hard-rule sampling does not repeat the same pick across blocks.
+    Deterministic when STEP4_RAND_SEED is set; otherwise uses a seeded seeder for uniqueness.
+    """
+    if _STEP4_RAND_SEED is not None:
+        seed_bytes = f"{_STEP4_RAND_SEED}:{block_id}".encode("utf-8")
+        seed_int = int.from_bytes(hashlib.sha256(seed_bytes).digest()[:8], "big")
+        return random.Random(seed_int)
+    return random.Random(_STEP4_SEEDER.getrandbits(64))
+
 def _find_numbered_items(snippet: str) -> int:
     # approximate count of numbered items
     return len(re.findall(r"^\s*(?:\d+[\.\)]|[a-z][\.\)])\s+", snippet, re.I | re.M))
 
 def _guess_block_min_words(snippet: str) -> int:
     wc = _estimate_word_count(snippet)
-    return max(30, int(wc * 0.6))
+    base = max(30, int(wc * 0.6))
+    return int(((base + 9) // 10) * 10)
 
 def _call_deepseek_block_constraints(block: BlockSpec,
                                      seed_task: str,
@@ -500,6 +519,7 @@ def extract_block_constraints(segmentation: Dict[str, Any],
             text_span=block_dict.get("text_span", ""),
             order_index=block_dict.get("order_index", 0),
         )
+        rng = _rng_for_block(block.block_id)
 
         from_fallback = False
         raw_str = _call_deepseek_block_constraints(block, seed_task, segmentation)
@@ -550,38 +570,38 @@ def extract_block_constraints(segmentation: Dict[str, Any],
             else:
                 soft_items.append(it)
 
-        # Deduplicate within each group and cap
-        hard_items = _dedup_and_cap(hard_items, cap=_STEP4_BLOCK_MAX_CONSTRAINTS)
-        soft_items = _dedup_and_cap(soft_items, cap=_STEP4_BLOCK_MAX_CONSTRAINTS)
+        # Deduplicate within each group and cap to allow sampling variety
+        hard_items = _dedup_and_cap(hard_items, cap=_STEP4_DEDUP_CAP)
+        soft_items = _dedup_and_cap(soft_items, cap=_STEP4_DEDUP_CAP)
 
-        max_total = _STEP4_BLOCK_MAX_CONSTRAINTS
-        hard_cap = min(_STEP4_BLOCK_MAX_HARD, max_total)
+        # Random total target up to 5 across hard+soft; distribution is randomized per block
+        combined_candidates = hard_items + soft_items
+        combined_selected: List[Dict[str, Any]] = []
+        if combined_candidates:
+            total_cap = min(_STEP4_TOTAL_MAX, len(combined_candidates))
+            pick_total = rng.randint(1, total_cap)
 
-        # Randomly select up to the hard cap first
-        if len(hard_items) > hard_cap:
-            hard_selected = random.sample(hard_items, hard_cap)
-        else:
-            hard_selected = list(hard_items)
+            # Pick a random number of hard constraints, then fill remaining from soft; if still short, fill from leftovers.
+            hard_pick = rng.randint(0, min(len(hard_items), pick_total))
+            hard_selected = rng.sample(hard_items, hard_pick) if hard_items else []
 
-        soft_slots = max_total - len(hard_selected)
-        if soft_slots < 0:
-            soft_slots = 0
+            remaining = pick_total - len(hard_selected)
+            soft_pick = min(len(soft_items), remaining)
+            soft_selected = rng.sample(soft_items, soft_pick) if soft_items else []
 
-        if len(soft_items) > soft_slots:
-            soft_selected = random.sample(soft_items, soft_slots)
-        else:
-            soft_selected = list(soft_items)
+            combined_selected.extend(hard_selected)
+            combined_selected.extend(soft_selected)
 
-        combined_selected = hard_selected + soft_selected
-
-        # Fill leftover capacity (if any) with additional soft constraints only
-        remaining_slots = max_total - len(combined_selected)
-        if remaining_slots > 0:
-            soft_leftover = [it for it in soft_items if it not in soft_selected]
-            if soft_leftover:
-                if len(soft_leftover) > remaining_slots:
-                    soft_leftover = random.sample(soft_leftover, remaining_slots)
-                combined_selected.extend(soft_leftover)
+            still_needed = pick_total - len(combined_selected)
+            if still_needed > 0:
+                leftovers = [
+                    it for it in combined_candidates
+                    if it not in combined_selected
+                ]
+                if leftovers:
+                    combined_selected.extend(
+                        rng.sample(leftovers, min(len(leftovers), still_needed))
+                    )
 
         # Final filtered items for this block
         filtered_items = combined_selected

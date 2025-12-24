@@ -9,6 +9,7 @@ Purpose
 Artifacts produced
 - data/graphs/<sample_id>.graph.json     - serialized ConstraintGraph snapshot.
 - data/graphs/<sample_id>.graph.mmd      - Mermaid visualization of the graph.
+- data/instructions/<sample_id>.machine.txt - raw machine prompt from Step 7 (pre-polish).
 - data/instructions/<sample_id>.prompt.txt - final machine prompt (Step 8 output or Step 7 fallback).
 - data/reports/<sample_id>.eval.json     - eval protocol + meta for scoring.
 - data/reports/<sample_id>.bundle.json   - full Step 7 bundle for audits.
@@ -157,11 +158,18 @@ def run_pipeline_once(sample_id: str,
         base_dir=graphs_dir,
     )
 
+    total_constraints = len(graph.global_constraints) + sum(
+        len(bcs.constraints) for bcs in graph.block_constraint_sets
+    )
+    selection_count = len(graph.selections)
+
     # Step 7: synthesize final instruction bundle (prompt + eval protocol)
     bundle = synthesize_instruction_bundle(graph)
 
     # Extract machine_prompt (to be used as the eval prompt for the target model)
     machine_prompt_raw = bundle.get("machine_prompt", "")
+    raw_prompt_path = os.path.join(instructions_dir, f"{sample_id}.machine.txt")
+    write_text(raw_prompt_path, machine_prompt_raw)
 
     idx_llm = len(LLM_CALL_EVENTS)
     polish_result = refine_instruction_prompt(
@@ -174,6 +182,7 @@ def run_pipeline_once(sample_id: str,
     bundle["machine_prompt_original"] = machine_prompt_raw
     bundle["machine_prompt"] = machine_prompt
     bundle["step8_polish"] = {k: v for k, v in polish_result.items() if k != "text"}
+    prompt_length = len(machine_prompt or "")
 
     # Extract eval_protocol (verifier-oriented scoring spec)
     eval_protocol = bundle.get("eval_protocol", {})
@@ -211,8 +220,12 @@ def run_pipeline_once(sample_id: str,
         "global_constraints_count": len(global_nodes),
         "graph_paths": saved_paths,                # graph.json + mermaid.mmd
         "prompt_path": prompt_path,                # instructions/<id>.prompt.txt
+        "prompt_path_machine": raw_prompt_path,    # instructions/<id>.machine.txt
         "eval_path": eval_path,                    # reports/<id>.eval.json
         "bundle_path": bundle_path,                # reports/<id>.bundle.json
+        "prompt_length": prompt_length,            # char length of final prompt
+        "constraint_total_count": total_constraints,
+        "selection_count": selection_count,
         "bundle": bundle,
         "polish_result": polish_result,
         "llm_statuses": llm_step_statuses,
@@ -281,9 +294,13 @@ def main():
     print(f"seed_task                  : {result['seed_task']}")
     print(f"blocks                     : {len(result['segmentation'].get('blocks', []))}")
     print(f"global_constraints         : {result['global_constraints_count']}")
+    print(f"total_constraints          : {result['constraint_total_count']}")
+    print(f"conditional_branches       : {result['selection_count']}")
+    print(f"prompt_length_chars        : {result['prompt_length']}")
     print("--- artifacts ---")
     print(f"graph_json_path            : {result['graph_paths']['graph_json']}")
     print(f"graph_mermaid_path         : {result['graph_paths']['mermaid_mmd']}")
+    print(f"prompt_path_raw (step7)    : {result['prompt_path_machine']}")
     print(f"prompt_path (to eval LLM)  : {result['prompt_path']}")
     print(f"eval_protocol_path         : {result['eval_path']}")
     print(f"bundle_debug_path          : {result['bundle_path']}")

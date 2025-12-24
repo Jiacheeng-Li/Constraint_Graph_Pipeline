@@ -1,0 +1,79 @@
+%% Mermaid flowchart for sample `sample_113`
+%% Paste this into any Mermaid renderer to view the graph.
+
+flowchart LR
+    SEED(((Compare and contrast the Cuban Missile Crisis and the Vie...)))
+    subgraph GLOBAL[Global Constraints]
+        G1((G1 Limit the response to a maximum of 450 words))
+        G2((G2 Write without contractions eg cannot instead of cant))
+        G3((G3 Structure the answer with an Introduction a Main Body...))
+        G4((G4 The answer must mention the following keywords vietnam...))
+        G5((G5 Prefer clear and logical reasoning when comparing conc...))
+        G6((G6 Provide explanations of reasons and background for eac...))
+        G7((G7 Maintain a formal and academic tone throughout the res...))
+        G8((G8 Use concrete historical examples to support comparisons))
+        G9((G9 Avoid vague or ambiguous phrasing to improve comprehen...))
+        G1 --- G2 --- G3 --- G4 --- G5 --- G6 --- G7 --- G8 --- G9
+    end
+    SEED --> G1
+    subgraph B1[B1 Opening]
+        B1_C1["B1C1 Provide a sufficiently detailed explanation in this..."]
+        B1_C2["B1C2 Introduce both subjects by name and timeframe"]
+        B1_C3["B1C3 Place both events in a shared historical context"]
+        B1_C4["B1C4 State that the subjects share common characteristics"]
+        B1_C1 --- B1_C2 --- B1_C3 --- B1_C4
+    end
+    subgraph B2[B2 Context setup]
+        B2_C1["B2C1 Provide a sufficiently detailed explanation in this..."]
+        B2_C2["B2C2 Explicitly signal the comparison using contrastive l..."]
+        B2_C3["B2C3 Define the second subject with its key characteristi..."]
+        B2_C4["B2C4 Identify the main participants or stakeholders for e..."]
+        B2_C1 --- B2_C2 --- B2_C3 --- B2_C4
+    end
+    subgraph B3[B3 Main Analysis]
+        B3_C1["B3C1 Provide a sufficiently detailed explanation in this..."]
+        B3_C2["B3C2 Present at least one key characteristic of the first..."]
+        B3_C3["B3C3 Describe the outcome or resolution of the first case"]
+        B3_C4["B3C4 Present at least one key characteristic of the secon..."]
+        B3_C1 --- B3_C2 --- B3_C3 --- B3_C4
+    end
+    subgraph B4[B4 Main Analysis]
+        B4_C1["B4C1 Provide a sufficiently detailed explanation in this..."]
+        B4_C2["B4C2 Compare at least two cases on a specific dimension o..."]
+        B4_C3["B4C3 Highlight the contrasting outcomes or consequences f..."]
+        B4_C4["B4C4 Provide concrete evidence for each case being compared"]
+        B4_C1 --- B4_C2 --- B4_C3 --- B4_C4
+    end
+    subgraph B4_ALT[B4_ALT Main Analysis]
+        B4_ALT_C1["B4ALTC1 Analyze how government messaging and media covera..."]
+        B4_ALT_C2["B4ALTC2 Critically assess the role of propaganda or infor..."]
+        B4_ALT_C3["B4ALTC3 Provide specific examples of media narratives or..."]
+        B4_ALT_C4["B4ALTC4 Maintain a critical analytical tone questioning o..."]
+        B4_ALT_C1 --- B4_ALT_C2 --- B4_ALT_C3 --- B4_ALT_C4
+    end
+    subgraph B5[B5 Conclusion]
+        B5_C1["B5C1 Provide a sufficiently detailed explanation in this..."]
+        B5_C2["B5C2 Restate the main comparative categories used in the..."]
+        B5_C3["B5C3 Use parallel structure when contrasting the two cases"]
+        B5_C4["B5C4 Summarize the key differences between the two cases"]
+        B5_C1 --- B5_C2 --- B5_C3 --- B5_C4
+    end
+    subgraph B5_ALT[B5_ALT Conclusion]
+        B5_ALT_C1["B5ALTC1 Explicitly state at least three strategic lessons..."]
+        B5_ALT_C2["B5ALTC2 Use a forwardlooking perspective that discusses h..."]
+        B5_ALT_C3["B5ALTC3 Maintain an analytical tone focused on strategic..."]
+        B5_ALT_C4["B5ALTC4 Connect the specific case differences to broader..."]
+        B5_ALT_C1 --- B5_ALT_C2 --- B5_ALT_C3 --- B5_ALT_C4
+    end
+    G9 --> B1_C1
+    B1_C4 --> B2_C1
+    B2_C4 --> B3_C1
+    DEC_SEL_B4{"If the analysis requires a more critical examination of g..."}
+    B3_C4 --> DEC_SEL_B4
+    DEC_SEL_B4 --> B4_C1
+    DEC_SEL_B4 --> B4_ALT_C1
+    B4_ALT_C4 --> DEC_SEL_B5
+    DEC_SEL_B5{"If the conclusion needs to emphasize the broader strategi..."}
+    B4_C4 --> DEC_SEL_B5
+    DEC_SEL_B5 --> B5_C1
+    DEC_SEL_B5 --> B5_ALT_C1

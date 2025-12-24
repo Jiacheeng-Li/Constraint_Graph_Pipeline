@@ -1,6 +1,6 @@
 # Constraint Graph Pipeline 实现说明（中文）
 
-> 本文档面向希望了解 **Pipeline_10.25** 实现细节的工程师，全面介绍组件职责、数据流、LLM 交互策略与运行方式。
+> 本文档面向希望了解 **Constraint Graph Pipeline** 实现细节的工程师，全面介绍组件职责、数据流、LLM 交互策略与运行方式。
 
 ## 1. 系统概览
 - **目标**：将一对高质量的「指令 + 模型回答」自动转化为可验证的复杂指令、约束图以及评分协议。
@@ -55,16 +55,16 @@
 ### Step 3：全局约束 (`step3_global_constraints.extract_global_constraints`)
 - **输入**：`model_answer` + Step 2 segmentation。
 - **策略**：
-  - **硬性约束**（无需 LLM）：字数、语言、段落结构、格式风格、禁止符号、关键词等，由启发式检测并附带 `verifier_spec`。
-  - **软性约束**：调用 DeepSeek，基于回答文本生成语气/质量偏好，解析后写入。
+  - **硬性约束**（无需 LLM）：字数、语言、段落结构、格式风格、禁止符号、关键词等，由启发式检测并附带 `verifier_spec`，然后在所有硬候选中随机抽取 3–5 条（按可用数截断）。
+  - **软性约束**：调用 DeepSeek，基于回答文本生成语气/质量偏好，解析后随机抽取 3–5 条（按可用数截断）。
 - **输出**：`List[ConstraintNode]`（`scope="global"`，含 `trace_to`/`derived_from`）。
 
 ### Step 4：局部约束回译 (`step4_back_translation.extract_block_constraints`)
 - **输入**：Step 2 segmentation、`seed_task`。
 - **策略**：
   1. 对每个 block：提供结构 outline + 原文 snippet，请 LLM 产出 JSON（包含 `logic` 与多条局部约束）。
-  2. 使用白名单、同义映射、去重策略，控制每块最多 4 条约束、最多 1 条硬性规则。
-  3. LLM 失败时兜底：中立语气 + 最少字数/编号列表约束。
+  2. 使用白名单、同义映射、去重策略；再按块独立随机抽取硬/软混合约束，总数 1–5 条（受可用候选数量限制）。
+  3. LLM 失败时兜底：中立语气 + 最少字数/编号列表约束，仍参与随机抽取。
 - **输出**：
   - `block_constraints`: `block_id -> [ConstraintNode...]`（`scope="local"`, `trace_to=block_id`）。
   - `block_logic`: `block_id -> "AND" / "sub-chain"`。
@@ -89,7 +89,7 @@
 ### Step 7：指令与评分协议 (`step7_instruction_synthesis.synthesize_instruction_bundle`)
 - **输入**：Step 6 的 `ConstraintGraph`。
 - **策略**：纯模板逻辑（无 LLM），渲染：
-  - `machine_prompt`：包含系统指令、种子任务、全局规则、块级计划、IF/ELSE 分支。
+  - `machine_prompt`：包含系统指令、种子任务、全局规则、块级计划、IF/ELSE 分支（落盘 `instructions/<id>.machine.txt` 便于审计/对比）。
   - `eval_protocol`：逐条列出 `verifier_spec`，供评分调用。
   - `meta`：透传图的组装信息。
 - **输出**：bundle dict（后续写入 `reports/<id>.bundle.json`）。
@@ -100,7 +100,9 @@
   1. 如果禁用 / 输入为空 → 直接返回原文。
   2. 调用 DeepSeek，将模板式提示转为自然段落；禁止新增/删除约束。
   3. `_validate_polish` 检查字数比例/空输出，失败则 fallback。
-- **输出**：`{"text": polished_prompt, "used_llm": bool, "reason": ...}`；文本保存为 `instructions/<id>.prompt.txt`。
+- **输出**：`{"text": polished_prompt, "used_llm": bool, "reason": ...}`；落盘：
+  - `instructions/<id>.machine.txt`：Step 7 生成的原始机器提示词（便于审计/对比）。
+  - `instructions/<id>.prompt.txt`：Step 8 润色后的最终提示词（或 fallback 原文）。
 
 ## 5. 运行脚本详解
 ### pipeline_runner.py
@@ -131,7 +133,7 @@
 - **随机性控制**：Step 4 支持 `STEP4_RAND_SEED`，Step 5 的 `random.Random` 可设置种子，便于复现。
 - **验证器扩展**：新增检查函数后需在 `verifier_registry` 注册，才能在 `verifier_spec` 中引用。
 
-## 8. 快速上手（中文说明）
+## 8. 快速上手
 ```bash
 # 1. 准备虚拟环境并安装依赖
 python3 -m venv .venv && source .venv/bin/activate
@@ -139,7 +141,7 @@ pip install -r requirements.txt  # 至少包含 requests 与 verifier 依赖
 
 # 2. 运行整条管线
 python -m src.pipeline_runner \
-    --sample-id sample_0001 \
+    --sample-id sample_213 \
     --instruction-file data/raw_examples/example_003_instruction.txt \
     --answer-file data/raw_examples/example_003_answer.txt
 

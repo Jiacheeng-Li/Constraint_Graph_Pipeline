@@ -1,13 +1,13 @@
 {
-  "sample_id": "example_003",
-  "timestamp_utc": "2025-11-18T09:41:47.332206+00:00",
-  "machine_prompt": "Begin by comparing and contrasting the Cuban Missile Crisis and the Vietnam War, keeping the entire answer under 450 words and written primarily in English. Structure your response with an introduction, body, and conclusion to ensure a clear flow, avoiding emojis or stylistic unicode characters. Use clear and logical reasoning throughout, providing sufficient background context while maintaining a neutral and objective tone. Highlight key differences in a structured manner, and conclude by summarizing the main points without introducing new information.\n\nIn the opening section, provide a sufficiently detailed explanation of at least 30 words. State that the subjects share common characteristics, establish shared historical context for both, and signal that differences will be analyzed.\n\nNext, in the context setup, deliver a sufficiently detailed explanation of at least 47 words. Define the first subject with its key characteristics and timeframe, define the second subject with its key characteristics and timeframe, and provide geopolitical context for each subject.\n\nFor the main analysis, present a sufficiently detailed explanation of at least 54 words. Include at least one key characteristic of the first case being compared, describe the outcome or resolution of the first case, and present at least one key characteristic of the second case being contrasted.\n\nThen, in the subsequent main analysis section, if the analysis requires emphasizing the long-term political consequences rather than just contrasting public perceptions, analyze how each event shaped subsequent US foreign policy decisions for at least the next decade. Include specific examples of policy changes or political shifts resulting from each event, maintain an analytical tone focused on political legacy rather than immediate public reaction, and provide at least 65 words of detailed political analysis. Otherwise, at this same decision point, provide a sufficiently detailed explanation of at least 55 words. Highlight contrasting outcomes or public perceptions, provide concrete evidence for each case being compared, and compare at least two cases on a specific dimension of difference.\n\nFinally, in the conclusion, if the analysis requires emphasizing the broader strategic implications and long-term consequences of these events, explicitly connect both events to their impact on Cold War strategy and doctrine. Analyze how these events influenced subsequent US foreign policy approaches, maintain an analytical tone focused on strategic implications rather than just factual comparison, and provide at least two specific examples of long-term consequences from each event. Otherwise, at this same decision point, provide a sufficiently detailed explanation of at least 36 words. Restate the main comparative categories used in the analysis, use comparative language to highlight differences, and summarize the contrasting outcomes for each case.\n\nUnless the evaluator states otherwise, assume the analysis does not require emphasizing long-term political consequences in the main analysis section, nor does it require emphasizing broader strategic implications in the conclusion. Automated checks will verify compliance with all global rules, stage duties, and branch-specific obligations, so once a branch is chosen, all its requirements become mandatory without mixing incompatible paths. Language, tone, structural cues, and conditional behaviors are all subject to inspection.",
+  "sample_id": "sample_113",
+  "timestamp_utc": "2025-11-26T07:21:25.706505+00:00",
+  "machine_prompt": "Your task is to compare and contrast the Cuban Missile Crisis and the Vietnam War. The final response must not exceed 450 words, be written without contractions, and follow a clear structure with an introduction, main body, and conclusion. It must include the keywords \"vietnam,\" \"cuban,\" and \"missile,\" and use clear, logical reasoning with explanations and background for each point. Maintain a formal, academic tone throughout, support comparisons with concrete historical examples, and avoid vague or ambiguous phrasing.\n\nBegin by writing an introduction of at least 30 words that names both events and their timeframes, places them within a shared historical context, and states that they share common characteristics. Next, in a section of at least 50 words, explicitly signal the comparison using contrastive language, define the Vietnam War with its key characteristics and duration, and identify the main participants or stakeholders for each conflict.\n\nFor the main analysis, provide an explanation of at least 60 words that presents at least one key characteristic of the Cuban Missile Crisis, describes its outcome or resolution, and presents at least one key characteristic of the Vietnam War. Then, if the analysis requires a more critical examination of government communication and media influence on public perception, you must analyze how government messaging and media coverage shaped public opinion differently in each conflict, critically assess the role of propaganda or information control in maintaining or undermining public support, provide specific examples of media narratives or government communications that influenced domestic attitudes, and maintain a critical analytical tone questioning official narratives. Otherwise, at this same point, provide a sufficiently detailed explanation of at least 60 words that compares at least two cases on a specific dimension of difference, highlights the contrasting outcomes or consequences for each case, and provides concrete evidence for each case being compared.\n\nIn the conclusion, if it needs to emphasize the broader strategic implications and lessons learned from these Cold War events, you must explicitly state at least three strategic lessons or implications for Cold War policy, use a forward-looking perspective discussing how these events shaped subsequent foreign policy, maintain an analytical tone focused on strategic assessment, and connect the specific case differences to broader Cold War dynamics and superpower relations. Otherwise, provide a sufficiently detailed explanation of at least 40 words that restates the main comparative categories used in the analysis, uses parallel structure when contrasting the two cases, and summarizes the key differences between them.\n\nUnless you are instructed otherwise, assume the analysis does not require a more critical examination of government communication and media influence on public perception, and the conclusion does not need to emphasize the broader strategic implications and lessons learned from these Cold War events.",
   "eval_protocol": {
     "seed_task": "Compare and contrast the Cuban Missile Crisis and the Vietnam War.",
     "global_scoring": [
       {
         "cid": "G1",
-        "desc": "Keep the answer under 450 words.",
+        "desc": "Limit the response to a maximum of 450 words.",
         "verifier": {
           "check": "max_word_count",
           "args": {
@@ -18,18 +18,16 @@
       },
       {
         "cid": "G2",
-        "desc": "The answer must be written primarily in English.",
+        "desc": "Write without contractions (e.g., 'cannot' instead of 'can't').",
         "verifier": {
-          "check": "require_language",
-          "args": {
-            "lang": "en"
-          }
+          "check": "avoid_contractions",
+          "args": {}
         },
         "logic": "MANDATORY_GLOBAL"
       },
       {
         "cid": "G3",
-        "desc": "Organize content into Intro → Body → Conclusion, maintaining a clear flow.",
+        "desc": "Structure the answer with an Introduction, a Main Body, and a Conclusion.",
         "verifier": {
           "check": "has_sections",
           "args": {
@@ -44,16 +42,22 @@
       },
       {
         "cid": "G4",
-        "desc": "Emojis and stylistic unicode characters are not allowed.",
+        "desc": "The answer must mention the following keywords: \"vietnam\", \"cuban\", \"missile\".",
         "verifier": {
-          "check": "forbid_emojis",
-          "args": {}
+          "check": "must_include_keywords",
+          "args": {
+            "keywords": [
+              "vietnam",
+              "cuban",
+              "missile"
+            ]
+          }
         },
         "logic": "MANDATORY_GLOBAL"
       },
       {
         "cid": "G5",
-        "desc": "Prefer clear and logical reasoning when comparing and contrasting topics.",
+        "desc": "Prefer clear and logical reasoning when comparing concepts.",
         "verifier": {
           "check": "preference_clear_reasoning",
           "args": {}
@@ -62,16 +66,16 @@
       },
       {
         "cid": "G6",
-        "desc": "Provide sufficient background context to frame the discussion.",
+        "desc": "Provide explanations of reasons and background for each point.",
         "verifier": {
-          "check": "preference_context_setup",
+          "check": "preference_explanation_background",
           "args": {}
         },
         "logic": "MANDATORY_GLOBAL"
       },
       {
         "cid": "G7",
-        "desc": "Maintain a neutral and objective tone when discussing historical events.",
+        "desc": "Maintain a formal and academic tone throughout the response.",
         "verifier": {
           "check": "tone_neutral_llm_judge",
           "args": {}
@@ -80,18 +84,18 @@
       },
       {
         "cid": "G8",
-        "desc": "Highlight key differences in a structured manner to aid understanding.",
+        "desc": "Use concrete historical examples to support comparisons.",
         "verifier": {
-          "check": "preference_structured_comparison",
+          "check": "preference_concrete_examples",
           "args": {}
         },
         "logic": "MANDATORY_GLOBAL"
       },
       {
         "cid": "G9",
-        "desc": "Conclude by summarizing the main points without introducing new information.",
+        "desc": "Avoid vague or ambiguous phrasing to improve comprehensibility.",
         "verifier": {
-          "check": "preference_conciseness",
+          "check": "preference_avoid_vagueness",
           "args": {}
         },
         "logic": "MANDATORY_GLOBAL"
@@ -117,25 +121,25 @@
           },
           {
             "cid": "B1_C2",
-            "desc": "State that the subjects share common characteristics",
+            "desc": "Introduce both subjects by name and timeframe",
             "verifier": {
-              "check": "custom:notes_similarities",
+              "check": "custom:mentions_named_entities",
               "args": {}
             }
           },
           {
             "cid": "B1_C3",
-            "desc": "Establish shared historical context for both subjects",
+            "desc": "Place both events in a shared historical context",
             "verifier": {
-              "check": "custom:identifies_shared_context",
+              "check": "custom:provides_context",
               "args": {}
             }
           },
           {
             "cid": "B1_C4",
-            "desc": "Signal that differences will be analyzed",
+            "desc": "State that the subjects share common characteristics",
             "verifier": {
-              "check": "custom:signals_comparison",
+              "check": "custom:notes_similarities",
               "args": {}
             }
           }
@@ -150,35 +154,35 @@
         "requirements": [
           {
             "cid": "B2_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 47 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 50 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 47
+                "min_words": 50
               }
             }
           },
           {
             "cid": "B2_C2",
-            "desc": "Define the second subject with its key characteristics and timeframe",
+            "desc": "Explicitly signal the comparison using contrastive language",
             "verifier": {
-              "check": "custom:has_definition",
+              "check": "custom:has_contrast_marker",
               "args": {}
             }
           },
           {
             "cid": "B2_C3",
-            "desc": "Provide geopolitical context for each subject",
+            "desc": "Define the second subject with its key characteristics and duration",
             "verifier": {
-              "check": "custom:has_geopolitical_context",
+              "check": "custom:has_definition",
               "args": {}
             }
           },
           {
             "cid": "B2_C4",
-            "desc": "Define the first subject with its key characteristics and timeframe",
+            "desc": "Identify the main participants or stakeholders for each subject",
             "verifier": {
-              "check": "custom:has_definition",
+              "check": "custom:lists_participants",
               "args": {}
             }
           }
@@ -193,11 +197,11 @@
         "requirements": [
           {
             "cid": "B3_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 54 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 60 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 54
+                "min_words": 60
               }
             }
           },
@@ -236,35 +240,35 @@
         "requirements": [
           {
             "cid": "B4_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 55 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 60 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 55
+                "min_words": 60
               }
             }
           },
           {
             "cid": "B4_C2",
-            "desc": "Highlight contrasting outcomes or public perceptions",
+            "desc": "Compare at least two cases on a specific dimension of difference",
             "verifier": {
-              "check": "custom:highlight_contrast",
+              "check": "custom:compare_dimension",
               "args": {}
             }
           },
           {
             "cid": "B4_C3",
-            "desc": "Provide concrete evidence for each case being compared",
+            "desc": "Highlight the contrasting outcomes or consequences for each case",
             "verifier": {
-              "check": "custom:provide_evidence",
+              "check": "custom:contrast_outcomes",
               "args": {}
             }
           },
           {
             "cid": "B4_C4",
-            "desc": "Compare at least two cases on a specific dimension of difference",
+            "desc": "Provide concrete evidence for each case being compared",
             "verifier": {
-              "check": "custom:compare_dimension",
+              "check": "custom:has_evidence_per_case",
               "args": {}
             }
           }
@@ -279,11 +283,11 @@
         "requirements": [
           {
             "cid": "B5_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 36 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 40 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 36
+                "min_words": 40
               }
             }
           },
@@ -297,15 +301,15 @@
           },
           {
             "cid": "B5_C3",
-            "desc": "Use comparative language to highlight differences",
+            "desc": "Use parallel structure when contrasting the two cases",
             "verifier": {
-              "check": "custom:uses_comparative_language",
+              "check": "custom:has_parallel_contrast",
               "args": {}
             }
           },
           {
             "cid": "B5_C4",
-            "desc": "Summarize the contrasting outcomes for each case",
+            "desc": "Summarize the key differences between the two cases",
             "verifier": {
               "check": "custom:has_contrasting_summary",
               "args": {}
@@ -318,7 +322,7 @@
       {
         "sid": "SEL_B4",
         "where": "B4 Main Analysis",
-        "condition": "If the analysis requires emphasizing the long-term political consequences rather than just contrasting public perceptions",
+        "condition": "If the analysis requires a more critical examination of government communication and media influence on public perception",
         "selection_type": "local",
         "merge_point": "B5",
         "truncated": false,
@@ -330,35 +334,35 @@
         "branch_real": [
           {
             "cid": "B4_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 55 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 60 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 55
+                "min_words": 60
               }
             }
           },
           {
             "cid": "B4_C2",
-            "desc": "Highlight contrasting outcomes or public perceptions",
+            "desc": "Compare at least two cases on a specific dimension of difference",
             "verifier": {
-              "check": "custom:highlight_contrast",
+              "check": "custom:compare_dimension",
               "args": {}
             }
           },
           {
             "cid": "B4_C3",
-            "desc": "Provide concrete evidence for each case being compared",
+            "desc": "Highlight the contrasting outcomes or consequences for each case",
             "verifier": {
-              "check": "custom:provide_evidence",
+              "check": "custom:contrast_outcomes",
               "args": {}
             }
           },
           {
             "cid": "B4_C4",
-            "desc": "Compare at least two cases on a specific dimension of difference",
+            "desc": "Provide concrete evidence for each case being compared",
             "verifier": {
-              "check": "custom:compare_dimension",
+              "check": "custom:has_evidence_per_case",
               "args": {}
             }
           }
@@ -366,44 +370,42 @@
         "branch_alt": [
           {
             "cid": "B4_ALT_C1",
-            "desc": "Analyze how each event shaped subsequent US foreign policy decisions for at least the next decade",
+            "desc": "Analyze how government messaging and media coverage shaped public opinion differently in each conflict",
             "verifier": {
               "check": "must_cover_topics",
               "args": {
                 "topics": [
-                  "foreign policy impact",
-                  "subsequent decisions",
-                  "long-term consequences"
+                  "government messaging",
+                  "media coverage",
+                  "public opinion shaping"
                 ]
               }
             }
           },
           {
             "cid": "B4_ALT_C2",
-            "desc": "Include specific examples of policy changes or political shifts resulting from each event",
+            "desc": "Critically assess the role of propaganda or information control in maintaining or undermining public support",
             "verifier": {
-              "check": "must_list_n_subpoints",
-              "args": {
-                "min_subpoints": 2
-              }
-            }
-          },
-          {
-            "cid": "B4_ALT_C3",
-            "desc": "Maintain an analytical tone focused on political legacy rather than immediate public reaction",
-            "verifier": {
-              "check": "tone_neutral_llm_judge",
+              "check": "tone_negative_llm_judge",
               "args": {}
             }
           },
           {
-            "cid": "B4_ALT_C4",
-            "desc": "Provide at least 65 words of detailed political analysis",
+            "cid": "B4_ALT_C3",
+            "desc": "Provide specific examples of media narratives or government communications that influenced domestic attitudes",
             "verifier": {
-              "check": "min_word_count",
+              "check": "must_list_n_subpoints",
               "args": {
-                "min_words": 65
+                "n": 2
               }
+            }
+          },
+          {
+            "cid": "B4_ALT_C4",
+            "desc": "Maintain a critical analytical tone questioning official narratives",
+            "verifier": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
             }
           }
         ],
@@ -416,7 +418,7 @@
       {
         "sid": "SEL_B5",
         "where": "B5 Conclusion",
-        "condition": "If the analysis requires emphasizing the broader strategic implications and long-term consequences of these events",
+        "condition": "If the conclusion needs to emphasize the broader strategic implications and lessons learned from these Cold War events",
         "selection_type": "local",
         "merge_point": "B6",
         "truncated": false,
@@ -428,11 +430,11 @@
         "branch_real": [
           {
             "cid": "B5_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 36 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 40 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 36
+                "min_words": 40
               }
             }
           },
@@ -446,15 +448,15 @@
           },
           {
             "cid": "B5_C3",
-            "desc": "Use comparative language to highlight differences",
+            "desc": "Use parallel structure when contrasting the two cases",
             "verifier": {
-              "check": "custom:uses_comparative_language",
+              "check": "custom:has_parallel_contrast",
               "args": {}
             }
           },
           {
             "cid": "B5_C4",
-            "desc": "Summarize the contrasting outcomes for each case",
+            "desc": "Summarize the key differences between the two cases",
             "verifier": {
               "check": "custom:has_contrasting_summary",
               "args": {}
@@ -464,39 +466,34 @@
         "branch_alt": [
           {
             "cid": "B5_ALT_C1",
-            "desc": "Explicitly connect both events to their impact on Cold War strategy and doctrine",
+            "desc": "Explicitly state at least three strategic lessons or implications for Cold War policy",
             "verifier": {
-              "check": "must_include_keywords",
+              "check": "must_list_n_subpoints",
               "args": {
-                "keywords": [
-                  "strategy",
-                  "doctrine",
-                  "policy",
-                  "Cold War",
-                  "impact",
-                  "consequence"
-                ]
+                "min_items": 3
               }
             }
           },
           {
             "cid": "B5_ALT_C2",
-            "desc": "Analyze how these events influenced subsequent US foreign policy approaches",
+            "desc": "Use a forward-looking perspective that discusses how these events shaped subsequent foreign policy",
             "verifier": {
-              "check": "must_cover_topics",
+              "check": "must_include_keywords",
               "args": {
-                "topics": [
-                  "foreign policy",
-                  "subsequent",
-                  "influence",
-                  "approach"
-                ]
+                "keywords": [
+                  "implications",
+                  "lessons",
+                  "policy",
+                  "future",
+                  "shaped"
+                ],
+                "min_count": 3
               }
             }
           },
           {
             "cid": "B5_ALT_C3",
-            "desc": "Maintain an analytical tone focused on strategic implications rather than just factual comparison",
+            "desc": "Maintain an analytical tone focused on strategic assessment rather than simple factual summary",
             "verifier": {
               "check": "tone_neutral_llm_judge",
               "args": {}
@@ -504,11 +501,15 @@
           },
           {
             "cid": "B5_ALT_C4",
-            "desc": "Provide at least two specific examples of long-term consequences from each event",
+            "desc": "Connect the specific case differences to broader Cold War dynamics and superpower relations",
             "verifier": {
-              "check": "must_list_n_subpoints",
+              "check": "must_cover_topics",
               "args": {
-                "min_subpoints": 4
+                "topics": [
+                  "superpower relations",
+                  "Cold War strategy",
+                  "international relations"
+                ]
               }
             }
           }
@@ -535,7 +536,7 @@
     "global_constraints": [
       {
         "cid": "G1",
-        "desc": "Keep the answer under 450 words.",
+        "desc": "Limit the response to a maximum of 450 words.",
         "scope": "global",
         "verifier_spec": {
           "check": "max_word_count",
@@ -548,20 +549,18 @@
       },
       {
         "cid": "G2",
-        "desc": "The answer must be written primarily in English.",
+        "desc": "Write without contractions (e.g., 'cannot' instead of 'can't').",
         "scope": "global",
         "verifier_spec": {
-          "check": "require_language",
-          "args": {
-            "lang": "en"
-          }
+          "check": "avoid_contractions",
+          "args": {}
         },
         "trace_to": null,
         "derived_from": "step3"
       },
       {
         "cid": "G3",
-        "desc": "Organize content into Intro → Body → Conclusion, maintaining a clear flow.",
+        "desc": "Structure the answer with an Introduction, a Main Body, and a Conclusion.",
         "scope": "global",
         "verifier_spec": {
           "check": "has_sections",
@@ -578,18 +577,24 @@
       },
       {
         "cid": "G4",
-        "desc": "Emojis and stylistic unicode characters are not allowed.",
+        "desc": "The answer must mention the following keywords: \"vietnam\", \"cuban\", \"missile\".",
         "scope": "global",
         "verifier_spec": {
-          "check": "forbid_emojis",
-          "args": {}
+          "check": "must_include_keywords",
+          "args": {
+            "keywords": [
+              "vietnam",
+              "cuban",
+              "missile"
+            ]
+          }
         },
         "trace_to": null,
         "derived_from": "step3"
       },
       {
         "cid": "G5",
-        "desc": "Prefer clear and logical reasoning when comparing and contrasting topics.",
+        "desc": "Prefer clear and logical reasoning when comparing concepts.",
         "scope": "global",
         "verifier_spec": {
           "check": "preference_clear_reasoning",
@@ -600,10 +605,10 @@
       },
       {
         "cid": "G6",
-        "desc": "Provide sufficient background context to frame the discussion.",
+        "desc": "Provide explanations of reasons and background for each point.",
         "scope": "global",
         "verifier_spec": {
-          "check": "preference_context_setup",
+          "check": "preference_explanation_background",
           "args": {}
         },
         "trace_to": null,
@@ -611,7 +616,7 @@
       },
       {
         "cid": "G7",
-        "desc": "Maintain a neutral and objective tone when discussing historical events.",
+        "desc": "Maintain a formal and academic tone throughout the response.",
         "scope": "global",
         "verifier_spec": {
           "check": "tone_neutral_llm_judge",
@@ -622,10 +627,10 @@
       },
       {
         "cid": "G8",
-        "desc": "Highlight key differences in a structured manner to aid understanding.",
+        "desc": "Use concrete historical examples to support comparisons.",
         "scope": "global",
         "verifier_spec": {
-          "check": "preference_structured_comparison",
+          "check": "preference_concrete_examples",
           "args": {}
         },
         "trace_to": null,
@@ -633,10 +638,10 @@
       },
       {
         "cid": "G9",
-        "desc": "Conclude by summarizing the main points without introducing new information.",
+        "desc": "Avoid vague or ambiguous phrasing to improve comprehensibility.",
         "scope": "global",
         "verifier_spec": {
-          "check": "preference_conciseness",
+          "check": "preference_avoid_vagueness",
           "args": {}
         },
         "trace_to": null,
@@ -721,10 +726,10 @@
           },
           {
             "cid": "B1_C2",
-            "desc": "State that the subjects share common characteristics",
+            "desc": "Introduce both subjects by name and timeframe",
             "scope": "local",
             "verifier_spec": {
-              "check": "custom:notes_similarities",
+              "check": "custom:mentions_named_entities",
               "args": {}
             },
             "trace_to": "B1",
@@ -732,10 +737,10 @@
           },
           {
             "cid": "B1_C3",
-            "desc": "Establish shared historical context for both subjects",
+            "desc": "Place both events in a shared historical context",
             "scope": "local",
             "verifier_spec": {
-              "check": "custom:identifies_shared_context",
+              "check": "custom:provides_context",
               "args": {}
             },
             "trace_to": "B1",
@@ -743,10 +748,10 @@
           },
           {
             "cid": "B1_C4",
-            "desc": "Signal that differences will be analyzed",
+            "desc": "State that the subjects share common characteristics",
             "scope": "local",
             "verifier_spec": {
-              "check": "custom:signals_comparison",
+              "check": "custom:notes_similarities",
               "args": {}
             },
             "trace_to": "B1",
@@ -760,12 +765,12 @@
         "constraints": [
           {
             "cid": "B2_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 47 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 50 words.",
             "scope": "local",
             "verifier_spec": {
               "check": "min_word_count",
               "args": {
-                "min_words": 47
+                "min_words": 50
               }
             },
             "trace_to": "B2",
@@ -773,10 +778,10 @@
           },
           {
             "cid": "B2_C2",
-            "desc": "Define the second subject with its key characteristics and timeframe",
+            "desc": "Explicitly signal the comparison using contrastive language",
             "scope": "local",
             "verifier_spec": {
-              "check": "custom:has_definition",
+              "check": "custom:has_contrast_marker",
               "args": {}
             },
             "trace_to": "B2",
@@ -784,10 +789,10 @@
           },
           {
             "cid": "B2_C3",
-            "desc": "Provide geopolitical context for each subject",
+            "desc": "Define the second subject with its key characteristics and duration",
             "scope": "local",
             "verifier_spec": {
-              "check": "custom:has_geopolitical_context",
+              "check": "custom:has_definition",
               "args": {}
             },
             "trace_to": "B2",
@@ -795,10 +800,10 @@
           },
           {
             "cid": "B2_C4",
-            "desc": "Define the first subject with its key characteristics and timeframe",
+            "desc": "Identify the main participants or stakeholders for each subject",
             "scope": "local",
             "verifier_spec": {
-              "check": "custom:has_definition",
+              "check": "custom:lists_participants",
               "args": {}
             },
             "trace_to": "B2",
@@ -812,12 +817,12 @@
         "constraints": [
           {
             "cid": "B3_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 54 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 60 words.",
             "scope": "local",
             "verifier_spec": {
               "check": "min_word_count",
               "args": {
-                "min_words": 54
+                "min_words": 60
               }
             },
             "trace_to": "B3",
@@ -864,12 +869,12 @@
         "constraints": [
           {
             "cid": "B4_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 55 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 60 words.",
             "scope": "local",
             "verifier_spec": {
               "check": "min_word_count",
               "args": {
-                "min_words": 55
+                "min_words": 60
               }
             },
             "trace_to": "B4",
@@ -877,10 +882,10 @@
           },
           {
             "cid": "B4_C2",
-            "desc": "Highlight contrasting outcomes or public perceptions",
+            "desc": "Compare at least two cases on a specific dimension of difference",
             "scope": "local",
             "verifier_spec": {
-              "check": "custom:highlight_contrast",
+              "check": "custom:compare_dimension",
               "args": {}
             },
             "trace_to": "B4",
@@ -888,10 +893,10 @@
           },
           {
             "cid": "B4_C3",
-            "desc": "Provide concrete evidence for each case being compared",
+            "desc": "Highlight the contrasting outcomes or consequences for each case",
             "scope": "local",
             "verifier_spec": {
-              "check": "custom:provide_evidence",
+              "check": "custom:contrast_outcomes",
               "args": {}
             },
             "trace_to": "B4",
@@ -899,10 +904,10 @@
           },
           {
             "cid": "B4_C4",
-            "desc": "Compare at least two cases on a specific dimension of difference",
+            "desc": "Provide concrete evidence for each case being compared",
             "scope": "local",
             "verifier_spec": {
-              "check": "custom:compare_dimension",
+              "check": "custom:has_evidence_per_case",
               "args": {}
             },
             "trace_to": "B4",
@@ -916,15 +921,15 @@
         "constraints": [
           {
             "cid": "B4_ALT_C1",
-            "desc": "Analyze how each event shaped subsequent US foreign policy decisions for at least the next decade",
+            "desc": "Analyze how government messaging and media coverage shaped public opinion differently in each conflict",
             "scope": "local",
             "verifier_spec": {
               "check": "must_cover_topics",
               "args": {
                 "topics": [
-                  "foreign policy impact",
-                  "subsequent decisions",
-                  "long-term consequences"
+                  "government messaging",
+                  "media coverage",
+                  "public opinion shaping"
                 ]
               }
             },
@@ -933,37 +938,35 @@
           },
           {
             "cid": "B4_ALT_C2",
-            "desc": "Include specific examples of policy changes or political shifts resulting from each event",
+            "desc": "Critically assess the role of propaganda or information control in maintaining or undermining public support",
             "scope": "local",
             "verifier_spec": {
-              "check": "must_list_n_subpoints",
-              "args": {
-                "min_subpoints": 2
-              }
-            },
-            "trace_to": "B4_ALT",
-            "derived_from": "step5"
-          },
-          {
-            "cid": "B4_ALT_C3",
-            "desc": "Maintain an analytical tone focused on political legacy rather than immediate public reaction",
-            "scope": "local",
-            "verifier_spec": {
-              "check": "tone_neutral_llm_judge",
+              "check": "tone_negative_llm_judge",
               "args": {}
             },
             "trace_to": "B4_ALT",
             "derived_from": "step5"
           },
           {
-            "cid": "B4_ALT_C4",
-            "desc": "Provide at least 65 words of detailed political analysis",
+            "cid": "B4_ALT_C3",
+            "desc": "Provide specific examples of media narratives or government communications that influenced domestic attitudes",
             "scope": "local",
             "verifier_spec": {
-              "check": "min_word_count",
+              "check": "must_list_n_subpoints",
               "args": {
-                "min_words": 65
+                "n": 2
               }
+            },
+            "trace_to": "B4_ALT",
+            "derived_from": "step5"
+          },
+          {
+            "cid": "B4_ALT_C4",
+            "desc": "Maintain a critical analytical tone questioning official narratives",
+            "scope": "local",
+            "verifier_spec": {
+              "check": "tone_negative_llm_judge",
+              "args": {}
             },
             "trace_to": "B4_ALT",
             "derived_from": "step5"
@@ -976,12 +979,12 @@
         "constraints": [
           {
             "cid": "B5_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 36 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 40 words.",
             "scope": "local",
             "verifier_spec": {
               "check": "min_word_count",
               "args": {
-                "min_words": 36
+                "min_words": 40
               }
             },
             "trace_to": "B5",
@@ -1000,10 +1003,10 @@
           },
           {
             "cid": "B5_C3",
-            "desc": "Use comparative language to highlight differences",
+            "desc": "Use parallel structure when contrasting the two cases",
             "scope": "local",
             "verifier_spec": {
-              "check": "custom:uses_comparative_language",
+              "check": "custom:has_parallel_contrast",
               "args": {}
             },
             "trace_to": "B5",
@@ -1011,7 +1014,7 @@
           },
           {
             "cid": "B5_C4",
-            "desc": "Summarize the contrasting outcomes for each case",
+            "desc": "Summarize the key differences between the two cases",
             "scope": "local",
             "verifier_spec": {
               "check": "custom:has_contrasting_summary",
@@ -1028,19 +1031,12 @@
         "constraints": [
           {
             "cid": "B5_ALT_C1",
-            "desc": "Explicitly connect both events to their impact on Cold War strategy and doctrine",
+            "desc": "Explicitly state at least three strategic lessons or implications for Cold War policy",
             "scope": "local",
             "verifier_spec": {
-              "check": "must_include_keywords",
+              "check": "must_list_n_subpoints",
               "args": {
-                "keywords": [
-                  "strategy",
-                  "doctrine",
-                  "policy",
-                  "Cold War",
-                  "impact",
-                  "consequence"
-                ]
+                "min_items": 3
               }
             },
             "trace_to": "B5_ALT",
@@ -1048,17 +1044,19 @@
           },
           {
             "cid": "B5_ALT_C2",
-            "desc": "Analyze how these events influenced subsequent US foreign policy approaches",
+            "desc": "Use a forward-looking perspective that discusses how these events shaped subsequent foreign policy",
             "scope": "local",
             "verifier_spec": {
-              "check": "must_cover_topics",
+              "check": "must_include_keywords",
               "args": {
-                "topics": [
-                  "foreign policy",
-                  "subsequent",
-                  "influence",
-                  "approach"
-                ]
+                "keywords": [
+                  "implications",
+                  "lessons",
+                  "policy",
+                  "future",
+                  "shaped"
+                ],
+                "min_count": 3
               }
             },
             "trace_to": "B5_ALT",
@@ -1066,7 +1064,7 @@
           },
           {
             "cid": "B5_ALT_C3",
-            "desc": "Maintain an analytical tone focused on strategic implications rather than just factual comparison",
+            "desc": "Maintain an analytical tone focused on strategic assessment rather than simple factual summary",
             "scope": "local",
             "verifier_spec": {
               "check": "tone_neutral_llm_judge",
@@ -1077,12 +1075,16 @@
           },
           {
             "cid": "B5_ALT_C4",
-            "desc": "Provide at least two specific examples of long-term consequences from each event",
+            "desc": "Connect the specific case differences to broader Cold War dynamics and superpower relations",
             "scope": "local",
             "verifier_spec": {
-              "check": "must_list_n_subpoints",
+              "check": "must_cover_topics",
               "args": {
-                "min_subpoints": 4
+                "topics": [
+                  "superpower relations",
+                  "Cold War strategy",
+                  "international relations"
+                ]
               }
             },
             "trace_to": "B5_ALT",
@@ -1094,7 +1096,7 @@
     "selections": [
       {
         "sid": "SEL_B4",
-        "condition": "If the analysis requires emphasizing the long-term political consequences rather than just contrasting public perceptions",
+        "condition": "If the analysis requires a more critical examination of government communication and media influence on public perception",
         "trace_to": "B4",
         "branch_real": {
           "block_id": "B4",
@@ -1124,7 +1126,7 @@
       },
       {
         "sid": "SEL_B5",
-        "condition": "If the analysis requires emphasizing the broader strategic implications and long-term consequences of these events",
+        "condition": "If the conclusion needs to emphasize the broader strategic implications and lessons learned from these Cold War events",
         "trace_to": "B5",
         "branch_real": {
           "block_id": "B5",
@@ -1172,9 +1174,10 @@
       "step5": "selections + augmented block_constraints"
     }
   },
-  "machine_prompt_original": "SYSTEM INSTRUCTIONS:\n\n1. MISSION BRIEF & DELIVERABLE\n   - Primary directive: Compare and contrast the Cuban Missile Crisis and the Vietnam War.\n\n2. NON-NEGOTIABLE GLOBAL RULES\n   Respect every rule simultaneously across the full response:\n   1. Keep the answer under 450 words.\n   2. The answer must be written primarily in English.\n   3. Organize content into Intro → Body → Conclusion, maintaining a clear flow.\n   4. Emojis and stylistic unicode characters are not allowed.\n   5. Prefer clear and logical reasoning when comparing and contrasting topics.\n   6. Provide sufficient background context to frame the discussion.\n   7. Maintain a neutral and objective tone when discussing historical events.\n   8. Highlight key differences in a structured manner to aid understanding.\n   9. Conclude by summarizing the main points without introducing new information.\n\n3. STRUCTURED RESPONSE BLUEPRINT\n   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.\n\n   Stage 1 – Opening\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      Timeline duties:\n        • Provide a sufficiently detailed explanation in this block with at least 30 words.\n        • State that the subjects share common characteristics\n        • Establish shared historical context for both subjects\n        • Signal that differences will be analyzed\n\n   Stage 2 – Context setup\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      Timeline duties:\n        • Provide a sufficiently detailed explanation in this block with at least 47 words.\n        • Define the second subject with its key characteristics and timeframe\n        • Provide geopolitical context for each subject\n        • Define the first subject with its key characteristics and timeframe\n\n   Stage 3 – Main Analysis\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      Timeline duties:\n        • Provide a sufficiently detailed explanation in this block with at least 54 words.\n        • Present at least one key characteristic of the first case being compared\n        • Describe the outcome or resolution of the first case\n        • Present at least one key characteristic of the second case being contrasted\n\n   Stage 4 – Main Analysis\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      LOCAL branch – when The analysis requires emphasizing the long-term political consequences rather than just contrasting public perceptions:\n        • Analyze how each event shaped subsequent US foreign policy decisions for at least the next decade\n        • Include specific examples of policy changes or political shifts resulting from each event\n        • Maintain an analytical tone focused on political legacy rather than immediate public reaction\n        • Provide at least 65 words of detailed political analysis\n      Otherwise at this same decision point:\n        • Provide a sufficiently detailed explanation in this block with at least 55 words.\n        • Highlight contrasting outcomes or public perceptions\n        • Provide concrete evidence for each case being compared\n        • Compare at least two cases on a specific dimension of difference\n\n   Stage 5 – Conclusion\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      LOCAL branch – when The analysis requires emphasizing the broader strategic implications and long-term consequences of these events:\n        • Explicitly connect both events to their impact on Cold War strategy and doctrine\n        • Analyze how these events influenced subsequent US foreign policy approaches\n        • Maintain an analytical tone focused on strategic implications rather than just factual comparison\n        • Provide at least two specific examples of long-term consequences from each event\n      Otherwise at this same decision point:\n        • Provide a sufficiently detailed explanation in this block with at least 36 words.\n        • Restate the main comparative categories used in the analysis\n        • Use comparative language to highlight differences\n        • Summarize the contrasting outcomes for each case\n\n4. CURRENT CONDITION ASSUMPTION\n   Unless the evaluator states otherwise, assume each trigger below is currently FALSE.\n   - Main Analysis: It is not the case that the analysis requires emphasizing the long-term political consequences rather than just contrasting public perceptions.\n   - Conclusion: It is not the case that the analysis requires emphasizing the broader strategic implications and long-term consequences of these events.\n\n5. EVALUATION NOTICE\n- Automated checks will verify every global rule, each stage’s duties, and the branch-specific obligations you triggered.\n- Once you pick a branch, treat all bullets under that branch as mandatory, and do not mix incompatible paths unless explicitly told to merge.\n- Language, tone, structural cues, and conditional behaviors are all inspected.\n",
+  "machine_prompt_original": "SYSTEM INSTRUCTIONS:\n\n1. MISSION BRIEF & DELIVERABLE\n   - Primary directive: Compare and contrast the Cuban Missile Crisis and the Vietnam War.\n\n2. NON-NEGOTIABLE GLOBAL RULES\n   Respect every rule simultaneously across the full response:\n   1. Limit the response to a maximum of 450 words.\n   2. Write without contractions (e.g., 'cannot' instead of 'can't').\n   3. Structure the answer with an Introduction, a Main Body, and a Conclusion.\n   4. The answer must mention the following keywords: \"vietnam\", \"cuban\", \"missile\".\n   5. Prefer clear and logical reasoning when comparing concepts.\n   6. Provide explanations of reasons and background for each point.\n   7. Maintain a formal and academic tone throughout the response.\n   8. Use concrete historical examples to support comparisons.\n   9. Avoid vague or ambiguous phrasing to improve comprehensibility.\n\n3. STRUCTURED RESPONSE BLUEPRINT\n   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.\n\n   Stage 1 - Opening\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      Timeline duties:\n        • Provide a sufficiently detailed explanation in this block with at least 30 words.\n        • Introduce both subjects by name and timeframe\n        • Place both events in a shared historical context\n        • State that the subjects share common characteristics\n\n   Stage 2 - Context setup\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      Timeline duties:\n        • Provide a sufficiently detailed explanation in this block with at least 50 words.\n        • Explicitly signal the comparison using contrastive language\n        • Define the second subject with its key characteristics and duration\n        • Identify the main participants or stakeholders for each subject\n\n   Stage 3 - Main Analysis\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      Timeline duties:\n        • Provide a sufficiently detailed explanation in this block with at least 60 words.\n        • Present at least one key characteristic of the first case being compared\n        • Describe the outcome or resolution of the first case\n        • Present at least one key characteristic of the second case being contrasted\n\n   Stage 4 - Main Analysis\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      LOCAL branch - when The analysis requires a more critical examination of government communication and media influence on public perception:\n        • Analyze how government messaging and media coverage shaped public opinion differently in each conflict\n        • Critically assess the role of propaganda or information control in maintaining or undermining public support\n        • Provide specific examples of media narratives or government communications that influenced domestic attitudes\n        • Maintain a critical analytical tone questioning official narratives\n      Otherwise at this same decision point:\n        • Provide a sufficiently detailed explanation in this block with at least 60 words.\n        • Compare at least two cases on a specific dimension of difference\n        • Highlight the contrasting outcomes or consequences for each case\n        • Provide concrete evidence for each case being compared\n\n   Stage 5 - Conclusion\n      Logic cue: Parallel coverage: hit every bullet for this stage.\n      LOCAL branch - when The conclusion needs to emphasize the broader strategic implications and lessons learned from these Cold War events:\n        • Explicitly state at least three strategic lessons or implications for Cold War policy\n        • Use a forward-looking perspective that discusses how these events shaped subsequent foreign policy\n        • Maintain an analytical tone focused on strategic assessment rather than simple factual summary\n        • Connect the specific case differences to broader Cold War dynamics and superpower relations\n      Otherwise at this same decision point:\n        • Provide a sufficiently detailed explanation in this block with at least 40 words.\n        • Restate the main comparative categories used in the analysis\n        • Use parallel structure when contrasting the two cases\n        • Summarize the key differences between the two cases\n\n4. CURRENT CONDITION ASSUMPTION\n   Unless the evaluator states otherwise, assume each trigger below is currently FALSE.\n   - Main Analysis: It is not the case that the analysis requires a more critical examination of government communication and media influence on public perception.\n   - Conclusion: It is not the case that the conclusion needs to emphasize the broader strategic implications and lessons learned from these cold war events.\n",
   "step8_polish": {
     "used_llm": true,
-    "reason": "success"
+    "reason": "success",
+    "attempts": 1
   }
 }

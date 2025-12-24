@@ -1,0 +1,68 @@
+%% Mermaid flowchart for sample `sample_213`
+%% Paste this into any Mermaid renderer to view the graph.
+
+flowchart LR
+    SEED(((Compare and contrast the Cuban Missile Crisis and the Vie...)))
+    subgraph GLOBAL[Global Constraints]
+        G1((G1 Include an OpeningIntro a BodyMain Analysis and a Conc...))
+        G2((G2 Do not use the symbol))
+        G3((G3 Use these keywords verbatim somewhere in the text viet...))
+        G4((G4 Write the response mostly in English))
+        G5((G5 Provide at least 320 words in total))
+        G6((G6 Highlight key differences between subjects to aid unde...))
+        G7((G7 Conclude with a summary that reinforces the main points))
+        G8((G8 Provide background context to help frame the discussion))
+        G9((G9 Use a neutral and informative tone suitable for histor...))
+        G10((G10 Prefer clear and logical reasoning when comparing and...))
+        G1 --- G2 --- G3 --- G4 --- G5 --- G6 --- G7 --- G8 --- G9 --- G10
+    end
+    SEED --> G1
+    subgraph B1[B1 Opening]
+        B1_C1["B1C1 Acknowledge both similarities and differences betwee..."]
+    end
+    subgraph B2[B2 Background]
+        B2_C1["B2C1 Provide a sufficiently detailed explanation in this..."]
+    end
+    subgraph B3[B3 Main Analysis]
+        B3_C1["B3C1 Present at least one key characteristic of the secon..."]
+    end
+    subgraph B4[B4 Main Analysis]
+        B4_C1["B4C1 Provide a sufficiently detailed explanation in this..."]
+        B4_C2["B4C2 Provide concrete evidence of public sentiment for ea..."]
+        B4_C3["B4C3 Contrast the outcomes or consequences of public opin..."]
+        B4_C4["B4C4 Compare at least two cases on a specific dimension o..."]
+        B4_C1 --- B4_C2 --- B4_C3 --- B4_C4
+    end
+    subgraph B4_ALT[B4_ALT Main Analysis]
+        B4_ALT_C1["B4ALTC1 Include specific polling data or statistics to qu..."]
+        B4_ALT_C2["B4ALTC2 Analyze at least three distinct demographic facto..."]
+        B4_ALT_C3["B4ALTC3 Compare the media coverage patterns and their imp..."]
+        B4_ALT_C4["B4ALTC4 Maintain an objective datafocused tone throughout..."]
+        B4_ALT_C1 --- B4_ALT_C2 --- B4_ALT_C3 --- B4_ALT_C4
+    end
+    subgraph B5[B5 Conclusion]
+        B5_C1["B5C1 Provide a sufficiently detailed explanation in this..."]
+        B5_C2["B5C2 Restate the main comparative framework established e..."]
+        B5_C3["B5C3 Summarize key contrasting attributes for each case"]
+        B5_C4["B5C4 Explicitly mark the block as a conclusion"]
+        B5_C1 --- B5_C2 --- B5_C3 --- B5_C4
+    end
+    subgraph B5_ALT[B5_ALT Conclusion]
+        B5_ALT_C1["B5ALTC1 Explicitly state at least two policy lessons or s..."]
+        B5_ALT_C2["B5ALTC2 Use language that emphasizes strategic importance..."]
+        B5_ALT_C3["B5ALTC3 Maintain a forwardlooking perspective that connec..."]
+        B5_ALT_C4["B5ALTC4 Explicitly mark the block as a conclusion with im..."]
+        B5_ALT_C1 --- B5_ALT_C2 --- B5_ALT_C3 --- B5_ALT_C4
+    end
+    G10 --> B1_C1
+    B1_C1 --> B2_C1
+    B2_C1 --> B3_C1
+    DEC_SEL_B4{"If the analysis requires a more analytical and datadriven..."}
+    B3_C1 --> DEC_SEL_B4
+    DEC_SEL_B4 --> B4_C1
+    DEC_SEL_B4 --> B4_ALT_C1
+    B4_ALT_C4 --> DEC_SEL_B5
+    DEC_SEL_B5{"If the conclusion needs to emphasize policy implications..."}
+    B4_C4 --> DEC_SEL_B5
+    DEC_SEL_B5 --> B5_C1
+    DEC_SEL_B5 --> B5_ALT_C1

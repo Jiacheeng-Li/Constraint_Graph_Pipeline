@@ -1,0 +1,74 @@
+SYSTEM INSTRUCTIONS:
+
+1. MISSION BRIEF & DELIVERABLE
+   - Primary directive: Compare and contrast the Cuban Missile Crisis and the Vietnam War.
+
+2. NON-NEGOTIABLE GLOBAL RULES
+   Respect every rule simultaneously across the full response:
+   1. Limit the response to a maximum of 450 words.
+   2. Write without contractions (e.g., 'cannot' instead of 'can't').
+   3. Structure the answer with an Introduction, a Main Body, and a Conclusion.
+   4. The answer must mention the following keywords: "vietnam", "cuban", "missile".
+   5. Prefer clear and logical reasoning when comparing concepts.
+   6. Provide explanations of reasons and background for each point.
+   7. Maintain a formal and academic tone throughout the response.
+   8. Use concrete historical examples to support comparisons.
+   9. Avoid vague or ambiguous phrasing to improve comprehensibility.
+
+3. STRUCTURED RESPONSE BLUEPRINT
+   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.
+
+   Stage 1 - Opening
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      Timeline duties:
+        • Provide a sufficiently detailed explanation in this block with at least 30 words.
+        • Introduce both subjects by name and timeframe
+        • Place both events in a shared historical context
+        • State that the subjects share common characteristics
+
+   Stage 2 - Context setup
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      Timeline duties:
+        • Provide a sufficiently detailed explanation in this block with at least 50 words.
+        • Explicitly signal the comparison using contrastive language
+        • Define the second subject with its key characteristics and duration
+        • Identify the main participants or stakeholders for each subject
+
+   Stage 3 - Main Analysis
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      Timeline duties:
+        • Provide a sufficiently detailed explanation in this block with at least 60 words.
+        • Present at least one key characteristic of the first case being compared
+        • Describe the outcome or resolution of the first case
+        • Present at least one key characteristic of the second case being contrasted
+
+   Stage 4 - Main Analysis
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      LOCAL branch - when The analysis requires a more critical examination of government communication and media influence on public perception:
+        • Analyze how government messaging and media coverage shaped public opinion differently in each conflict
+        • Critically assess the role of propaganda or information control in maintaining or undermining public support
+        • Provide specific examples of media narratives or government communications that influenced domestic attitudes
+        • Maintain a critical analytical tone questioning official narratives
+      Otherwise at this same decision point:
+        • Provide a sufficiently detailed explanation in this block with at least 60 words.
+        • Compare at least two cases on a specific dimension of difference
+        • Highlight the contrasting outcomes or consequences for each case
+        • Provide concrete evidence for each case being compared
+
+   Stage 5 - Conclusion
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      LOCAL branch - when The conclusion needs to emphasize the broader strategic implications and lessons learned from these Cold War events:
+        • Explicitly state at least three strategic lessons or implications for Cold War policy
+        • Use a forward-looking perspective that discusses how these events shaped subsequent foreign policy
+        • Maintain an analytical tone focused on strategic assessment rather than simple factual summary
+        • Connect the specific case differences to broader Cold War dynamics and superpower relations
+      Otherwise at this same decision point:
+        • Provide a sufficiently detailed explanation in this block with at least 40 words.
+        • Restate the main comparative categories used in the analysis
+        • Use parallel structure when contrasting the two cases
+        • Summarize the key differences between the two cases
+
+4. CURRENT CONDITION ASSUMPTION
+   Unless the evaluator states otherwise, assume each trigger below is currently FALSE.
+   - Main Analysis: It is not the case that the analysis requires a more critical examination of government communication and media influence on public perception.
+   - Conclusion: It is not the case that the conclusion needs to emphasize the broader strategic implications and lessons learned from these cold war events.

@@ -1,0 +1,60 @@
+%% Mermaid flowchart for sample `sample_001`
+%% Paste this into any Mermaid renderer to view the graph.
+
+flowchart LR
+    SEED(((Write a short story around 200–300 words showing cooperat...)))
+    subgraph GLOBAL[Global Constraints]
+        G1((G1 Do not submit under 200 words))
+        G2((G2 Contractions are disallowed prefer full phrases))
+        G3((G3 Ensure at least 5 distinct paragraphs))
+        G4((G4 The character must not appear in the answer))
+        G1 --- G2 --- G3 --- G4
+    end
+    SEED --> G1
+    subgraph B1[B1 TBD]
+        B1_C1["B1C1 Provide a sufficiently detailed explanation with at..."]
+        B1_C2["B1C2 Maintain a neutral analytical tone without emotional..."]
+        B1_C1 --- B1_C2
+    end
+    subgraph B2[B2 TBD]
+        B2_C1["B2C1 Provide a sufficiently detailed explanation in this..."]
+        B2_C2["B2C2 Maintain a neutral analytical tone without emotional..."]
+        B2_C1 --- B2_C2
+    end
+    subgraph B3[B3 TBD]
+        B3_C1["B3C1 Provide a sufficiently detailed explanation in this..."]
+        B3_C2["B3C2 Maintain a neutral analytical tone without emotional..."]
+        B3_C1 --> B3_C2
+    end
+    subgraph B4[B4 TBD]
+        B4_C1["B4C1 Provide a sufficiently detailed explanation in this..."]
+        B4_C2["B4C2 Maintain a neutral analytical tone without emotional..."]
+        B4_C1 --- B4_C2
+    end
+    subgraph B4_ALT[B4_ALT TBD]
+        B4_ALT_C1["B4ALTC1 Adopt an explicitly critical tone highlighting co..."]
+        B4_ALT_C2["B4ALTC2 Propose at least one concrete nextstep action to..."]
+        B4_ALT_C1 --- B4_ALT_C2
+    end
+    subgraph B5[B5 TBD]
+        B5_C1["B5C1 Provide a sufficiently detailed explanation with at..."]
+        B5_C2["B5C2 Maintain a neutral analytical tone without emotional..."]
+        B5_C1 --- B5_C2
+    end
+    subgraph B5_ALT[B5_ALT TBD]
+        B5_ALT_C1["B5ALTC1 Adopt an explicitly critical tone highlighting co..."]
+        B5_ALT_C2["B5ALTC2 Propose at least one concrete nextstep action to..."]
+        B5_ALT_C1 --- B5_ALT_C2
+    end
+    G4 --> B1_C1
+    B1_C2 --> B2_C1
+    B2_C2 --> B3_C1
+    DEC_SEL_B4{"If the stance is criticalnegative"}
+    B3_C2 --> DEC_SEL_B4
+    DEC_SEL_B4 --> B4_C1
+    DEC_SEL_B4 --> B4_ALT_C1
+    B4_ALT_C2 --> DEC_SEL_B5
+    DEC_SEL_B5{"If the stance is criticalnegative"}
+    B4_C2 --> DEC_SEL_B5
+    DEC_SEL_B5 --> B5_C1
+    DEC_SEL_B5 --> B5_ALT_C1

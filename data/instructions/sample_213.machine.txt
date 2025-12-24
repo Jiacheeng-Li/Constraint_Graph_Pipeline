@@ -1,0 +1,66 @@
+SYSTEM INSTRUCTIONS:
+
+1. MISSION BRIEF & DELIVERABLE
+   - Primary directive: Compare and contrast the Cuban Missile Crisis and the Vietnam War.
+
+2. NON-NEGOTIABLE GLOBAL RULES
+   Respect every rule simultaneously across the full response:
+   1. Include an Opening/Intro, a Body/Main Analysis, and a Conclusion/Outlook in logical progression.
+   2. Do not use the symbol ':'.
+   3. Use these keywords verbatim somewhere in the text: "vietnam", "cuban", "missile".
+   4. Write the response mostly in English.
+   5. Provide at least 320 words in total.
+   6. Highlight key differences between subjects to aid understanding.
+   7. Conclude with a summary that reinforces the main points.
+   8. Provide background context to help frame the discussion.
+   9. Use a neutral and informative tone suitable for historical analysis.
+   10. Prefer clear and logical reasoning when comparing and contrasting topics.
+
+3. STRUCTURED RESPONSE BLUEPRINT
+   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.
+
+   Stage 1 - Opening
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      Timeline duties:
+        • Acknowledge both similarities and differences between the subjects
+
+   Stage 2 - Background
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      Timeline duties:
+        • Provide a sufficiently detailed explanation in this block with at least 50 words.
+
+   Stage 3 - Main Analysis
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      Timeline duties:
+        • Present at least one key characteristic of the second case being contrasted
+
+   Stage 4 - Main Analysis
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      LOCAL branch - when The analysis requires a more analytical and data-driven approach rather than narrative historical comparison:
+        • Include specific polling data or statistics to quantify public opinion levels
+        • Analyze at least three distinct demographic factors that influenced public opinion differently in each conflict
+        • Compare the media coverage patterns and their impact on public perception between the two events
+        • Maintain an objective, data-focused tone throughout the analysis
+      Otherwise at this same decision point:
+        • Provide a sufficiently detailed explanation in this block with at least 60 words.
+        • Provide concrete evidence of public sentiment for each case
+        • Contrast the outcomes or consequences of public opinion between cases
+        • Compare at least two cases on a specific dimension of public opinion
+
+   Stage 5 - Conclusion
+      Logic cue: Parallel coverage: hit every bullet for this stage.
+      LOCAL branch - when The conclusion needs to emphasize policy implications and lessons learned rather than just summarizing differences:
+        • Explicitly state at least two policy lessons or strategic implications drawn from comparing these events
+        • Use language that emphasizes strategic importance and contemporary relevance
+        • Maintain a forward-looking perspective that connects historical analysis to modern contexts
+        • Explicitly mark the block as a conclusion with implications
+      Otherwise at this same decision point:
+        • Provide a sufficiently detailed explanation in this block with at least 40 words.
+        • Restate the main comparative framework established earlier in the response
+        • Summarize key contrasting attributes for each case
+        • Explicitly mark the block as a conclusion
+
+4. CURRENT CONDITION ASSUMPTION
+   Unless the evaluator states otherwise, assume each trigger below is currently FALSE.
+   - Main Analysis: It is not the case that the analysis requires a more analytical and data-driven approach rather than narrative historical comparison.
+   - Conclusion: It is not the case that the conclusion needs to emphasize policy implications and lessons learned rather than just summarizing differences.

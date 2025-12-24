@@ -3,33 +3,7 @@
   "global_constraints": [
     {
       "cid": "G1",
-      "desc": "Keep the answer under 450 words.",
-      "scope": "global",
-      "verifier_spec": {
-        "check": "max_word_count",
-        "args": {
-          "max_words": 450
-        }
-      },
-      "trace_to": null,
-      "derived_from": "step3"
-    },
-    {
-      "cid": "G2",
-      "desc": "The answer must be written primarily in English.",
-      "scope": "global",
-      "verifier_spec": {
-        "check": "require_language",
-        "args": {
-          "lang": "en"
-        }
-      },
-      "trace_to": null,
-      "derived_from": "step3"
-    },
-    {
-      "cid": "G3",
-      "desc": "Organize content into Intro → Body → Conclusion, maintaining a clear flow.",
+      "desc": "Include an Opening/Intro, a Body/Main Analysis, and a Conclusion/Outlook in logical progression.",
       "scope": "global",
       "verifier_spec": {
         "check": "has_sections",
@@ -45,33 +19,67 @@
       "derived_from": "step3"
     },
     {
-      "cid": "G4",
-      "desc": "Emojis and stylistic unicode characters are not allowed.",
+      "cid": "G2",
+      "desc": "Do not use the symbol ':'.",
       "scope": "global",
       "verifier_spec": {
-        "check": "forbid_emojis",
-        "args": {}
+        "check": "forbid_symbol",
+        "args": {
+          "symbol": ":"
+        }
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G3",
+      "desc": "Use these keywords verbatim somewhere in the text: \"vietnam\", \"cuban\", \"missile\".",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "vietnam",
+            "cuban",
+            "missile"
+          ]
+        }
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G4",
+      "desc": "Write the response mostly in English.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "require_language",
+        "args": {
+          "lang": "en"
+        }
       },
       "trace_to": null,
       "derived_from": "step3"
     },
     {
       "cid": "G5",
-      "desc": "Prefer clear and logical reasoning when comparing and contrasting topics.",
+      "desc": "Provide at least 320 words in total.",
       "scope": "global",
       "verifier_spec": {
-        "check": "preference_clear_reasoning",
-        "args": {}
+        "check": "min_word_count",
+        "args": {
+          "min_words": 320
+        }
       },
       "trace_to": null,
       "derived_from": "step3"
     },
     {
       "cid": "G6",
-      "desc": "Provide sufficient background context to frame the discussion.",
+      "desc": "Highlight key differences between subjects to aid understanding.",
       "scope": "global",
       "verifier_spec": {
-        "check": "preference_context_setup",
+        "check": "preference_highlight_differences",
         "args": {}
       },
       "trace_to": null,
@@ -79,7 +87,29 @@
     },
     {
       "cid": "G7",
-      "desc": "Maintain a neutral and objective tone when discussing historical events.",
+      "desc": "Conclude with a summary that reinforces the main points.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "preference_concluding_summary",
+        "args": {}
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G8",
+      "desc": "Provide background context to help frame the discussion.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "preference_background_context",
+        "args": {}
+      },
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G9",
+      "desc": "Use a neutral and informative tone suitable for historical analysis.",
       "scope": "global",
       "verifier_spec": {
         "check": "tone_neutral_llm_judge",
@@ -89,22 +119,11 @@
       "derived_from": "step3"
     },
     {
-      "cid": "G8",
-      "desc": "Highlight key differences in a structured manner to aid understanding.",
+      "cid": "G10",
+      "desc": "Prefer clear and logical reasoning when comparing and contrasting topics.",
       "scope": "global",
       "verifier_spec": {
-        "check": "preference_structured_comparison",
-        "args": {}
-      },
-      "trace_to": null,
-      "derived_from": "step3"
-    },
-    {
-      "cid": "G9",
-      "desc": "Conclude by summarizing the main points without introducing new information.",
-      "scope": "global",
-      "verifier_spec": {
-        "check": "preference_conciseness",
+        "check": "preference_clear_reasoning",
         "args": {}
       },
       "trace_to": null,
@@ -122,7 +141,7 @@
     },
     {
       "block_id": "B2",
-      "intent": "Context setup",
+      "intent": "Background",
       "text_span": "The Cuban Missile Crisis was a 13-day political and military standoff between the United States and the Soviet Union over the installation of Soviet nuclear missiles in Cuba, just 90 miles from US shores. In contrast, the Vietnam War was a prolonged conflict that lasted for almost two decades, involving the US, South Vietnam, North Vietnam, and other Communist allies. The war was a result of the US attempting to contain the spread of communism in Southeast Asia.",
       "order_index": 1,
       "is_alternate": false,
@@ -176,45 +195,10 @@
       "constraints": [
         {
           "cid": "B1_C1",
-          "desc": "Provide a sufficiently detailed explanation in this block with at least 30 words.",
+          "desc": "Acknowledge both similarities and differences between the subjects",
           "scope": "local",
           "verifier_spec": {
-            "check": "min_word_count",
-            "args": {
-              "min_words": 30
-            }
-          },
-          "trace_to": "B1",
-          "derived_from": "step4"
-        },
-        {
-          "cid": "B1_C2",
-          "desc": "State that the subjects share common characteristics",
-          "scope": "local",
-          "verifier_spec": {
-            "check": "custom:notes_similarities",
-            "args": {}
-          },
-          "trace_to": "B1",
-          "derived_from": "step4"
-        },
-        {
-          "cid": "B1_C3",
-          "desc": "Establish shared historical context for both subjects",
-          "scope": "local",
-          "verifier_spec": {
-            "check": "custom:identifies_shared_context",
-            "args": {}
-          },
-          "trace_to": "B1",
-          "derived_from": "step4"
-        },
-        {
-          "cid": "B1_C4",
-          "desc": "Signal that differences will be analyzed",
-          "scope": "local",
-          "verifier_spec": {
-            "check": "custom:signals_comparison",
+            "check": "custom:compares_and_contrasts",
             "args": {}
           },
           "trace_to": "B1",
@@ -228,46 +212,13 @@
       "constraints": [
         {
           "cid": "B2_C1",
-          "desc": "Provide a sufficiently detailed explanation in this block with at least 47 words.",
+          "desc": "Provide a sufficiently detailed explanation in this block with at least 50 words.",
           "scope": "local",
           "verifier_spec": {
             "check": "min_word_count",
             "args": {
-              "min_words": 47
+              "min_words": 50
             }
-          },
-          "trace_to": "B2",
-          "derived_from": "step4"
-        },
-        {
-          "cid": "B2_C2",
-          "desc": "Define the second subject with its key characteristics and timeframe",
-          "scope": "local",
-          "verifier_spec": {
-            "check": "custom:has_definition",
-            "args": {}
-          },
-          "trace_to": "B2",
-          "derived_from": "step4"
-        },
-        {
-          "cid": "B2_C3",
-          "desc": "Provide geopolitical context for each subject",
-          "scope": "local",
-          "verifier_spec": {
-            "check": "custom:has_geopolitical_context",
-            "args": {}
-          },
-          "trace_to": "B2",
-          "derived_from": "step4"
-        },
-        {
-          "cid": "B2_C4",
-          "desc": "Define the first subject with its key characteristics and timeframe",
-          "scope": "local",
-          "verifier_spec": {
-            "check": "custom:has_definition",
-            "args": {}
           },
           "trace_to": "B2",
           "derived_from": "step4"
@@ -280,41 +231,6 @@
       "constraints": [
         {
           "cid": "B3_C1",
-          "desc": "Provide a sufficiently detailed explanation in this block with at least 54 words.",
-          "scope": "local",
-          "verifier_spec": {
-            "check": "min_word_count",
-            "args": {
-              "min_words": 54
-            }
-          },
-          "trace_to": "B3",
-          "derived_from": "step4"
-        },
-        {
-          "cid": "B3_C2",
-          "desc": "Present at least one key characteristic of the first case being compared",
-          "scope": "local",
-          "verifier_spec": {
-            "check": "custom:has_characteristic",
-            "args": {}
-          },
-          "trace_to": "B3",
-          "derived_from": "step4"
-        },
-        {
-          "cid": "B3_C3",
-          "desc": "Describe the outcome or resolution of the first case",
-          "scope": "local",
-          "verifier_spec": {
-            "check": "custom:has_outcome",
-            "args": {}
-          },
-          "trace_to": "B3",
-          "derived_from": "step4"
-        },
-        {
-          "cid": "B3_C4",
           "desc": "Present at least one key characteristic of the second case being contrasted",
           "scope": "local",
           "verifier_spec": {
@@ -332,12 +248,12 @@
       "constraints": [
         {
           "cid": "B4_C1",
-          "desc": "Provide a sufficiently detailed explanation in this block with at least 55 words.",
+          "desc": "Provide a sufficiently detailed explanation in this block with at least 60 words.",
           "scope": "local",
           "verifier_spec": {
             "check": "min_word_count",
             "args": {
-              "min_words": 55
+              "min_words": 60
             }
           },
           "trace_to": "B4",
@@ -345,18 +261,7 @@
         },
         {
           "cid": "B4_C2",
-          "desc": "Highlight contrasting outcomes or public perceptions",
-          "scope": "local",
-          "verifier_spec": {
-            "check": "custom:highlight_contrast",
-            "args": {}
-          },
-          "trace_to": "B4",
-          "derived_from": "step4"
-        },
-        {
-          "cid": "B4_C3",
-          "desc": "Provide concrete evidence for each case being compared",
+          "desc": "Provide concrete evidence of public sentiment for each case",
           "scope": "local",
           "verifier_spec": {
             "check": "custom:provide_evidence",
@@ -366,8 +271,19 @@
           "derived_from": "step4"
         },
         {
+          "cid": "B4_C3",
+          "desc": "Contrast the outcomes or consequences of public opinion between cases",
+          "scope": "local",
+          "verifier_spec": {
+            "check": "custom:contrast_outcomes",
+            "args": {}
+          },
+          "trace_to": "B4",
+          "derived_from": "step4"
+        },
+        {
           "cid": "B4_C4",
-          "desc": "Compare at least two cases on a specific dimension of difference",
+          "desc": "Compare at least two cases on a specific dimension of public opinion",
           "scope": "local",
           "verifier_spec": {
             "check": "custom:compare_dimension",
@@ -384,15 +300,19 @@
       "constraints": [
         {
           "cid": "B4_ALT_C1",
-          "desc": "Analyze how each event shaped subsequent US foreign policy decisions for at least the next decade",
+          "desc": "Include specific polling data or statistics to quantify public opinion levels",
           "scope": "local",
           "verifier_spec": {
-            "check": "must_cover_topics",
+            "check": "must_include_keywords",
             "args": {
-              "topics": [
-                "foreign policy impact",
-                "subsequent decisions",
-                "long-term consequences"
+              "keywords": [
+                "poll",
+                "percentage",
+                "statistic",
+                "survey",
+                "data",
+                "approval",
+                "disapproval"
               ]
             }
           },
@@ -401,12 +321,12 @@
         },
         {
           "cid": "B4_ALT_C2",
-          "desc": "Include specific examples of policy changes or political shifts resulting from each event",
+          "desc": "Analyze at least three distinct demographic factors that influenced public opinion differently in each conflict",
           "scope": "local",
           "verifier_spec": {
             "check": "must_list_n_subpoints",
             "args": {
-              "min_subpoints": 2
+              "min_items": 3
             }
           },
           "trace_to": "B4_ALT",
@@ -414,24 +334,29 @@
         },
         {
           "cid": "B4_ALT_C3",
-          "desc": "Maintain an analytical tone focused on political legacy rather than immediate public reaction",
+          "desc": "Compare the media coverage patterns and their impact on public perception between the two events",
           "scope": "local",
           "verifier_spec": {
-            "check": "tone_neutral_llm_judge",
-            "args": {}
+            "check": "must_cover_topics",
+            "args": {
+              "topics": [
+                "media coverage",
+                "news reporting",
+                "television",
+                "newspapers"
+              ]
+            }
           },
           "trace_to": "B4_ALT",
           "derived_from": "step5"
         },
         {
           "cid": "B4_ALT_C4",
-          "desc": "Provide at least 65 words of detailed political analysis",
+          "desc": "Maintain an objective, data-focused tone throughout the analysis",
           "scope": "local",
           "verifier_spec": {
-            "check": "min_word_count",
-            "args": {
-              "min_words": 65
-            }
+            "check": "tone_neutral_llm_judge",
+            "args": {}
           },
           "trace_to": "B4_ALT",
           "derived_from": "step5"
@@ -444,12 +369,12 @@
       "constraints": [
         {
           "cid": "B5_C1",
-          "desc": "Provide a sufficiently detailed explanation in this block with at least 36 words.",
+          "desc": "Provide a sufficiently detailed explanation in this block with at least 40 words.",
           "scope": "local",
           "verifier_spec": {
             "check": "min_word_count",
             "args": {
-              "min_words": 36
+              "min_words": 40
             }
           },
           "trace_to": "B5",
@@ -457,10 +382,10 @@
         },
         {
           "cid": "B5_C2",
-          "desc": "Restate the main comparative categories used in the analysis",
+          "desc": "Restate the main comparative framework established earlier in the response",
           "scope": "local",
           "verifier_spec": {
-            "check": "custom:has_restated_categories",
+            "check": "custom:has_comparative_framework",
             "args": {}
           },
           "trace_to": "B5",
@@ -468,10 +393,10 @@
         },
         {
           "cid": "B5_C3",
-          "desc": "Use comparative language to highlight differences",
+          "desc": "Summarize key contrasting attributes for each case",
           "scope": "local",
           "verifier_spec": {
-            "check": "custom:uses_comparative_language",
+            "check": "custom:has_contrasting_summary",
             "args": {}
           },
           "trace_to": "B5",
@@ -479,10 +404,10 @@
         },
         {
           "cid": "B5_C4",
-          "desc": "Summarize the contrasting outcomes for each case",
+          "desc": "Explicitly mark the block as a conclusion",
           "scope": "local",
           "verifier_spec": {
-            "check": "custom:has_contrasting_summary",
+            "check": "custom:has_conclusion_marker",
             "args": {}
           },
           "trace_to": "B5",
@@ -496,19 +421,12 @@
       "constraints": [
         {
           "cid": "B5_ALT_C1",
-          "desc": "Explicitly connect both events to their impact on Cold War strategy and doctrine",
+          "desc": "Explicitly state at least two policy lessons or strategic implications drawn from comparing these events",
           "scope": "local",
           "verifier_spec": {
-            "check": "must_include_keywords",
+            "check": "must_list_n_subpoints",
             "args": {
-              "keywords": [
-                "strategy",
-                "doctrine",
-                "policy",
-                "Cold War",
-                "impact",
-                "consequence"
-              ]
+              "min_items": 2
             }
           },
           "trace_to": "B5_ALT",
@@ -516,17 +434,19 @@
         },
         {
           "cid": "B5_ALT_C2",
-          "desc": "Analyze how these events influenced subsequent US foreign policy approaches",
+          "desc": "Use language that emphasizes strategic importance and contemporary relevance",
           "scope": "local",
           "verifier_spec": {
-            "check": "must_cover_topics",
+            "check": "must_include_keywords",
             "args": {
-              "topics": [
-                "foreign policy",
-                "subsequent",
-                "influence",
-                "approach"
-              ]
+              "keywords": [
+                "lessons",
+                "implications",
+                "strategic",
+                "policy",
+                "contemporary"
+              ],
+              "min_count": 3
             }
           },
           "trace_to": "B5_ALT",
@@ -534,10 +454,10 @@
         },
         {
           "cid": "B5_ALT_C3",
-          "desc": "Maintain an analytical tone focused on strategic implications rather than just factual comparison",
+          "desc": "Maintain a forward-looking perspective that connects historical analysis to modern contexts",
           "scope": "local",
           "verifier_spec": {
-            "check": "tone_neutral_llm_judge",
+            "check": "tone_forward_looking_llm_judge",
             "args": {}
           },
           "trace_to": "B5_ALT",
@@ -545,13 +465,11 @@
         },
         {
           "cid": "B5_ALT_C4",
-          "desc": "Provide at least two specific examples of long-term consequences from each event",
+          "desc": "Explicitly mark the block as a conclusion with implications",
           "scope": "local",
           "verifier_spec": {
-            "check": "must_list_n_subpoints",
-            "args": {
-              "min_subpoints": 4
-            }
+            "check": "custom:has_conclusion_marker",
+            "args": {}
           },
           "trace_to": "B5_ALT",
           "derived_from": "step5"
@@ -562,7 +480,7 @@
   "selections": [
     {
       "sid": "SEL_B4",
-      "condition": "If the analysis requires emphasizing the long-term political consequences rather than just contrasting public perceptions",
+      "condition": "If the analysis requires a more analytical and data-driven approach rather than narrative historical comparison",
       "trace_to": "B4",
       "branch_real": {
         "block_id": "B4",
@@ -592,7 +510,7 @@
     },
     {
       "sid": "SEL_B5",
-      "condition": "If the analysis requires emphasizing the broader strategic implications and long-term consequences of these events",
+      "condition": "If the conclusion needs to emphasize policy implications and lessons learned rather than just summarizing differences",
       "trace_to": "B5",
       "branch_real": {
         "block_id": "B5",

@@ -1,15 +1,16 @@
 {
-  "sample_id": "example_003",
-  "timestamp_utc": "2025-11-18T09:41:47.332206+00:00",
+  "sample_id": "sample_003",
+  "timestamp_utc": "2025-11-19T13:26:28.366793+00:00",
   "eval_protocol": {
     "seed_task": "Compare and contrast the Cuban Missile Crisis and the Vietnam War.",
     "global_scoring": [
       {
         "cid": "G1",
-        "desc": "Keep the answer under 450 words.",
+        "desc": "Constrain the total length to 320–450 words.",
         "verifier": {
-          "check": "max_word_count",
+          "check": "word_count_between",
           "args": {
+            "min_words": 320,
             "max_words": 450
           }
         },
@@ -17,18 +18,16 @@
       },
       {
         "cid": "G2",
-        "desc": "The answer must be written primarily in English.",
+        "desc": "Use formal forms rather than contractions throughout.",
         "verifier": {
-          "check": "require_language",
-          "args": {
-            "lang": "en"
-          }
+          "check": "avoid_contractions",
+          "args": {}
         },
         "logic": "MANDATORY_GLOBAL"
       },
       {
         "cid": "G3",
-        "desc": "Organize content into Intro → Body → Conclusion, maintaining a clear flow.",
+        "desc": "Include an Opening/Intro, a Body/Main Analysis, and a Conclusion/Outlook in logical progression.",
         "verifier": {
           "check": "has_sections",
           "args": {
@@ -43,16 +42,16 @@
       },
       {
         "cid": "G4",
-        "desc": "Emojis and stylistic unicode characters are not allowed.",
+        "desc": "Use third-person analysis and refrain from 'I', 'we', 'my', or 'our'.",
         "verifier": {
-          "check": "forbid_emojis",
+          "check": "forbid_first_person",
           "args": {}
         },
         "logic": "MANDATORY_GLOBAL"
       },
       {
         "cid": "G5",
-        "desc": "Prefer clear and logical reasoning when comparing and contrasting topics.",
+        "desc": "Prefer clear and logical reasoning when comparing concepts.",
         "verifier": {
           "check": "preference_clear_reasoning",
           "args": {}
@@ -61,16 +60,16 @@
       },
       {
         "cid": "G6",
-        "desc": "Provide sufficient background context to frame the discussion.",
+        "desc": "Provide explanations of reasons and background for each point.",
         "verifier": {
-          "check": "preference_context_setup",
+          "check": "preference_explanation_background",
           "args": {}
         },
         "logic": "MANDATORY_GLOBAL"
       },
       {
         "cid": "G7",
-        "desc": "Maintain a neutral and objective tone when discussing historical events.",
+        "desc": "Maintain a formal and informative tone throughout the response.",
         "verifier": {
           "check": "tone_neutral_llm_judge",
           "args": {}
@@ -79,18 +78,18 @@
       },
       {
         "cid": "G8",
-        "desc": "Highlight key differences in a structured manner to aid understanding.",
+        "desc": "Use concrete historical examples to illustrate key differences.",
         "verifier": {
-          "check": "preference_structured_comparison",
+          "check": "preference_concrete_examples",
           "args": {}
         },
         "logic": "MANDATORY_GLOBAL"
       },
       {
         "cid": "G9",
-        "desc": "Conclude by summarizing the main points without introducing new information.",
+        "desc": "Avoid vague or ambiguous phrasing to improve comprehensibility.",
         "verifier": {
-          "check": "preference_conciseness",
+          "check": "preference_avoid_vagueness",
           "args": {}
         },
         "logic": "MANDATORY_GLOBAL"
@@ -116,17 +115,17 @@
           },
           {
             "cid": "B1_C2",
-            "desc": "State that the subjects share common characteristics",
+            "desc": "Establish shared historical context for both subjects",
             "verifier": {
-              "check": "custom:notes_similarities",
+              "check": "custom:has_shared_context",
               "args": {}
             }
           },
           {
             "cid": "B1_C3",
-            "desc": "Establish shared historical context for both subjects",
+            "desc": "Introduce both subjects by name and timeframe",
             "verifier": {
-              "check": "custom:identifies_shared_context",
+              "check": "custom:mentions_named_entities",
               "args": {}
             }
           },
@@ -149,11 +148,11 @@
         "requirements": [
           {
             "cid": "B2_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 47 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 50 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 47
+                "min_words": 50
               }
             }
           },
@@ -167,9 +166,9 @@
           },
           {
             "cid": "B2_C3",
-            "desc": "Provide geopolitical context for each subject",
+            "desc": "Explicitly contrast the two subjects using a comparative signal",
             "verifier": {
-              "check": "custom:has_geopolitical_context",
+              "check": "custom:has_contrast",
               "args": {}
             }
           },
@@ -192,17 +191,17 @@
         "requirements": [
           {
             "cid": "B3_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 54 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 60 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 54
+                "min_words": 60
               }
             }
           },
           {
             "cid": "B3_C2",
-            "desc": "Present at least one key characteristic of the first case being compared",
+            "desc": "Present at least one key characteristic of the second case being contrasted",
             "verifier": {
               "check": "custom:has_characteristic",
               "args": {}
@@ -218,9 +217,9 @@
           },
           {
             "cid": "B3_C4",
-            "desc": "Present at least one key characteristic of the second case being contrasted",
+            "desc": "Use explicit contrast language to highlight differences between cases",
             "verifier": {
-              "check": "custom:has_characteristic",
+              "check": "custom:has_contrast",
               "args": {}
             }
           }
@@ -235,35 +234,35 @@
         "requirements": [
           {
             "cid": "B4_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 55 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 60 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 55
+                "min_words": 60
               }
             }
           },
           {
             "cid": "B4_C2",
-            "desc": "Highlight contrasting outcomes or public perceptions",
+            "desc": "Compare at least two cases on a specific dimension of difference",
             "verifier": {
-              "check": "custom:highlight_contrast",
+              "check": "custom:compare_dimension",
               "args": {}
             }
           },
           {
             "cid": "B4_C3",
-            "desc": "Provide concrete evidence for each case being compared",
+            "desc": "Highlight contrasting outcomes or consequences for each case",
             "verifier": {
-              "check": "custom:provide_evidence",
+              "check": "custom:highlight_contrasting_outcomes",
               "args": {}
             }
           },
           {
             "cid": "B4_C4",
-            "desc": "Compare at least two cases on a specific dimension of difference",
+            "desc": "Provide concrete evidence for each case being compared",
             "verifier": {
-              "check": "custom:compare_dimension",
+              "check": "custom:provide_evidence_per_case",
               "args": {}
             }
           }
@@ -278,35 +277,35 @@
         "requirements": [
           {
             "cid": "B5_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 36 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 40 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 36
+                "min_words": 40
               }
             }
           },
           {
             "cid": "B5_C2",
-            "desc": "Restate the main comparative categories used in the analysis",
+            "desc": "Summarize the key similarities and differences between the two cases",
             "verifier": {
-              "check": "custom:has_restated_categories",
+              "check": "custom:has_comparison",
               "args": {}
             }
           },
           {
             "cid": "B5_C3",
-            "desc": "Use comparative language to highlight differences",
+            "desc": "Restate the main analytical categories used in the comparison",
             "verifier": {
-              "check": "custom:uses_comparative_language",
+              "check": "custom:has_categories",
               "args": {}
             }
           },
           {
             "cid": "B5_C4",
-            "desc": "Summarize the contrasting outcomes for each case",
+            "desc": "Provide a concluding judgment about each case",
             "verifier": {
-              "check": "custom:has_contrasting_summary",
+              "check": "custom:has_judgment",
               "args": {}
             }
           }
@@ -317,7 +316,7 @@
       {
         "sid": "SEL_B4",
         "where": "B4 Main Analysis",
-        "condition": "If the analysis requires emphasizing the long-term political consequences rather than just contrasting public perceptions",
+        "condition": "If the analysis requires emphasizing the long-term political and institutional consequences rather than immediate public sentiment",
         "selection_type": "local",
         "merge_point": "B5",
         "truncated": false,
@@ -329,35 +328,35 @@
         "branch_real": [
           {
             "cid": "B4_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 55 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 60 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 55
+                "min_words": 60
               }
             }
           },
           {
             "cid": "B4_C2",
-            "desc": "Highlight contrasting outcomes or public perceptions",
+            "desc": "Compare at least two cases on a specific dimension of difference",
             "verifier": {
-              "check": "custom:highlight_contrast",
+              "check": "custom:compare_dimension",
               "args": {}
             }
           },
           {
             "cid": "B4_C3",
-            "desc": "Provide concrete evidence for each case being compared",
+            "desc": "Highlight contrasting outcomes or consequences for each case",
             "verifier": {
-              "check": "custom:provide_evidence",
+              "check": "custom:highlight_contrasting_outcomes",
               "args": {}
             }
           },
           {
             "cid": "B4_C4",
-            "desc": "Compare at least two cases on a specific dimension of difference",
+            "desc": "Provide concrete evidence for each case being compared",
             "verifier": {
-              "check": "custom:compare_dimension",
+              "check": "custom:provide_evidence_per_case",
               "args": {}
             }
           }
@@ -365,21 +364,21 @@
         "branch_alt": [
           {
             "cid": "B4_ALT_C1",
-            "desc": "Analyze how each event shaped subsequent US foreign policy decisions for at least the next decade",
+            "desc": "Analyze how each conflict shaped subsequent US foreign policy doctrine and institutional reforms",
             "verifier": {
               "check": "must_cover_topics",
               "args": {
                 "topics": [
-                  "foreign policy impact",
-                  "subsequent decisions",
-                  "long-term consequences"
+                  "foreign policy doctrine",
+                  "institutional reforms",
+                  "long-term impact"
                 ]
               }
             }
           },
           {
             "cid": "B4_ALT_C2",
-            "desc": "Include specific examples of policy changes or political shifts resulting from each event",
+            "desc": "Compare the legislative and executive branch responses triggered by each crisis",
             "verifier": {
               "check": "must_list_n_subpoints",
               "args": {
@@ -389,20 +388,20 @@
           },
           {
             "cid": "B4_ALT_C3",
-            "desc": "Maintain an analytical tone focused on political legacy rather than immediate public reaction",
+            "desc": "Provide specific examples of policy changes or institutional mechanisms created in response to each event",
             "verifier": {
-              "check": "tone_neutral_llm_judge",
-              "args": {}
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 2
+              }
             }
           },
           {
             "cid": "B4_ALT_C4",
-            "desc": "Provide at least 65 words of detailed political analysis",
+            "desc": "Maintain an analytical tone focused on systemic consequences rather than public opinion",
             "verifier": {
-              "check": "min_word_count",
-              "args": {
-                "min_words": 65
-              }
+              "check": "tone_neutral_llm_judge",
+              "args": {}
             }
           }
         ],
@@ -415,7 +414,7 @@
       {
         "sid": "SEL_B5",
         "where": "B5 Conclusion",
-        "condition": "If the analysis requires emphasizing the broader strategic implications and long-term consequences of these events",
+        "condition": "If the conclusion needs to emphasize the broader strategic implications and lessons for modern foreign policy",
         "selection_type": "local",
         "merge_point": "B6",
         "truncated": false,
@@ -427,35 +426,35 @@
         "branch_real": [
           {
             "cid": "B5_C1",
-            "desc": "Provide a sufficiently detailed explanation in this block with at least 36 words.",
+            "desc": "Provide a sufficiently detailed explanation in this block with at least 40 words.",
             "verifier": {
               "check": "min_word_count",
               "args": {
-                "min_words": 36
+                "min_words": 40
               }
             }
           },
           {
             "cid": "B5_C2",
-            "desc": "Restate the main comparative categories used in the analysis",
+            "desc": "Summarize the key similarities and differences between the two cases",
             "verifier": {
-              "check": "custom:has_restated_categories",
+              "check": "custom:has_comparison",
               "args": {}
             }
           },
           {
             "cid": "B5_C3",
-            "desc": "Use comparative language to highlight differences",
+            "desc": "Restate the main analytical categories used in the comparison",
             "verifier": {
-              "check": "custom:uses_comparative_language",
+              "check": "custom:has_categories",
               "args": {}
             }
           },
           {
             "cid": "B5_C4",
-            "desc": "Summarize the contrasting outcomes for each case",
+            "desc": "Provide a concluding judgment about each case",
             "verifier": {
-              "check": "custom:has_contrasting_summary",
+              "check": "custom:has_judgment",
               "args": {}
             }
           }
@@ -463,52 +462,51 @@
         "branch_alt": [
           {
             "cid": "B5_ALT_C1",
-            "desc": "Explicitly connect both events to their impact on Cold War strategy and doctrine",
+            "desc": "Explicitly draw strategic lessons from both cases for contemporary international relations",
             "verifier": {
               "check": "must_include_keywords",
               "args": {
                 "keywords": [
-                  "strategy",
-                  "doctrine",
+                  "lesson",
+                  "strategic",
+                  "modern",
                   "policy",
-                  "Cold War",
-                  "impact",
-                  "consequence"
-                ]
+                  "implication"
+                ],
+                "min_count": 3
               }
             }
           },
           {
             "cid": "B5_ALT_C2",
-            "desc": "Analyze how these events influenced subsequent US foreign policy approaches",
+            "desc": "Connect the historical analysis to current geopolitical challenges",
             "verifier": {
               "check": "must_cover_topics",
               "args": {
                 "topics": [
-                  "foreign policy",
-                  "subsequent",
-                  "influence",
-                  "approach"
+                  "contemporary relevance",
+                  "current applications",
+                  "modern parallels"
                 ]
               }
             }
           },
           {
             "cid": "B5_ALT_C3",
-            "desc": "Maintain an analytical tone focused on strategic implications rather than just factual comparison",
+            "desc": "Provide at least two specific policy recommendations based on the comparison",
             "verifier": {
-              "check": "tone_neutral_llm_judge",
-              "args": {}
+              "check": "min_numbered_items",
+              "args": {
+                "min_items": 2
+              }
             }
           },
           {
             "cid": "B5_ALT_C4",
-            "desc": "Provide at least two specific examples of long-term consequences from each event",
+            "desc": "Maintain an analytical, forward-looking tone throughout the conclusion",
             "verifier": {
-              "check": "must_list_n_subpoints",
-              "args": {
-                "min_subpoints": 4
-              }
+              "check": "tone_neutral_llm_judge",
+              "args": {}
             }
           }
         ],

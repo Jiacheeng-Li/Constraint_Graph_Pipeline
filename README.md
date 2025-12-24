@@ -71,6 +71,7 @@ Pipeline_10.25/
 |------|-------------|-------------|
 | `data/graphs/<id>.graph.json` | Step 6 | Serialized constraint graph with all nodes and selections. |
 | `data/graphs/<id>.graph.mmd` | Step 6 | Mermaid diagram for quick visualization. |
+| `data/instructions/<id>.machine.txt` | Step 7 | Raw machine prompt (pre-Stage 8 polish) for audit/diff. |
 | `data/instructions/<id>.prompt.txt` | Step 8 (or Step 7 fallback) | Final machine prompt fed to target models. |
 | `data/reports/<id>.eval.json` | Step 7 | Eval protocol + metadata bundle required for scoring. |
 | `data/reports/<id>.bundle.json` | Step 7 | Full instruction bundle (prompt, eval protocol, serialized graph). |

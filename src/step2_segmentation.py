@@ -28,6 +28,7 @@ Dependencies
 
 import json
 import re
+import time
 from typing import Dict, Any
 from .utils.deepseek_client import call_chat_completions, DeepSeekError
 
@@ -146,24 +147,23 @@ def segment_response(response_text: str) -> Dict[str, Any]:
     3. 如果解析失败（extract_blocks 返回空 blocks），则本地用段落切分兜底。
     """
 
-    raw_llm = _call_deepseek_segmentation(response_text)
-    parsed = extract_blocks(raw_llm)
-
-    # 如果 LLM 没给出可解析结果，则 fallback: 简单按段落切
-    if not parsed.get("blocks"):
-        paras = _split_paragraphs_with_bullet_groups(response_text)
-        blocks = []
-        for i, p in enumerate(paras, start=1):
-            blocks.append({
-                "block_id": f"B{i}",
-                "intent": "TBD",
-                "text_span": p,
-                "order_index": i - 1,
-            })
-        parsed = {
-            "blocks": blocks,
-            "order": [b["block_id"] for b in blocks],
-        }
+    # 重试若分块为空：尽量再试几次，减少偶发空输出带来的硬失败
+    max_attempts = 3
+    last_error: str | None = None
+    for attempt in range(1, max_attempts + 1):
+        raw_llm = _call_deepseek_segmentation(response_text)
+        parsed = extract_blocks(raw_llm)
+        if parsed.get("blocks"):
+            break
+        last_error = f"[Step2] attempt {attempt}/{max_attempts} produced no blocks."
+        print(last_error)
+        if attempt < max_attempts:
+            # 简单线性退避
+            time.sleep(1.0 * attempt)
+    else:
+        # 尝试多次仍然没有块，抛出错误供上层记录
+        msg = last_error or "[Step2] segmentation produced no blocks; raising to mark failure."
+        raise DeepSeekError(msg)
 
     # 最后再确保 block_id / order_index 完整
     for idx, blk in enumerate(parsed.get("blocks", [])):
