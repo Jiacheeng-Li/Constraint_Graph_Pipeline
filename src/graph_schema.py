@@ -30,6 +30,7 @@ class ConstraintNode:
     - verifier_spec: 一个dict，描述如何自动验证这条约束。
         例如 {"check": "min_word_count", "args": {"min_words":150}}
         这些check会在verifier_registry中注册。
+    - priority_level: 约束优先级（2=必须满足；1=尽可能满足，且不得违反2）。
     - trace_to: 该约束来源于哪个block（例如"B2"），用于追踪来源。
     - derived_from: 该约束是由pipeline的哪个步骤生成的（"step3", "step4", "step5"等）。
     """
@@ -37,6 +38,7 @@ class ConstraintNode:
     desc: str
     scope: str
     verifier_spec: Dict[str, Any]
+    priority_level: int = 2
     trace_to: Optional[str] = None
     derived_from: Optional[str] = None
 
@@ -170,6 +172,7 @@ class ConstraintGraph:
                     "desc": c.desc,
                     "scope": c.scope,
                     "verifier_spec": c.verifier_spec,
+                    "priority_level": c.priority_level,
                     "trace_to": c.trace_to,
                     "derived_from": c.derived_from,
                 } for c in self.global_constraints
@@ -184,6 +187,7 @@ class ConstraintGraph:
                             "desc": c.desc,
                             "scope": c.scope,
                             "verifier_spec": c.verifier_spec,
+                            "priority_level": c.priority_level,
                             "trace_to": c.trace_to,
                             "derived_from": c.derived_from,
                         } for c in bcs.constraints

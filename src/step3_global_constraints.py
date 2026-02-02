@@ -683,8 +683,9 @@ You must return ONLY the JSON list, no explanations, no markdown, no code fences
             ],
             system_prompt=system_prompt,
             temperature=0.0,
-            max_tokens=800,
-            timeout=20,
+            max_tokens=1024,
+            timeout=180,
+            retries=2,
         ).strip()
         return content
     except DeepSeekError:

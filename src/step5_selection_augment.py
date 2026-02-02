@@ -297,9 +297,11 @@ def _call_deepseek_selection_aug(block_id: str,
         content = call_chat_completions(
             messages=[{"role": "user", "content": user_prompt}],
             system_prompt=system_prompt,
-            temperature=0.3,
-            max_tokens=900,
-            timeout=20,
+            temperature=0.4,
+            max_tokens=2048,
+            timeout=150,
+            retries=4,
+            retry_backoff_sec=1.2,
         ).strip()
         start = content.find("{")
         end = content.rfind("}") + 1

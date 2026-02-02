@@ -81,6 +81,7 @@ def _render_block_plan(block_specs: List[BlockSpec],
                 "cid": cnode.cid,
                 "desc": cnode.desc,
                 "verifier": cnode.verifier_spec,
+                "priority_level": cnode.priority_level,
             })
         rendered.append({
             "block_id": spec.block_id,
@@ -104,6 +105,7 @@ def _render_global_constraints(global_nodes: List[ConstraintNode]) -> List[Dict[
             "cid": node.cid,
             "desc": node.desc,
             "verifier": node.verifier_spec,
+            "priority_level": node.priority_level,
         })
     return out
 
@@ -147,9 +149,10 @@ def _render_selections(selections: List[SelectionNode],
                     "cid": cid,
                     "desc": node.desc,
                     "verifier": node.verifier_spec,
+                    "priority_level": node.priority_level,
                 })
             else:
-                real_list.append({"cid": cid, "desc": None, "verifier": None})
+                real_list.append({"cid": cid, "desc": None, "verifier": None, "priority_level": 2})
 
         alt_list = []
         for cid in sel.branch_alt.constraints:
@@ -159,9 +162,10 @@ def _render_selections(selections: List[SelectionNode],
                     "cid": cid,
                     "desc": node.desc,
                     "verifier": node.verifier_spec,
+                    "priority_level": node.priority_level,
                 })
             else:
-                alt_list.append({"cid": cid, "desc": None, "verifier": None})
+                alt_list.append({"cid": cid, "desc": None, "verifier": None, "priority_level": 2})
 
         # Group alternate-branch constraints by their true owning block via trace_to
         alt_by_block: Dict[str, List[Dict[str, Any]]] = {}
@@ -176,6 +180,7 @@ def _render_selections(selections: List[SelectionNode],
                         "cid": cid,
                         "desc": node.desc,
                         "verifier": node.verifier_spec,
+                        "priority_level": node.priority_level,
                     })
             if not grouped:
                 fallback_items = [
@@ -199,6 +204,7 @@ def _render_selections(selections: List[SelectionNode],
                 "cid": cid,
                 "desc": node.desc,
                 "verifier": node.verifier_spec,
+                "priority_level": node.priority_level,
             })
             if block_id not in real_path_blocks:
                 real_path_blocks.append(block_id)
@@ -293,6 +299,8 @@ def _mk_machine_prompt(seed_task: str,
         lines.append(f"   - Primary directive: {mission}")
     else:
         lines.append("   - Follow the staged plan and constraints below to construct the final answer.")
+    if graph.meta.get("turn_notice"):
+        lines.append("   - Only constraints in the current graph are active.")
     lines.append("")
 
     lines.append("2. NON-NEGOTIABLE GLOBAL RULES")
@@ -315,6 +323,57 @@ def _mk_machine_prompt(seed_task: str,
     lines.append("3. STRUCTURED RESPONSE BLUEPRINT")
     lines.append("   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.")
 
+    def _priority_level(item: Dict[str, Any]) -> int:
+        level = item.get("priority_level")
+        return level if level in (1, 2) else 2
+
+    def _append_requirements(target_list: List[str],
+                             indent: str,
+                             obligations: List[Dict[str, Any]],
+                             default_msg: str) -> None:
+        has_secondary = any(_priority_level(item) == 1 for item in obligations)
+        if not has_secondary:
+            if obligations:
+                for item in obligations:
+                    desc = (item.get("desc") or "").strip()
+                    if desc:
+                        target_list.append(f"{indent}• {desc}")
+            else:
+                target_list.append(f"{indent}• {default_msg}")
+            return
+
+        primary = []
+        secondary = []
+        for item in obligations:
+            desc = (item.get("desc") or "").strip()
+            if not desc:
+                continue
+            if _priority_level(item) == 1:
+                secondary.append(desc)
+            else:
+                primary.append(desc)
+        if not primary and not secondary:
+            primary = [default_msg]
+
+        target_list.append(f"{indent}Primary constraints (priority=2, must satisfy):")
+        if primary:
+            for desc in primary:
+                target_list.append(f"{indent}  • {desc}")
+        else:
+            target_list.append(f"{indent}  • None.")
+
+        target_list.append(f"{indent}Secondary constraints (priority=1, best effort; must not violate primary):")
+        if secondary:
+            for desc in secondary:
+                target_list.append(f"{indent}  • {desc}")
+        else:
+            target_list.append(f"{indent}  • None.")
+
+        target_list.append(
+            f"{indent}If a secondary constraint conflicts with any primary constraints, "
+            "prioritize satisfying the primary constraints first, then satisfy the secondary one if possible."
+        )
+
     def _append_path(block_ids: List[str],
                      grouped: Dict[str, List[Dict[str, Any]]],
                      default_msg: str,
@@ -327,21 +386,19 @@ def _mk_machine_prompt(seed_task: str,
             obligations = grouped.get(block_id, [])
             if show_steps:
                 target_list.append(f"{indent}- Step {order}: {label}")
-                if obligations:
-                    for item in obligations:
-                        desc = (item.get("desc") or "").strip()
-                        if desc:
-                            target_list.append(f"{indent}    • {desc}")
-                else:
-                    target_list.append(f"{indent}    • {default_msg.format(stage=label)}")
+                _append_requirements(
+                    target_list,
+                    indent=indent + "    ",
+                    obligations=obligations,
+                    default_msg=default_msg.format(stage=label),
+                )
             else:
-                if obligations:
-                    for item in obligations:
-                        desc = (item.get("desc") or "").strip()
-                        if desc:
-                            target_list.append(f"{indent}• {desc}")
-                else:
-                    target_list.append(f"{indent}• {default_msg.format(stage=label)}")
+                _append_requirements(
+                    target_list,
+                    indent=indent,
+                    obligations=obligations,
+                    default_msg=default_msg.format(stage=label),
+                )
 
     def _inline_stage_block(stage_idx: int,
                             indent: str,
@@ -364,10 +421,12 @@ def _mk_machine_prompt(seed_task: str,
         if not stage_selections:
             if reqs:
                 snippet.append(f"{body_indent}Duties:")
-                for r in reqs:
-                    desc = (r.get("desc") or "").strip()
-                    if desc:
-                        snippet.append(f"{body_indent}  • {desc}")
+                _append_requirements(
+                    snippet,
+                    indent=body_indent + "  ",
+                    obligations=reqs,
+                    default_msg="Follow the intent of this stage even if no explicit bullet exists.",
+                )
             else:
                 snippet.append(f"{body_indent}Duties: Follow the intent of this stage even if no explicit bullet exists.")
             return snippet, block_id
@@ -441,10 +500,12 @@ def _mk_machine_prompt(seed_task: str,
         if not stage_selections:
             if reqs:
                 lines.append("      Timeline duties:")
-                for r in reqs:
-                    desc = (r.get("desc") or "").strip()
-                    if desc:
-                        lines.append(f"        • {desc}")
+                _append_requirements(
+                    lines,
+                    indent="        ",
+                    obligations=reqs,
+                    default_msg="Follow the intent of this stage even if no explicit bullet exists.",
+                )
             else:
                 lines.append("      Timeline duties: Follow the intent of this stage even if no explicit bullet exists.")
             consumed_blocks.add(stage_id)
@@ -552,6 +613,7 @@ def _mk_eval_protocol(seed_task: str,
                 "cid": r["cid"],
                 "desc": r["desc"],
                 "verifier": r["verifier"],
+                "priority_level": r.get("priority_level", 2),
             })
         block_specs_eval.append(block_entry)
 
@@ -573,6 +635,7 @@ def _mk_eval_protocol(seed_task: str,
                     "cid": it["cid"],
                     "desc": it["desc"],
                     "verifier": it["verifier"],
+                    "priority_level": it.get("priority_level", 2),
                 }
                 for it in sel["branch_real"]
             ],
@@ -581,6 +644,7 @@ def _mk_eval_protocol(seed_task: str,
                     "cid": it["cid"],
                     "desc": it["desc"],
                     "verifier": it["verifier"],
+                    "priority_level": it.get("priority_level", 2),
                 }
                 for it in sel["branch_alt"]
             ],
@@ -593,11 +657,13 @@ def _mk_eval_protocol(seed_task: str,
 
     protocol = {
         "seed_task": seed_task,
+        "curriculum_level": graph_meta.get("curriculum_level"),
         "global_scoring": [
             {
                 "cid": g["cid"],
                 "desc": g["desc"],
                 "verifier": g["verifier"],
+                "priority_level": g.get("priority_level", 2),
                 "logic": "MANDATORY_GLOBAL",
             }
             for g in global_rules

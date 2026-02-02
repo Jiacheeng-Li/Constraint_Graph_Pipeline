@@ -5,6 +5,9 @@ Pipeline Runner - Steps 1->8 Orchestrator
 
 Purpose
 - Glue the stage modules together for one (instruction, exemplar answer) pair and persist every artifact used later for prompting, graph debugging, or scoring.
+- Optionally runs the graph augmenter to emit curriculum/multi-turn variants.
+- Optionally runs Step 6.5 + 7.5 to render template prompts from augmented graphs.
+- Optionally runs Step 8.5 to produce diversified natural-language prompt variants.
 
 Artifacts produced
 - data/graphs/<sample_id>.graph.json     - serialized ConstraintGraph snapshot.
@@ -18,6 +21,10 @@ Contracts
 - Calls each step in order, passing the expected inputs/outputs documented in the step modules.
 - Tracks LLM_CALL_EVENTS for observability and records which steps actually hit the API.
 - Respects CLI flag `--skip-step8-polish` and env `PIPELINE_ENABLE_STEP8` to disable the polish pass.
+- Step 7.5 is off by default; enable via CLI or env `PIPELINE_ENABLE_STEP7_5`.
+- Step 8.5 is off by default; enable via CLI or env `PIPELINE_ENABLE_STEP8_5`.
+- Augmentation is off by default; enable via CLI `--enable-augment` or env `PIPELINE_ENABLE_AUGMENT`.
+- Augment + diversity is off by default; enable via CLI `--enable-augment-diversity` or env `PIPELINE_ENABLE_AUGMENT_DIVERSITY`.
 
 Usage
 ```bash
@@ -29,8 +36,11 @@ python -m src.pipeline_runner \
 """
 
 import os
+import re
+import json
+import random
 import argparse
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 
 from .utils.export_utils import write_json, write_text, save_graph_outputs
@@ -45,6 +55,10 @@ from .step5_selection_augment import generate_selection_branches
 from .step6_graph_assembly import assemble_constraint_graph
 from .step7_instruction_synthesis import synthesize_instruction_bundle
 from .step8_prompt_refinement import refine_instruction_prompt
+from .step7_5_prompt_renderer import render_prompt_variant
+from .step6_5_graph_augment import augment_graphs_only
+from .graph_augmenter import augment_graph, _graph_from_serialized
+from .step8_5_prompt_diversification import diversify_instruction_prompt
 
 
 # ------------------------------------------------------------
@@ -73,6 +87,25 @@ def _record_llm_status(status_list, step_name: str, start_index: int) -> None:
     })
 
 
+def _strip_think_prefix(text: str) -> tuple[str, bool]:
+    """
+    Qwen 等模型可能在正文前输出 <think>...</think>。仅保留 </think> 之后的内容。
+    Returns (clean_text, stripped_flag).
+    """
+    if not text:
+        return text, False
+    marker = "</think>"
+    if marker in text:
+        _, tail = text.split(marker, 1)
+        return tail.lstrip(), True
+    return text, False
+
+
+def _slugify_style(name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", (name or "").lower()).strip("_")
+    return slug or "variant"
+
+
 
 # ------------------------------------------------------------
 # Core pipeline for one sample
@@ -83,7 +116,23 @@ def run_pipeline_once(sample_id: str,
                        model_answer: str,
                        base_data_dir: str = "data",
                        *,
-                       enable_step8_polish: bool = True) -> Dict[str, Any]:
+                       enable_step8_polish: bool = True,
+                       enable_step7_5: bool = False,
+                       step7_5_templates: Optional[list[str]] = None,
+                       step7_5_limit: Optional[int] = None,
+                       step7_5_seed: Optional[int] = None,
+                       step7_5_heuristic_ratio: float = 0.5,
+                       enable_augment: bool = False,
+                       enable_augment_diversity: bool = False,
+                       augment_seed: int = 0,
+                       augment_priority_ratio: float = 0.5,
+                       augment_curriculum: bool = True,
+                       augment_m1: bool = True,
+                       augment_m2: bool = True,
+                       enable_step8_5: bool = False,
+                       step8_5_variants: int = 3,
+                       step8_5_seed: Optional[int] = None,
+                       step8_5_styles: Optional[list[str]] = None) -> Dict[str, Any]:
     """
     Run Steps 1 -> 8 on a single (instruction, answer) pair.
 
@@ -179,10 +228,236 @@ def run_pipeline_once(sample_id: str,
     )
     _record_llm_status(llm_step_statuses, "Step8 prompt_refinement", idx_llm)
     machine_prompt = polish_result.get("text", machine_prompt_raw)
+    machine_prompt, stripped_think = _strip_think_prefix(machine_prompt)
+    polish_result["stripped_think"] = stripped_think
     bundle["machine_prompt_original"] = machine_prompt_raw
     bundle["machine_prompt"] = machine_prompt
     bundle["step8_polish"] = {k: v for k, v in polish_result.items() if k != "text"}
     prompt_length = len(machine_prompt or "")
+
+    step7_5_result = {}
+    step7_5_variants_written = []
+    if enable_step7_5:
+        idx_llm = len(LLM_CALL_EVENTS)
+        step7_5_result = render_prompt_variant(
+            graph,
+            template_pool=step7_5_templates,
+            template_seed=step7_5_seed,
+            template_limit=step7_5_limit,
+            heuristic_ratio=step7_5_heuristic_ratio,
+            selection_key=sample_id,
+        )
+        variant = step7_5_result.get("variant", {})
+        machine_variant = (variant.get("machine_prompt") or "").strip()
+        if machine_variant:
+            template_key = _slugify_style(variant.get("template", "template"))
+            machine_path = os.path.join(
+                instructions_dir,
+                f"{sample_id}.machine.tmpl_{template_key}.txt",
+            )
+            write_text(machine_path, machine_variant)
+
+            if enable_step8_polish:
+                polish_variant = refine_instruction_prompt(
+                    machine_prompt=machine_variant,
+                    seed_task=seed_task,
+                    enable=True,
+                )
+                prompt_text = polish_variant.get("text", machine_variant)
+            else:
+                polish_variant = {
+                    "used_llm": False,
+                    "reason": "disabled",
+                    "attempts": 0,
+                }
+                prompt_text = machine_variant
+
+            prompt_text, stripped_think = _strip_think_prefix(prompt_text)
+            polish_variant["stripped_think"] = stripped_think
+            prompt_path = os.path.join(
+                instructions_dir,
+                f"{sample_id}.prompt.tmpl_{template_key}.txt",
+            )
+            write_text(prompt_path, prompt_text)
+            step7_5_variants_written.append({
+                "template": variant.get("template"),
+                "label": variant.get("label"),
+                "description": variant.get("description"),
+                "machine_path": machine_path,
+                "prompt_path": prompt_path,
+                "prompt_length_chars": len(prompt_text),
+                "step8_polish": {k: v for k, v in polish_variant.items() if k != "text"},
+            })
+        _record_llm_status(llm_step_statuses, "Step7.5 prompt_templates", idx_llm)
+
+    if step7_5_result:
+        bundle["step7_5_templates"] = {
+            "meta": {
+                "enabled": enable_step7_5,
+                "template_pool": step7_5_result.get("selection", {}).get("template_pool"),
+                "unknown_templates": step7_5_result.get("selection", {}).get("unknown_templates"),
+                "template_seed": step7_5_seed,
+                "template_limit": step7_5_limit,
+                "heuristic_ratio": step7_5_heuristic_ratio,
+                "selected_template": step7_5_result.get("selection", {}).get("template"),
+                "selected_by": step7_5_result.get("selection", {}).get("selected_by"),
+                "heuristic_template": step7_5_result.get("selection", {}).get("heuristic_template"),
+                "step8_enabled": enable_step8_polish,
+            },
+            "variants": step7_5_variants_written,
+        }
+
+    augment_outputs: list[str] = []
+    augment_diversity_outputs: list[Dict[str, Any]] = []
+    if enable_augment:
+        idx_llm = len(LLM_CALL_EVENTS)
+        rng = random.Random(augment_seed)
+        run_meta = {
+            "seed": augment_seed,
+            "priority_ratio": augment_priority_ratio,
+            "enable_curriculum": augment_curriculum,
+            "enable_m1": augment_m1,
+            "enable_m2": augment_m2,
+            "enable_step8": enable_step8_polish,
+        }
+        augment_outputs = augment_graph(
+            graph=graph,
+            sample_id=sample_id,
+            base_dir=base_data_dir,
+            rng=rng,
+            priority_ratio=augment_priority_ratio,
+            enable_curriculum=augment_curriculum,
+            enable_m1=augment_m1,
+            enable_m2=augment_m2,
+            enable_step8=enable_step8_polish,
+            run_id=ts_utc,
+            run_meta=run_meta,
+        )
+        _record_llm_status(llm_step_statuses, "Graph augmenter", idx_llm)
+
+    if enable_augment_diversity:
+        idx_llm = len(LLM_CALL_EVENTS)
+        rng = random.Random(augment_seed)
+        augmented_entries = augment_graphs_only(
+            graph=graph,
+            sample_id=sample_id,
+            base_dir=base_data_dir,
+            rng=rng,
+            priority_ratio=augment_priority_ratio,
+            enable_curriculum=augment_curriculum,
+            enable_m1=augment_m1,
+            enable_m2=augment_m2,
+        )
+        for entry in augmented_entries:
+            graph_path = (entry.get("paths") or {}).get("graph_json")
+            if not graph_path:
+                continue
+            with open(graph_path, "r", encoding="utf-8") as f:
+                graph_data = json.load(f)
+            aug_graph = _graph_from_serialized(graph_data)
+            template_result = render_prompt_variant(
+                aug_graph,
+                template_pool=step7_5_templates,
+                template_seed=step7_5_seed,
+                template_limit=step7_5_limit,
+                heuristic_ratio=step7_5_heuristic_ratio,
+                selection_key=entry.get("sample_id", ""),
+            )
+            variant = template_result.get("variant", {})
+            machine_variant = (variant.get("machine_prompt") or "").strip()
+            if not machine_variant:
+                continue
+            template_key = _slugify_style(variant.get("template", "template"))
+            variant_sample_id = entry.get("sample_id") or sample_id
+            machine_path = os.path.join(
+                instructions_dir,
+                f"{variant_sample_id}.machine.tmpl_{template_key}.txt",
+            )
+            write_text(machine_path, machine_variant)
+
+            if enable_step8_polish:
+                polish_variant = refine_instruction_prompt(
+                    machine_prompt=machine_variant,
+                    seed_task=aug_graph.seed_task,
+                    enable=True,
+                )
+                prompt_text = polish_variant.get("text", machine_variant)
+            else:
+                polish_variant = {
+                    "used_llm": False,
+                    "reason": "disabled",
+                    "attempts": 0,
+                }
+                prompt_text = machine_variant
+
+            prompt_text, stripped_think = _strip_think_prefix(prompt_text)
+            polish_variant["stripped_think"] = stripped_think
+            prompt_path = os.path.join(
+                instructions_dir,
+                f"{variant_sample_id}.prompt.tmpl_{template_key}.txt",
+            )
+            write_text(prompt_path, prompt_text)
+            augment_diversity_outputs.append({
+                "sample_id": variant_sample_id,
+                "template": variant.get("template"),
+                "selected_by": template_result.get("selection", {}).get("selected_by"),
+                "machine_path": machine_path,
+                "prompt_path": prompt_path,
+                "prompt_length_chars": len(prompt_text),
+                "step8_polish": {k: v for k, v in polish_variant.items() if k != "text"},
+            })
+        _record_llm_status(llm_step_statuses, "Step6.5/7.5 augmented templates", idx_llm)
+
+    step8_5_result = {}
+    step8_5_variants_written = []
+    if enable_step8_5 and step8_5_variants > 0:
+        idx_llm = len(LLM_CALL_EVENTS)
+        step8_5_result = diversify_instruction_prompt(
+            machine_prompt=machine_prompt_raw,
+            seed_task=seed_task,
+            enable=enable_step8_5,
+            num_variants=step8_5_variants,
+            style_seed=step8_5_seed,
+            style_pool=step8_5_styles,
+        )
+        _record_llm_status(llm_step_statuses, "Step8.5 prompt_diversification", idx_llm)
+
+        used_slugs: Dict[str, int] = {}
+        for variant in step8_5_result.get("variants", []):
+            text = (variant.get("text") or "").strip()
+            if not text:
+                continue
+            text, stripped_think = _strip_think_prefix(text)
+            style_slug = variant.get("style_slug") or _slugify_style(variant.get("style", "variant"))
+            used_slugs[style_slug] = used_slugs.get(style_slug, 0) + 1
+            suffix = f"_{used_slugs[style_slug]}" if used_slugs[style_slug] > 1 else ""
+            file_slug = f"{style_slug}{suffix}"
+            variant_path = os.path.join(instructions_dir, f"{sample_id}.prompt.{file_slug}.txt")
+            write_text(variant_path, text)
+            step8_5_variants_written.append({
+                "style": variant.get("style"),
+                "style_slug": file_slug,
+                "path": variant_path,
+                "prompt_length_chars": len(text),
+                "used_llm": variant.get("used_llm", False),
+                "reason": variant.get("reason", ""),
+                "attempts": variant.get("attempts", 0),
+                "stripped_think": stripped_think,
+            })
+
+    if step8_5_result:
+        bundle["step8_5_diversify"] = {
+            "meta": {
+                "enabled": enable_step8_5,
+                "requested_variants": step8_5_result.get("requested_variants"),
+                "generated_variants": len(step8_5_variants_written),
+                "style_seed": step8_5_result.get("style_seed"),
+                "style_pool": step8_5_result.get("style_pool"),
+                "unknown_styles": step8_5_result.get("unknown_styles", []),
+                "result_reason": step8_5_result.get("reason"),
+            },
+            "variants": step8_5_variants_written,
+        }
 
     # Extract eval_protocol (verifier-oriented scoring spec)
     eval_protocol = bundle.get("eval_protocol", {})
@@ -228,6 +503,12 @@ def run_pipeline_once(sample_id: str,
         "selection_count": selection_count,
         "bundle": bundle,
         "polish_result": polish_result,
+        "step7_5_result": step7_5_result,
+        "step7_5_variants": step7_5_variants_written,
+        "augment_outputs": augment_outputs,
+        "augment_diversity_outputs": augment_diversity_outputs,
+        "step8_5_result": step8_5_result,
+        "step8_5_variants": step8_5_variants_written,
         "llm_statuses": llm_step_statuses,
     }
 
@@ -265,6 +546,102 @@ def main():
         action="store_true",
         help="Disable the Step 8 LLM-based polish pass (default enabled, can also set PIPELINE_ENABLE_STEP8=0).",
     )
+    parser.add_argument(
+        "--enable-augment",
+        action="store_true",
+        help="Enable curriculum/multi-turn graph augmentation (graph_augmenter).",
+    )
+    parser.add_argument(
+        "--enable-augment-diversity",
+        action="store_true",
+        help="Enable graph-only augmentation + template rendering (Step6.5 -> Step7.5 -> Step8).",
+    )
+    parser.add_argument(
+        "--augment-mode",
+        type=str,
+        default="auto",
+        choices=["auto", "none", "augment", "augment_diversity", "both"],
+        help="Override augmentation selection (auto uses --enable-augment/--enable-augment-diversity + env).",
+    )
+    parser.add_argument(
+        "--augment-seed",
+        type=int,
+        default=0,
+        help="Random seed for augmentation steps.",
+    )
+    parser.add_argument(
+        "--augment-priority-ratio",
+        type=float,
+        default=0.5,
+        help="Probability of priority injection during augmentation.",
+    )
+    parser.add_argument(
+        "--augment-disable-curriculum",
+        action="store_true",
+        help="Disable curriculum generation during augmentation.",
+    )
+    parser.add_argument(
+        "--augment-disable-m1",
+        action="store_true",
+        help="Disable M1 multi-turn generation during augmentation.",
+    )
+    parser.add_argument(
+        "--augment-disable-m2",
+        action="store_true",
+        help="Disable M2 multi-turn generation during augmentation.",
+    )
+    parser.add_argument(
+        "--enable-step7-5",
+        action="store_true",
+        help="Enable Step 7.5 multi-template rendering (default disabled; can also set PIPELINE_ENABLE_STEP7_5=1).",
+    )
+    parser.add_argument(
+        "--step7-5-templates",
+        type=str,
+        default="",
+        help="Comma-separated template names for Step 7.5 (empty means default pool).",
+    )
+    parser.add_argument(
+        "--step7-5-limit",
+        type=int,
+        default=-1,
+        help="Limit the number of Step 7.5 templates to render (negative means no limit).",
+    )
+    parser.add_argument(
+        "--step7-5-seed",
+        type=int,
+        default=-1,
+        help="Random seed for Step 7.5 template selection (negative means default).",
+    )
+    parser.add_argument(
+        "--step7-5-heuristic-ratio",
+        type=float,
+        default=0.5,
+        help="Probability of choosing the heuristic template instead of seeded random in Step 7.5.",
+    )
+    parser.add_argument(
+        "--enable-step8-5",
+        action="store_true",
+        help="Enable the Step 8.5 diversified prompt pass (default disabled; can also set PIPELINE_ENABLE_STEP8_5=1).",
+    )
+    parser.add_argument(
+        "--step8-5-variants",
+        type=int,
+        default=3,
+        help="Number of diversified prompts to generate in Step 8.5.",
+    )
+    parser.add_argument(
+        "--step8-5-seed",
+        type=int,
+        default=-1,
+        help="Random seed for Step 8.5 style selection (negative means random).",
+    )
+    parser.add_argument(
+        "--step8-5-styles",
+        type=str,
+        default="",
+        help="Comma-separated style names for Step 8.5 (empty means default pool).",
+    )
 
     args = parser.parse_args()
 
@@ -279,6 +656,36 @@ def main():
     env_flag = os.getenv("PIPELINE_ENABLE_STEP8", "1").lower()
     step8_enabled_default = env_flag not in {"0", "false", "no"}
     enable_step8 = step8_enabled_default and not args.skip_step8_polish
+    env_flag_augment = os.getenv("PIPELINE_ENABLE_AUGMENT", "0").lower()
+    augment_enabled_default = env_flag_augment in {"1", "true", "yes"}
+    enable_augment = augment_enabled_default or args.enable_augment
+    env_flag_augment_diversity = os.getenv("PIPELINE_ENABLE_AUGMENT_DIVERSITY", "0").lower()
+    augment_diversity_default = env_flag_augment_diversity in {"1", "true", "yes"}
+    enable_augment_diversity = augment_diversity_default or args.enable_augment_diversity
+    if args.augment_mode != "auto":
+        if args.augment_mode == "none":
+            enable_augment = False
+            enable_augment_diversity = False
+        elif args.augment_mode == "augment":
+            enable_augment = True
+            enable_augment_diversity = False
+        elif args.augment_mode == "augment_diversity":
+            enable_augment = False
+            enable_augment_diversity = True
+        elif args.augment_mode == "both":
+            enable_augment = True
+            enable_augment_diversity = True
+    env_flag_7_5 = os.getenv("PIPELINE_ENABLE_STEP7_5", "0").lower()
+    step7_5_enabled_default = env_flag_7_5 in {"1", "true", "yes"}
+    enable_step7_5 = step7_5_enabled_default or args.enable_step7_5
+    step7_5_templates = [s.strip() for s in args.step7_5_templates.split(",") if s.strip()]
+    step7_5_seed = None if args.step7_5_seed < 0 else args.step7_5_seed
+    step7_5_limit = None if args.step7_5_limit < 0 else args.step7_5_limit
+    env_flag_8_5 = os.getenv("PIPELINE_ENABLE_STEP8_5", "0").lower()
+    step8_5_enabled_default = env_flag_8_5 in {"1", "true", "yes"}
+    enable_step8_5 = step8_5_enabled_default or args.enable_step8_5
+    step8_5_seed = None if args.step8_5_seed < 0 else args.step8_5_seed
+    step8_5_styles = [s.strip() for s in args.step8_5_styles.split(",") if s.strip()]
 
     result = run_pipeline_once(
         sample_id=args.sample_id,
@@ -286,6 +693,22 @@ def main():
         model_answer=model_answer,
         base_data_dir=args.data_dir,
         enable_step8_polish=enable_step8,
+        enable_step7_5=enable_step7_5,
+        step7_5_templates=step7_5_templates or None,
+        step7_5_limit=step7_5_limit,
+        step7_5_seed=step7_5_seed,
+        step7_5_heuristic_ratio=args.step7_5_heuristic_ratio,
+        enable_augment=enable_augment,
+        enable_augment_diversity=enable_augment_diversity,
+        augment_seed=args.augment_seed,
+        augment_priority_ratio=args.augment_priority_ratio,
+        augment_curriculum=not args.augment_disable_curriculum,
+        augment_m1=not args.augment_disable_m1,
+        augment_m2=not args.augment_disable_m2,
+        enable_step8_5=enable_step8_5,
+        step8_5_variants=args.step8_5_variants,
+        step8_5_seed=step8_5_seed,
+        step8_5_styles=step8_5_styles or None,
     )
 
     # Print a short human summary to stdout
@@ -306,6 +729,25 @@ def main():
     print(f"bundle_debug_path          : {result['bundle_path']}")
     polish_info = result.get("polish_result") or {}
     print(f"step8_polish_used          : {polish_info.get('used_llm', False)} ({polish_info.get('reason', 'n/a')})")
+    print(f"step8_stripped_think       : {polish_info.get('stripped_think', False)}")
+    if enable_augment:
+        print(f"augment_enabled            : {enable_augment}")
+        print(f"augment_outputs            : {len(result.get('augment_outputs', []) or [])}")
+    if enable_augment_diversity:
+        print(f"augment_diversity_enabled  : {enable_augment_diversity}")
+        print(f"augment_diversity_outputs  : {len(result.get('augment_diversity_outputs', []) or [])}")
+    if enable_step7_5:
+        step7_5_info = result.get("step7_5_result", {}) or {}
+        variants_written = len(result.get("step7_5_variants", []) or [])
+        print(f"step7_5_enabled            : {enable_step7_5}")
+        print(f"step7_5_variants_written   : {variants_written}")
+        print(f"step7_5_templates          : {', '.join(step7_5_info.get('template_pool', []) or [])}")
+    if enable_step8_5:
+        step8_5_info = result.get("step8_5_result", {}) or {}
+        variants_written = len(result.get("step8_5_variants", []) or [])
+        print(f"step8_5_enabled            : {enable_step8_5}")
+        print(f"step8_5_variants_written   : {variants_written}")
+        print(f"step8_5_reason             : {step8_5_info.get('reason', 'n/a')}")
     print("--- LLM call status by step ---")
     for entry in result.get("llm_statuses", []):
         print(f"{entry['step']:<32}: {entry['status']} (calls={entry['calls']})")

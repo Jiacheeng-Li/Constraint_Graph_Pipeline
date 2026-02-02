@@ -127,14 +127,19 @@ def _avg_bool(values: List[Optional[bool]]) -> Optional[float]:
         return None
     return sum(numeric) / float(len(numeric))
 
+def _priority_level(item: Dict[str, Any]) -> int:
+    level = item.get("priority_level")
+    return 1 if level == 1 else 2
 
-def _score_branch(requirements: List[Dict[str, Any]], candidate_answer: str,
-                  selection_id: str) -> Tuple[List[Dict[str, Any]], Optional[float]]:
+
+def _score_branch(requirements: List[Dict[str, Any]],
+                  candidate_answer: str,
+                  selection_id: str) -> Tuple[List[Dict[str, Any]], Optional[float], Optional[float]]:
     """
     对一条分支(branch_real 或 branch_alt)的所有 requirement 执行校验。
 
     返回：
-        (per_req_results, avg_score)
+        (per_req_results, mandatory_score, best_effort_score)
 
     per_req_results 是一个 list[dict]，每一项结构为：
         {
@@ -144,7 +149,8 @@ def _score_branch(requirements: List[Dict[str, Any]], candidate_answer: str,
     avg_score 是通过率均值（忽略 None）。
     """
     per_req_results: List[Dict[str, Any]] = []
-    pass_flags: List[Optional[bool]] = []
+    mandatory_flags: List[Optional[bool]] = []
+    best_effort_flags: List[Optional[bool]] = []
 
     for req in requirements:
         cid = req.get("cid")
@@ -152,6 +158,7 @@ def _score_branch(requirements: List[Dict[str, Any]], candidate_answer: str,
         verifier_spec = req.get("verifier") or {}
         check_name = verifier_spec.get("check")
         check_args = verifier_spec.get("args", {})
+        priority_level = _priority_level(req)
 
         if not check_name:
             passed = None
@@ -176,11 +183,16 @@ def _score_branch(requirements: List[Dict[str, Any]], candidate_answer: str,
             "scope": "branch",
             "block_id": None,
             "selection_id": selection_id,
+            "priority_level": priority_level,
         })
-        pass_flags.append(passed)
+        if priority_level == 1:
+            best_effort_flags.append(passed)
+        else:
+            mandatory_flags.append(passed)
 
-    avg_score = _avg_bool(pass_flags)
-    return per_req_results, avg_score
+    mandatory_score = _avg_bool(mandatory_flags)
+    best_effort_score = _avg_bool(best_effort_flags)
+    return per_req_results, mandatory_score, best_effort_score
 
 
 # ------------------------------------------------------------
@@ -206,6 +218,9 @@ def run_evaluation(eval_protocol: Dict[str, Any], candidate_answer: str) -> Dict
     global_flags: List[Optional[bool]] = []
     block_flags: List[Optional[bool]] = []
     branch_flags: List[Optional[bool]] = []
+    global_best_effort: List[Optional[bool]] = []
+    block_best_effort: List[Optional[bool]] = []
+    branch_best_effort: List[Optional[bool]] = []
 
     # 1. 全局约束 (global_scoring)
     for g in eval_protocol.get("global_scoring", []):
@@ -214,6 +229,7 @@ def run_evaluation(eval_protocol: Dict[str, Any], candidate_answer: str) -> Dict
         verifier_spec = g.get("verifier") or {}
         check_name = verifier_spec.get("check")
         check_args = verifier_spec.get("args", {})
+        priority_level = _priority_level(g)
 
         if not check_name:
             passed = None
@@ -238,8 +254,12 @@ def run_evaluation(eval_protocol: Dict[str, Any], candidate_answer: str) -> Dict
             "scope": "global",
             "block_id": None,
             "selection_id": None,
+            "priority_level": priority_level,
         })
-        global_flags.append(passed)
+        if priority_level == 1:
+            global_best_effort.append(passed)
+        else:
+            global_flags.append(passed)
 
     # 2. 分阶段约束 (block_scoring)
     for blk in eval_protocol.get("block_scoring", []):
@@ -252,6 +272,7 @@ def run_evaluation(eval_protocol: Dict[str, Any], candidate_answer: str) -> Dict
             verifier_spec = req.get("verifier") or {}
             check_name = verifier_spec.get("check")
             check_args = verifier_spec.get("args", {})
+            priority_level = _priority_level(req)
 
             if not check_name:
                 passed = None
@@ -276,8 +297,12 @@ def run_evaluation(eval_protocol: Dict[str, Any], candidate_answer: str) -> Dict
                 "scope": "block",
                 "block_id": block_id,
                 "selection_id": None,
+                "priority_level": priority_level,
             })
-            block_flags.append(passed)
+            if priority_level == 1:
+                block_best_effort.append(passed)
+            else:
+                block_flags.append(passed)
 
     # 3. 条件化分支约束 (conditional_scoring)
     for sel in eval_protocol.get("conditional_scoring", []):
@@ -286,8 +311,8 @@ def run_evaluation(eval_protocol: Dict[str, Any], candidate_answer: str) -> Dict
         alt_reqs = sel.get("branch_alt", [])
 
         # 分别对两条分支打分
-        real_results, real_score = _score_branch(real_reqs, candidate_answer, sid)
-        alt_results, alt_score   = _score_branch(alt_reqs, candidate_answer, sid)
+        real_results, real_score, real_best_effort = _score_branch(real_reqs, candidate_answer, sid)
+        alt_results, alt_score, alt_best_effort = _score_branch(alt_reqs, candidate_answer, sid)
 
         # 把两边的逐项结果都加入总 per_constraint_results
         per_constraint_results.extend(real_results)
@@ -296,7 +321,14 @@ def run_evaluation(eval_protocol: Dict[str, Any], candidate_answer: str) -> Dict
         # 选择“更像它遵守的分支”
         # 规则：哪个 avg_score 高就选哪个；都 None 时就是 "undecided"
         if real_score is None and alt_score is None:
-            chosen = "undecided"
+            if real_best_effort is None and alt_best_effort is None:
+                chosen = "undecided"
+            elif alt_best_effort is None:
+                chosen = "branch_real"
+            elif real_best_effort is None:
+                chosen = "branch_alt"
+            else:
+                chosen = "branch_real" if (real_best_effort >= alt_best_effort) else "branch_alt"
         elif alt_score is None:
             chosen = "branch_real"
         elif real_score is None:
@@ -312,31 +344,49 @@ def run_evaluation(eval_protocol: Dict[str, Any], candidate_answer: str) -> Dict
 
         # 将该选择的分支的 per-req 通过情况汇入 branch_flags，便于整体统计
         if chosen == "branch_real":
-            branch_flags.extend([r.get("passed") for r in real_results])
+            for r in real_results:
+                if r.get("priority_level") == 1:
+                    branch_best_effort.append(r.get("passed"))
+                else:
+                    branch_flags.append(r.get("passed"))
         elif chosen == "branch_alt":
-            branch_flags.extend([r.get("passed") for r in alt_results])
+            for r in alt_results:
+                if r.get("priority_level") == 1:
+                    branch_best_effort.append(r.get("passed"))
+                else:
+                    branch_flags.append(r.get("passed"))
         else:
-            # undecided: 两边都不计入 or 计入两边都行？这里我们计入两边的通过率一起参考
-            branch_flags.extend([r.get("passed") for r in real_results])
-            branch_flags.extend([r.get("passed") for r in alt_results])
+            # undecided: 仍统计两边的通过率，区分 mandatory/best-effort
+            for r in real_results + alt_results:
+                if r.get("priority_level") == 1:
+                    branch_best_effort.append(r.get("passed"))
+                else:
+                    branch_flags.append(r.get("passed"))
 
     # 汇总通过率
     global_rate = _avg_bool(global_flags)
     block_rate = _avg_bool(block_flags)
     branch_rate = _avg_bool(branch_flags)
 
-    # overall_pass_rate: 粗暴平均（忽略 None）
+    # overall_pass_rate: 仅基于 mandatory 约束
     overall_components = []
     for v in [global_rate, block_rate, branch_rate]:
         if v is not None:
             overall_components.append(v)
     overall_rate = sum(overall_components) / len(overall_components) if overall_components else None
 
+    best_effort_components = []
+    for v in [_avg_bool(global_best_effort), _avg_bool(block_best_effort), _avg_bool(branch_best_effort)]:
+        if v is not None:
+            best_effort_components.append(v)
+    best_effort_rate = sum(best_effort_components) / len(best_effort_components) if best_effort_components else None
+
     summary = {
         "global_pass_rate": global_rate,
         "block_pass_rate": block_rate,
         "branch_pass_rate": branch_rate,
         "overall_pass_rate": overall_rate,
+        "best_effort_rate": best_effort_rate,
     }
 
     return {

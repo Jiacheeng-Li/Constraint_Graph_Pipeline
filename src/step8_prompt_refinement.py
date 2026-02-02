@@ -27,16 +27,32 @@ REQUIRED_HEADINGS = [
     "SYSTEM INSTRUCTIONS",
     "MISSION BRIEF",
     "NON-NEGOTIABLE GLOBAL RULES",
+    "CONSTRAINT SUMMARY (BY TYPE)",
+    "CONSTRAINT SUMMARY (BY PRIORITY)",
+    "CONSTRAINT SUMMARY BY TYPE",
+    "CONSTRAINT SUMMARY BY PRIORITY",
     "STRUCTURED RESPONSE BLUEPRINT",
+    "RESPONSE BLUEPRINT",
     "CURRENT CONDITION ASSUMPTION",
+    "DEFAULT CONDITION ASSUMPTION",
     "EVALUATION NOTICE",
 ]
 
 SECTION_HEADINGS = [
-    ("mission", "1. MISSION BRIEF"),
-    ("global", "2. NON-NEGOTIABLE GLOBAL RULES"),
-    ("blueprint", "3. STRUCTURED RESPONSE BLUEPRINT"),
-    ("conditions", "4. CURRENT CONDITION ASSUMPTION"),
+    ("mission", ["1. MISSION BRIEF", "1. MISSION BRIEF & DELIVERABLE", "1. TASK BRIEF"]),
+    ("global", [
+        "2. NON-NEGOTIABLE GLOBAL RULES",
+        "2. CONSTRAINT SUMMARY (BY TYPE)",
+        "2. CONSTRAINT SUMMARY (BY PRIORITY)",
+        "2. CONSTRAINT SUMMARY BY TYPE",
+        "2. CONSTRAINT SUMMARY BY PRIORITY",
+    ]),
+    ("blueprint", [
+        "3. STRUCTURED RESPONSE BLUEPRINT",
+        "3. RESPONSE BLUEPRINT",
+        "3. RESPONSE BLUEPRINT & REMAINING RULES",
+    ]),
+    ("conditions", ["4. CURRENT CONDITION ASSUMPTION", "4. DEFAULT CONDITION ASSUMPTION"]),
 ]
 
 SECTION_COVERAGE_THRESHOLDS = {
@@ -70,10 +86,17 @@ def _extract_sections(machine_prompt: str) -> Dict[str, str]:
     Returns a dict keyed by section name with the text span for that section.
     """
     positions = []
-    for name, heading in SECTION_HEADINGS:
-        idx = machine_prompt.find(heading)
-        if idx != -1:
-            positions.append((idx, name, heading))
+    for name, headings in SECTION_HEADINGS:
+        candidates = headings if isinstance(headings, list) else [headings]
+        best_idx = -1
+        best_heading = ""
+        for heading in candidates:
+            idx = machine_prompt.find(heading)
+            if idx != -1 and (best_idx == -1 or idx < best_idx):
+                best_idx = idx
+                best_heading = heading
+        if best_idx != -1:
+            positions.append((best_idx, name, best_heading))
     positions.sort(key=lambda x: x[0])
 
     sections: Dict[str, str] = {}
@@ -248,9 +271,11 @@ def refine_instruction_prompt(machine_prompt: str,
                 api_key=api_key,
                 endpoint=endpoint,
                 model=model,
-                temperature=0.15,
-                max_tokens=min(4096, int(len(machine_prompt) * 1.2) + 512),
-                timeout=120,
+                temperature=0.6,
+                max_tokens=4096,
+                timeout=180,
+                retries=3,
+                retry_backoff_sec=1.5,
             ).strip()
         except DeepSeekError as err:
             result["reason"] = f"llm_error: {err}"

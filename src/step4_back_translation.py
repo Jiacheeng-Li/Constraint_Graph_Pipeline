@@ -336,8 +336,8 @@ def _call_deepseek_block_constraints(block: BlockSpec,
             ],
             system_prompt=system_prompt,
             temperature=0.0,
-            max_tokens=900,
-            timeout=20,
+            max_tokens=3072,
+            timeout=180,
             retries=2,
         ).strip()
         return content

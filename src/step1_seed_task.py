@@ -146,12 +146,52 @@ def _call_deepseek_seed_task_full_context(instruction_text: str,
             model=model or None,
             api_key=api_key or None,
             endpoint=endpoint or None,
-            temperature=0.0,
-            max_tokens=64,
-            timeout=10,
+            temperature=0.2,
+            max_tokens=128,
+            timeout=60,
+            retries=3,
+            retry_backoff_sec=1.2,
         ).strip()
-        first_line = content.splitlines()[0].strip()
-        return first_line
+        
+         # Filter out <think> tags and other common LLM thinking markers
+        # Some models (like Qwen) may output <think>...</think> tags
+        if "</think>" in content:
+            _, content = content.split("</think>", 1)
+            content = content.strip()
+        
+        # Remove leading <think> tag if present
+        content = re.sub(r"^<think>\s*", "", content, flags=re.IGNORECASE)
+        
+        # Split by lines and find the first meaningful line
+        lines = [line.strip() for line in content.splitlines() if line.strip()]
+        
+        # Look for imperative sentences starting with strong verbs
+        imperative_verbs = ["analyze", "explain", "summarize", "write", "draft", "propose", 
+                           "generate", "describe", "identify", "compare", "evaluate", "discuss",
+                           "outline", "present", "provide", "create", "develop", "design"]
+        
+        for line in lines:
+            line_lower = line.lower()
+            # Skip thinking markers
+            if line_lower.startswith(("<think>", "<think", "think>", "okay", "let's see", "i need", "the user")):
+                continue
+            # Check if line starts with an imperative verb
+            first_word = line_lower.split()[0] if line.split() else ""
+            if first_word in imperative_verbs or line[0].isupper():
+                # Found a potential imperative sentence
+                if len(line) >= 10:  # Reasonable minimum length
+                    return line
+        
+        # If no imperative sentence found, take first non-empty line if reasonable
+        if lines:
+            first_line = lines[0]
+            # Reject obviously invalid outputs (just tags, too short, or meaningless)
+            if len(first_line) >= 10 and first_line.lower() not in ("<think>", "<think", "think>"):
+                return first_line
+        
+        # If all else fails, return empty to trigger fallback
+        return ""
+    
     except DeepSeekError:
         return ""
 

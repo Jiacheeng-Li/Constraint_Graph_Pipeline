@@ -192,6 +192,7 @@ def serialize_graph(graph: ConstraintGraph) -> Dict[str, Any]:
             "desc": n.desc,
             "scope": n.scope,
             "verifier_spec": n.verifier_spec,
+            "priority_level": n.priority_level,
             "trace_to": n.trace_to,
             "derived_from": n.derived_from,
         }

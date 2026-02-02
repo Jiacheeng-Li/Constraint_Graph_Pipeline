@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__/
+*.pyc
+*.log
+
+# Generated pipeline artifacts
+data/graphs/
+data/instructions/
+data/reports/
+experiments/

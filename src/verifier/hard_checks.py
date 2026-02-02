@@ -133,6 +133,31 @@ def min_numbered_items(text: str, n: int) -> bool:
     items = pattern.findall(text)
     return len(items) >= int(n)
 
+def min_paragraphs(text: str, min_paras: int) -> bool:
+    """
+    要求文本至少包含 min_paras 个自然段（空行分隔）。
+    """
+    paragraphs = [p for p in re.split(r"\n\s*\n+", text.strip()) if p.strip()]
+    return len(paragraphs) >= int(min_paras)
+
+def bullet_style_consistent(text: str, marker: str) -> bool:
+    """
+    要求所有项目符号行使用相同的 marker（'-' 或 '*'）。
+    """
+    bullets = re.findall(r"^\s*([-*])\s+.+", text, flags=re.MULTILINE)
+    if not bullets:
+        return False
+    return all(b == marker for b in bullets)
+
+def decimal_places(text: str, places: int) -> bool:
+    """
+    要求出现的所有小数位数一致且等于 places。
+    """
+    matches = re.findall(r"\b\d+\.(\d+)\b", text)
+    if not matches:
+        return False
+    return all(len(m) == int(places) for m in matches)
+
 
 # ====== 3. 关键词出现频率 / 主题覆盖 ======
 

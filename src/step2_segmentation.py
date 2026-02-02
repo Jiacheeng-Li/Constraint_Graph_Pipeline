@@ -6,10 +6,10 @@ Purpose / 目标
 - Capture each block's semantic intent (Opening, Background, Analysis, Recommendation, etc.) to drive structure constraints and traceability.
 
 Workflow
-1. Feed the full answer into DeepSeek with a strict JSON schema request.
+1. Feed the full answer into the LLM with a strict JSON schema request.
 2. Ask for sequential blocks labelled with block_id, intent, text_span, and order_index.
 3. Parse the response with utils.parsing.extract_blocks so we survive minor JSON mistakes.
-4. If the LLM output is empty or invalid, fall back to deterministic paragraph splitting that preserves bullet runs.
+4. If the LLM output is empty or invalid after several attempts, fall back to deterministic paragraph splitting that preserves bullet runs.
 
 Inputs / 输入
 - response_text: the exemplar answer we are reverse engineering.
@@ -30,8 +30,8 @@ import json
 import re
 import time
 from typing import Dict, Any
-from .utils.deepseek_client import call_chat_completions, DeepSeekError
 
+from .utils.deepseek_client import call_chat_completions, DeepSeekError
 from .utils.parsing import extract_blocks
 
 # Deprecated per-unified client configuration (kept for minimal diff)
@@ -42,10 +42,10 @@ _DEEPSEEK_MODEL = ""
 
 def _call_deepseek_segmentation(response_text: str) -> str:
     """
-    调用 DeepSeek 模型，请它把回答分块并标注 intent。
+    调用 LLM，请它把回答分块并标注 intent。
 
     返回：LLM 原始输出字符串（可能是 JSON，也可能是包含解释+JSON）。
-    我们不会在这里解析，而是在上层用 extract_blocks() 做统一的宽松解析。
+    解析工作由上层 extract_blocks() 统一处理。
     """
 
     system_prompt = (
@@ -65,6 +65,7 @@ def _call_deepseek_segmentation(response_text: str) -> str:
         "Rules:\n"
         "- Preserve the original text order.\n"
         "- Keep each block text_span concise (50-200 words typically).\n"
+        "- Ensure each block intent label is unique; do not reuse the same intent string.\n"
         "- Do not include explanations outside JSON.\n"
     )
 
@@ -80,12 +81,15 @@ def _call_deepseek_segmentation(response_text: str) -> str:
                 {"role": "user", "content": user_prompt},
             ],
             system_prompt=system_prompt,
-            temperature=0.0,
-            max_tokens=800,
-            timeout=60,
+            temperature=0.2,
+            max_tokens=4096,
+            timeout=180,
+            retries=4,
+            retry_backoff_sec=1.2,
         ).strip()
         return content
     except DeepSeekError:
+        # 上层会根据 "{}" 得知本次调用失败
         return "{}"
 
 
@@ -113,6 +117,7 @@ def _split_paragraphs_with_bullet_groups(response_text: str) -> list[str]:
         line = raw_line.rstrip()
         stripped = line.strip()
         if not stripped:
+            # 空行逻辑：列表模式下保留空行，否则结束当前段
             if bullet_mode:
                 current_lines.append("")
             else:
@@ -142,37 +147,72 @@ def segment_response(response_text: str) -> Dict[str, Any]:
     输出：包含 blocks 列表和顺序的字典
 
     逻辑：
-    1. 调用 DeepSeek 让它给出分块 JSON（原始字符串）。
-    2. 用 utils.parsing.extract_blocks() 解析该字符串。
-    3. 如果解析失败（extract_blocks 返回空 blocks），则本地用段落切分兜底。
+    1. 多次调用 LLM，尝试得到合法的分块 JSON。
+    2. 若多次尝试后仍然没有 blocks，则使用本地段落切分兜底。
+    3. 最后补全缺失的 block_id / order_index / order。
     """
 
-    # 重试若分块为空：尽量再试几次，减少偶发空输出带来的硬失败
+    # 1) 先尝试通过 LLM + extract_blocks 获得分块
     max_attempts = 3
+    parsed: Dict[str, Any] = {}
     last_error: str | None = None
+
     for attempt in range(1, max_attempts + 1):
         raw_llm = _call_deepseek_segmentation(response_text)
         parsed = extract_blocks(raw_llm)
         if parsed.get("blocks"):
             break
+
         last_error = f"[Step2] attempt {attempt}/{max_attempts} produced no blocks."
         print(last_error)
+
         if attempt < max_attempts:
-            # 简单线性退避
+            # 简单线性退避，避免打爆后端
             time.sleep(1.0 * attempt)
     else:
-        # 尝试多次仍然没有块，抛出错误供上层记录
-        msg = last_error or "[Step2] segmentation produced no blocks; raising to mark failure."
-        raise DeepSeekError(msg)
+        # 2) LLM 多次失败：使用本地段落切分兜底
+        paragraphs = _split_paragraphs_with_bullet_groups(response_text)
+        if paragraphs:
+            blocks = []
+            order = []
+            for i, para in enumerate(paragraphs, start=1):
+                block_id = f"B{i}"
+                blocks.append(
+                    {
+                        "block_id": block_id,
+                        "intent": f"Paragraph {i}",
+                        "text_span": para,
+                        "order_index": i - 1,
+                    }
+                )
+                order.append(block_id)
+            parsed = {"blocks": blocks, "order": order}
+        else:
+            # 输入本身为空或只有空白，确实没法分块
+            msg = last_error or "[Step2] segmentation produced no blocks; raising to mark failure."
+            raise DeepSeekError(msg)
 
-    # 最后再确保 block_id / order_index 完整
-    for idx, blk in enumerate(parsed.get("blocks", [])):
-        if "block_id" not in blk:
+    # 3) 补全 block_id / order_index / order
+    blocks = parsed.get("blocks", [])
+    for idx, blk in enumerate(blocks):
+        if "block_id" not in blk or not blk["block_id"]:
             blk["block_id"] = f"B{idx+1}"
         if "order_index" not in blk:
             blk["order_index"] = idx
+
     if "order" not in parsed or not parsed["order"]:
-        parsed["order"] = [b["block_id"] for b in parsed.get("blocks", [])]
+        parsed["order"] = [b["block_id"] for b in blocks]
+
+    # 4) Ensure intent labels are unique to avoid merging stages downstream.
+    used_intents: Dict[str, int] = {}
+    for idx, blk in enumerate(blocks, start=1):
+        intent = (blk.get("intent") or "").strip() or f"Stage {idx}"
+        if intent not in used_intents:
+            used_intents[intent] = 1
+            blk["intent"] = intent
+            continue
+        used_intents[intent] += 1
+        blk["intent"] = f"{intent} ({used_intents[intent]})"
 
     return parsed
 
