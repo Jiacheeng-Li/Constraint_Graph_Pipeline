@@ -1,0 +1,595 @@
+{
+  "seed_task": "Write a rigorous Introduction section for a survey on publicly available automatic brain segmentation methodologies.",
+  "global_constraints": [
+    {
+      "cid": "G1",
+      "desc": "Use bracketed numeric references, such as [3].",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "citation_style",
+        "args": {
+          "style": "numeric"
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G2",
+      "desc": "Use English as the primary language for the answer.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "require_language",
+        "args": {
+          "lang": "en"
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G3",
+      "desc": "Write a minimum of 3 paragraphs.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "min_paragraphs",
+        "args": {
+          "min_paras": 3
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G4",
+      "desc": "Incorporate the keywords exactly as listed: \"segmentation\", \"brain\", \"alzheimer's\".",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "segmentation",
+            "brain",
+            "alzheimer's"
+          ]
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G5",
+      "desc": "Prefer citing specific examples and applications to illustrate general points.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "preference_concrete_examples",
+        "args": {}
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G6",
+      "desc": "Prefer a formal and academic tone suitable for a scientific review.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "tone_formal_academic_judge",
+        "args": {}
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G7",
+      "desc": "Prefer providing comprehensive background and context before delving into specifics.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "preference_comprehensive_background",
+        "args": {}
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "step3"
+    },
+    {
+      "cid": "G8",
+      "desc": "Support core claims with inline citations and include at least 14 citation markers across the full response.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "min_citation_markers",
+        "args": {
+          "min_count": 14
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "evidence"
+    },
+    {
+      "cid": "G9",
+      "desc": "Use at least 8 distinct cited sources in the response.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "min_distinct_citations",
+        "args": {
+          "min_unique": 8
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "evidence"
+    },
+    {
+      "cid": "G10",
+      "desc": "Keep a consistent citation style throughout the response (detected style: ref_id).",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "citation_style",
+        "args": {
+          "style": "ref_id"
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "evidence"
+    },
+    {
+      "cid": "G11",
+      "desc": "When using ref-id citations, only cite ref_ids present in the evidence set (for example [b12]).",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "citation_refs_from_allowed_set",
+        "args": {
+          "allowed_ref_ids": [
+            "b0",
+            "b1",
+            "b10",
+            "b11",
+            "b12",
+            "b13",
+            "b14",
+            "b15",
+            "b16",
+            "b17",
+            "b18",
+            "b19",
+            "b2",
+            "b20",
+            "b21",
+            "b22",
+            "b23",
+            "b24",
+            "b25",
+            "b26",
+            "b27",
+            "b28",
+            "b29",
+            "b3",
+            "b30",
+            "b31",
+            "b32",
+            "b33",
+            "b34",
+            "b35",
+            "b36",
+            "b37",
+            "b38",
+            "b39",
+            "b4",
+            "b40",
+            "b41",
+            "b42",
+            "b43",
+            "b44",
+            "b45",
+            "b46",
+            "b47",
+            "b48",
+            "b49",
+            "b5",
+            "b50",
+            "b51",
+            "b52",
+            "b53",
+            "b54",
+            "b55",
+            "b56",
+            "b57",
+            "b58",
+            "b59",
+            "b6",
+            "b60",
+            "b61",
+            "b62",
+            "b63",
+            "b64",
+            "b65",
+            "b66",
+            "b67",
+            "b68",
+            "b7",
+            "b8",
+            "b9"
+          ],
+          "min_unique": 8,
+          "max_out_of_set": 0
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "evidence"
+    },
+    {
+      "cid": "G12",
+      "desc": "Anchor the survey to core domain concepts and explicitly cover: Identification, Medical Image Segmentation Techniques, Functional Brain Connectivity Studies.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "must_include_keywords",
+        "args": {
+          "keywords": [
+            "Identification",
+            "Medical Image Segmentation Techniques",
+            "Functional Brain Connectivity Studies"
+          ]
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "step3_5_knowledge"
+    },
+    {
+      "cid": "G13",
+      "desc": "Ground key claims using high-impact sources from the evidence pool (prioritize seminal or highly cited works).",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "citation_refs_from_allowed_set",
+        "args": {
+          "allowed_ref_ids": [
+            "b30",
+            "b20",
+            "b27",
+            "b31",
+            "b10",
+            "b32",
+            "b7",
+            "b8",
+            "b35",
+            "b29",
+            "b68",
+            "b25"
+          ],
+          "min_unique": 3,
+          "max_out_of_set": 999
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "step3_5_knowledge"
+    },
+    {
+      "cid": "G14",
+      "desc": "Cover all cited evidence ids observed in the reference answer; expected distinct citation ids: 16.",
+      "scope": "global",
+      "verifier_spec": {
+        "check": "citation_refs_from_allowed_set",
+        "args": {
+          "allowed_ref_ids": [
+            "b0",
+            "b1",
+            "b2",
+            "b3",
+            "b4",
+            "b5",
+            "b6",
+            "b7",
+            "b8",
+            "b9",
+            "b10",
+            "b11",
+            "b12",
+            "b13",
+            "b14",
+            "b15"
+          ],
+          "min_unique": 16,
+          "max_out_of_set": 999
+        }
+      },
+      "priority_level": 2,
+      "trace_to": null,
+      "derived_from": "step3_5_knowledge"
+    }
+  ],
+  "block_specs": [
+    {
+      "block_id": "B1",
+      "intent": "Introduction",
+      "text_span": "## Introduction\n\nThe advancements in the field of neuroimaging particularly structural magnetic resonance imaging (MRI) had resulted in the availability of high-resolution three-dimensional (3D) imaging data of the human brain. Several large-population studies using MRI datasets have found different morphometric and volumetric changes in normal vs. various neurological conditions such as Alzheimer's disease, mild cognitive impairment, etc. 1,2 The study of different areas of the brain, cortical and subcortical regions and structures, changes in grey matter (GM), white matter (WM), hippocampus, thalamus, amygdala, etc., has found greater interest in neuroscience studies for research and clinical intervention. Medical image segmentation is used for addressing a wide range of such biomedical research problems. 3 The accurate segmentation of MRI images thus becomes a necessary prerequisite for the quantitative analysis of the study of neurological diseases including their diagnosis, progression, and treatment monitoring in a wide variety of neurological disorders such as Alzheimer's, dementia, focal epilepsy, multiple sclerosis, etc. 4 Apart from whole-brain segmentation into GM, WM, cerebrospinal fluid (CSF), etc. and parcellation of brain structures, several regions, and structures have received added focus on the account of their association with important cognitive functions. The hippocampus which is a part of the limbic system that is involved in learning and memory is one such important structure. The MRI can be used to monitor morphological changes that occur in the hippocampus in diseases such as Alzheimer's, schizophrenia, epilepsy, depression, etc. and can act as biomarkers for several brain disorders such as Alzheimer's disease, schizophrenia, epilepsy, etc. [5][6][7][8] The amygdala is another brain structure of the limbic system that is involved in emotion, learning, memory, attention, etc. It is also associated with negative emotions and fear. 9 The caudate nucleus and putamen also have importance in several neurological disorders and diseases such as Parkinson's disease, Huntington's disease, Alzheimer's disease, depression, schizophrenia, etc. [10][11][12][13] The manual segmentation is considered the \"gold standard\" for anatomical segmentation. It involves the demarcation of structure, grey and white matter along the anatomical boundaries for each layer of the region of interest (ROI) by experienced anatomic tracers 14 utilizing specific software tools. A single MRI scan can have up to hundreds of layers depending upon the scan resolution, and thus manual segmentation is a timeconsuming, subjective, laborious process and is not suitable for large-scale neuroimaging studies. 15,16 The automatic segmentation techniques attempt to address the above-discussed limitations associated with manual segmentation. The advancement in the algorithms and computation resources over the years has further helped the development of various segmentation techniques. Some of the hugely used publicly available software tools for neuroimaging studies that are used for the automatic segmentation of brain regions and structure are (a) FreeSurfer, (b) FMRIB Software Library (FSL), and (c) Statistical Parametric Mapping (SPM). The machine learning approaches based on CNN architecture are also being increasingly used for automated segmentation. [b0] [b1] [b2] [b3] [b4] [b5] [b6] [b7] [b8] [b9] [b10] [b11] [b12] [b13] [b14] [b15]\n\nThe remaining portion of the review will discuss the models for automatic segmentation techniques, publicly available neuroimaging tools, and emerging machine learning models for automatic segmentation and their comparison.",
+      "order_index": 0,
+      "is_alternate": false,
+      "origin_block": null
+    }
+  ],
+  "block_constraint_sets": [],
+  "selections": [],
+  "meta": {
+    "assembled_from": {
+      "step1": "seed_task",
+      "step2": "segmentation",
+      "step3": "global_constraints",
+      "step4": "block_constraints + block_logic",
+      "step5": "selections + augmented block_constraints"
+    },
+    "evidence": {
+      "provided": true,
+      "reference_count": 69,
+      "title": "A Review of Publicly Available Automatic Brain Segmentation Methodologies, Machine Learning Models, Recent Advancements, and Their Comparison",
+      "corpusId": "233650333"
+    },
+    "survey_mode": true,
+    "prompt_profile": "survey",
+    "knowledge_style": "abstract",
+    "explicit_reference_strategy": "in_prompt_guarded",
+    "generation_granularity": "whole",
+    "survey_block_mode": "heading",
+    "knowledge_constraints": {
+      "enabled": true,
+      "instruction_knowledge_style": "abstract",
+      "generation_granularity": "whole",
+      "core_keywords": [
+        "Identification",
+        "Medical Image Segmentation Techniques",
+        "Functional Brain Connectivity Studies",
+        "Brain Tumor Detection and Classification"
+      ],
+      "high_impact_ref_count": 12,
+      "blocks_with_knowledge_constraints": 0,
+      "cited_ref_count_from_answer": 16,
+      "cited_ref_ids_from_answer": [
+        "b0",
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5",
+        "b6",
+        "b7",
+        "b8",
+        "b9",
+        "b10",
+        "b11",
+        "b12",
+        "b13",
+        "b14",
+        "b15"
+      ],
+      "explicit_reference_list": [],
+      "cited_reference_catalog": {
+        "b0": {
+          "title": "Longitudinal pattern of regional brain volume change differentiates normal aging from MCI",
+          "doi": "10.1212/WNL.0b013e3181a82634",
+          "url": "https://www.semanticscholar.org/paper/df68603a78f12684ce3347849d92f08759574971",
+          "pdfUrl": "https://doi.org/10.1212/WNL.0b013e3181a82634",
+          "paperId": "df68603a78f12684ce3347849d92f08759574971",
+          "corpusId": "8451977",
+          "citationCount": 475,
+          "referenceCount": 39,
+          "fieldsOfStudy": [
+            "Psychology",
+            "Medicine"
+          ]
+        },
+        "b1": {
+          "title": "Longitudinal changes in individual BrainAGE in healthy aging, mild cognitive impairment, and Alzheimer's disease",
+          "doi": "10.1024/1662-9647/A000074",
+          "url": "https://www.semanticscholar.org/paper/6d324af5e51aea4755b3de3b0e1f7e65ca156ae2",
+          "pdfUrl": "https://doi.org/10.1024/1662-9647/A000074",
+          "paperId": "6d324af5e51aea4755b3de3b0e1f7e65ca156ae2",
+          "corpusId": "17157572",
+          "citationCount": 227,
+          "referenceCount": 55,
+          "fieldsOfStudy": [
+            "Psychology"
+          ]
+        },
+        "b2": {
+          "title": "Volumetric and morphometric analysis of pineal and pituitary glands of an Indian inedial subject",
+          "doi": "10.1159/000487067",
+          "url": "https://www.semanticscholar.org/paper/c7e61dec4b961c24234c5f05dd01df847a809343",
+          "pdfUrl": "https://doi.org/10.1159/000487067",
+          "paperId": "c7e61dec4b961c24234c5f05dd01df847a809343",
+          "corpusId": "81056501",
+          "citationCount": 7,
+          "referenceCount": 16,
+          "fieldsOfStudy": [
+            "Biology",
+            "Medicine"
+          ]
+        },
+        "b3": {
+          "title": "Clinical use of brain volumetry",
+          "doi": "10.1002/jmri.23671",
+          "url": "https://www.semanticscholar.org/paper/b7d610fcd4c8fa7b149e3f025ff961171ec02923",
+          "pdfUrl": "https://doi.org/10.1002/jmri.23671",
+          "paperId": "b7d610fcd4c8fa7b149e3f025ff961171ec02923",
+          "corpusId": "6928822",
+          "citationCount": 125,
+          "referenceCount": 140,
+          "fieldsOfStudy": [
+            "Medicine"
+          ]
+        },
+        "b4": {
+          "title": "Hippocampal alterations in children with temporal lobe epilepsy with or without a history of febrile convulsions: Evaluations with MR volumetry and proton MR spectroscopy",
+          "doi": "",
+          "url": "https://www.semanticscholar.org/paper/99e448c090022a5a09a4c913ab13f465aed548f8",
+          "pdfUrl": "https://www.semanticscholar.org/paper/99e448c090022a5a09a4c913ab13f465aed548f8",
+          "paperId": "99e448c090022a5a09a4c913ab13f465aed548f8",
+          "corpusId": "18548176",
+          "citationCount": 67,
+          "referenceCount": 40,
+          "fieldsOfStudy": [
+            "Medicine"
+          ]
+        },
+        "b5": {
+          "title": "3D comparison of hippocampal atrophy in amnestic mild cognitive impairment and Alzheimer's disease",
+          "doi": "10.1093/BRAIN/AWL274",
+          "url": "https://www.semanticscholar.org/paper/511c3394a1c96c74b5e03f42d3a96d7550700968",
+          "pdfUrl": "https://doi.org/10.1093/BRAIN/AWL274",
+          "paperId": "511c3394a1c96c74b5e03f42d3a96d7550700968",
+          "corpusId": "600965",
+          "citationCount": 257,
+          "referenceCount": 51,
+          "fieldsOfStudy": [
+            "Medicine"
+          ]
+        },
+        "b6": {
+          "title": "Hippocampus and amygdala volumes in schizophrenia and other psychoses in the Northern Finland 1966 birth cohort",
+          "doi": "10.1016/j.schres.2004.09.022",
+          "url": "https://www.semanticscholar.org/paper/03872ef15a1c24c699dace1f3a8f25190ab68f50",
+          "pdfUrl": "https://doi.org/10.1016/j.schres.2004.09.022",
+          "paperId": "03872ef15a1c24c699dace1f3a8f25190ab68f50",
+          "corpusId": "24866673",
+          "citationCount": 80,
+          "referenceCount": 33,
+          "fieldsOfStudy": [
+            "Medicine",
+            "Psychology"
+          ]
+        },
+        "b7": {
+          "title": "Hippocampal volume reduction in major depression",
+          "doi": "10.1176/AJP.157.1.115",
+          "url": "https://www.semanticscholar.org/paper/eccabfb80763edfa48c5f6ed0ec412e17f3a4781",
+          "pdfUrl": "https://doi.org/10.1176/AJP.157.1.115",
+          "paperId": "eccabfb80763edfa48c5f6ed0ec412e17f3a4781",
+          "corpusId": "39071403",
+          "citationCount": 1694,
+          "referenceCount": 15,
+          "fieldsOfStudy": [
+            "Psychology",
+            "Medicine"
+          ]
+        },
+        "b8": {
+          "title": "The amygdala and reward",
+          "doi": "10.1038/nrn875",
+          "url": "https://www.semanticscholar.org/paper/254d8c5427ea2a2e92648653683a7e9f81e135dd",
+          "pdfUrl": "https://doi.org/10.1038/nrn875",
+          "paperId": "254d8c5427ea2a2e92648653683a7e9f81e135dd",
+          "corpusId": "3344804",
+          "citationCount": 1220,
+          "referenceCount": 87,
+          "fieldsOfStudy": [
+            "Psychology",
+            "Medicine"
+          ]
+        },
+        "b9": {
+          "title": "Subcortical volumes differentiate major depressive disorder, bipolar disorder, and remitted major depressive disorder",
+          "doi": "10.1016/j.jpsychires.2015.06.002",
+          "url": "https://www.semanticscholar.org/paper/cb5c17cdb08c6332d349a9ddf84fb0b3139c54c6",
+          "pdfUrl": "https://doi.org/10.1016/j.jpsychires.2015.06.002",
+          "paperId": "cb5c17cdb08c6332d349a9ddf84fb0b3139c54c6",
+          "corpusId": "6987448",
+          "citationCount": 72,
+          "referenceCount": 65,
+          "fieldsOfStudy": [
+            "Psychology",
+            "Medicine"
+          ]
+        },
+        "b10": {
+          "title": "Huntington's disease",
+          "doi": "10.1212/WNL.34.8.1059",
+          "url": "https://www.semanticscholar.org/paper/3e7170560e3d31596036eb72e51037c88bc1b173",
+          "pdfUrl": "https://doi.org/10.1212/WNL.34.8.1059",
+          "paperId": "3e7170560e3d31596036eb72e51037c88bc1b173",
+          "corpusId": "1536080",
+          "citationCount": 2784,
+          "referenceCount": 92,
+          "fieldsOfStudy": [
+            "Medicine"
+          ]
+        },
+        "b11": {
+          "title": "Caudate, putamen, and globus pallidus volume in schizophrenia: A quantitative MRI study",
+          "doi": "10.1016/0925-4927(95)02729-H",
+          "url": "https://www.semanticscholar.org/paper/3da04f73e0d514fb2c1e6a24878fc4cf9538a44e",
+          "pdfUrl": "https://doi.org/10.1016/0925-4927(95)02729-H",
+          "paperId": "3da04f73e0d514fb2c1e6a24878fc4cf9538a44e",
+          "corpusId": "14142228",
+          "citationCount": 197,
+          "referenceCount": 54,
+          "fieldsOfStudy": [
+            "Medicine"
+          ]
+        },
+        "b12": {
+          "title": "Striatal shape in Parkinson's disease",
+          "doi": "10.1016/j.neurobiolaging.2013.05.017",
+          "url": "https://www.semanticscholar.org/paper/5dfb034cc0bbc63993bd9aba3b8e26873cc45472",
+          "pdfUrl": "https://doi.org/10.1016/j.neurobiolaging.2013.05.017",
+          "paperId": "5dfb034cc0bbc63993bd9aba3b8e26873cc45472",
+          "corpusId": "25532657",
+          "citationCount": 62,
+          "referenceCount": 58,
+          "fieldsOfStudy": [
+            "Psychology",
+            "Medicine"
+          ]
+        },
+        "b13": {
+          "title": "Parametric surface modeling and registration for comparison of manual and automated segmentation of the hippocampus",
+          "doi": "10.1002/hipo.20613",
+          "url": "https://www.semanticscholar.org/paper/090bc69ede50d874b9f634065687be96b6f12e1a",
+          "pdfUrl": "https://doi.org/10.1002/hipo.20613",
+          "paperId": "090bc69ede50d874b9f634065687be96b6f12e1a",
+          "corpusId": "6306738",
+          "citationCount": 41,
+          "referenceCount": 29,
+          "fieldsOfStudy": [
+            "Computer Science",
+            "Medicine"
+          ]
+        },
+        "b14": {
+          "title": "In vivo hippocampal measurement and memory: A comparison of manual tracing and automated segmentation in a large communitybased sample",
+          "doi": "10.1371/journal.pone.0005265",
+          "url": "https://www.semanticscholar.org/paper/e4082bedbe9e37cd48c25a128d7a6a1cdade91ad",
+          "pdfUrl": "https://doi.org/10.1371/journal.pone.0005265",
+          "paperId": "e4082bedbe9e37cd48c25a128d7a6a1cdade91ad",
+          "corpusId": "8910511",
+          "citationCount": 120,
+          "referenceCount": 40,
+          "fieldsOfStudy": [
+            "Biology",
+            "Medicine"
+          ]
+        },
+        "b15": {
+          "title": "Comparing manual and automatic segmentation of hippocampal volumes: Reliability and validity issues in younger and older brains",
+          "doi": "10.1002/hbm.22473",
+          "url": "https://www.semanticscholar.org/paper/fea6445ea234f08dc2c4858a21f9b66664e83911",
+          "pdfUrl": "https://doi.org/10.1002/hbm.22473",
+          "paperId": "fea6445ea234f08dc2c4858a21f9b66664e83911",
+          "corpusId": "15885672",
+          "citationCount": 169,
+          "referenceCount": 73,
+          "fieldsOfStudy": [
+            "Psychology",
+            "Medicine"
+          ]
+        }
+      }
+    }
+  }
+}

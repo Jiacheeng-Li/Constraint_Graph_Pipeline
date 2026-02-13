@@ -29,7 +29,7 @@ Dependencies
 import json
 import re
 import time
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from .utils.deepseek_client import call_chat_completions, DeepSeekError
 from .utils.parsing import extract_blocks
@@ -94,6 +94,11 @@ def _call_deepseek_segmentation(response_text: str) -> str:
 
 
 _BULLET_LINE_PATTERN = re.compile(r"^\s*(?:[-*•]+|\d+[\.\)]|[A-Za-z][\.\)])\s+")
+_HEADING_PATTERN = re.compile(r"^\s{0,3}(#{1,6})\s+(.+?)\s*$")
+_VISUAL_HEADING_PATTERN = re.compile(
+    r"^\s*(?:figure|fig\.?|table|image|chart|supplementary\s+(?:figure|fig\.?|table|image)|appendix\s+(?:figure|table))\b",
+    re.I,
+)
 
 
 def _split_paragraphs_with_bullet_groups(response_text: str) -> list[str]:
@@ -140,7 +145,149 @@ def _split_paragraphs_with_bullet_groups(response_text: str) -> list[str]:
     return paragraphs
 
 
-def segment_response(response_text: str) -> Dict[str, Any]:
+def _segment_by_markdown_headings(response_text: str) -> Dict[str, Any]:
+    """
+    Deterministically segment by markdown headings (survey-friendly path).
+    Each heading becomes one block; text span includes heading + body.
+    """
+    lines = response_text.splitlines()
+    blocks_raw: List[Dict[str, Any]] = []
+
+    current_heading = ""
+    current_lines: List[str] = []
+    preamble_lines: List[str] = []
+    dropping_visual_block = False
+
+    def _is_valid_heading_text(heading_text: str) -> bool:
+        text = (heading_text or "").strip()
+        if not text:
+            return False
+        if _VISUAL_HEADING_PATTERN.match(text):
+            return False
+        return bool(re.search(r"[A-Za-z0-9]", text))
+
+    def flush_block() -> None:
+        nonlocal current_heading, current_lines
+        if not current_heading:
+            current_lines = []
+            return
+        if not _is_valid_heading_text(current_heading):
+            current_heading = ""
+            current_lines = []
+            return
+        text_span = "\n".join(current_lines).strip()
+        if not text_span:
+            text_span = current_heading
+        blocks_raw.append(
+            {
+                "heading": current_heading,
+                "text_span": text_span,
+            }
+        )
+        current_heading = ""
+        current_lines = []
+
+    for line in lines:
+        m = _HEADING_PATTERN.match(line)
+        if m:
+            flush_block()
+            heading_text = m.group(2).strip()
+            if not _is_valid_heading_text(heading_text):
+                current_heading = ""
+                current_lines = []
+                dropping_visual_block = True
+                continue
+            dropping_visual_block = False
+            current_heading = heading_text
+            current_lines = [line]
+        else:
+            if current_heading:
+                current_lines.append(line)
+            elif dropping_visual_block:
+                continue
+            else:
+                preamble_lines.append(line)
+
+    flush_block()
+
+    preamble_text = "\n".join(preamble_lines).strip()
+    if preamble_text:
+        blocks_raw.insert(
+            0,
+            {
+                "heading": "Preamble",
+                "text_span": preamble_text,
+            },
+        )
+
+    if not blocks_raw:
+        return {}
+
+    blocks = []
+    order = []
+    for idx, item in enumerate(blocks_raw, start=1):
+        bid = f"B{idx}"
+        heading = item["heading"] or f"Section {idx}"
+        blocks.append(
+            {
+                "block_id": bid,
+                "intent": heading,
+                "text_span": item["text_span"],
+                "order_index": idx - 1,
+            }
+        )
+        order.append(bid)
+
+    return {"blocks": blocks, "order": order}
+
+
+def _segment_by_paragraph_blocks(response_text: str) -> Dict[str, Any]:
+    """
+    Deterministically segment by paragraphs.
+    Useful for intro-only section-mode where one heading contains multiple long paragraphs.
+    """
+    raw = response_text or ""
+    lines = raw.splitlines()
+    heading_hint = "Section"
+    body_start = 0
+    for idx, line in enumerate(lines):
+        m = _HEADING_PATTERN.match(line)
+        if m:
+            heading_text = (m.group(2) or "").strip()
+            if heading_text:
+                heading_hint = heading_text
+            body_start = idx + 1
+            break
+        if line.strip():
+            break
+
+    body_text = "\n".join(lines[body_start:]).strip()
+    paragraphs = _split_paragraphs_with_bullet_groups(body_text if body_text else raw)
+    if not paragraphs:
+        return {}
+
+    blocks = []
+    order = []
+    for i, para in enumerate(paragraphs, start=1):
+        bid = f"B{i}"
+        blocks.append(
+            {
+                "block_id": bid,
+                "intent": f"{heading_hint} / Part {i}",
+                "text_span": para,
+                "order_index": i - 1,
+            }
+        )
+        order.append(bid)
+    return {"blocks": blocks, "order": order}
+
+
+def segment_response(
+    response_text: str,
+    *,
+    survey_mode: bool = False,
+    survey_block_mode: str = "heading",
+) -> Dict[str, Any]:
     """
     Step2 主函数：
     输入：完整回答文本
@@ -151,6 +298,19 @@ def segment_response(response_text: str) -> Dict[str, Any]:
     2. 若多次尝试后仍然没有 blocks，则使用本地段落切分兜底。
     3. 最后补全缺失的 block_id / order_index / order。
     """
+
+    # 0) Survey mode: prefer deterministic segmentation.
+    if survey_mode:
+        survey_mode_norm = (survey_block_mode or "heading").strip().lower()
+        if survey_mode_norm == "paragraph":
+            para_seg = _segment_by_paragraph_blocks(response_text)
+            if para_seg.get("blocks"):
+                return para_seg
+        elif survey_mode_norm == "heading":
+            heading_seg = _segment_by_markdown_headings(response_text)
+            if heading_seg.get("blocks"):
+                return heading_seg
+        # survey_mode_norm == "llm" falls through to LLM segmentation path below.
 
     # 1) 先尝试通过 LLM + extract_blocks 获得分块
     max_attempts = 3

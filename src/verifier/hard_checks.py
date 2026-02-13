@@ -1,209 +1,245 @@
-
-
 """
-硬性（可程序化）约束校验函数集合。
-
-这些函数会被 `verifier_registry` 注册，通过 `verifier_spec` 调用。
-
-所有函数都应该保持一个统一的签名风格：
-    def fn(text: str, **kwargs) -> bool
-其中 text 是待检文本，kwargs 来自 verifier_spec["args"].
-
-示例 verifier_spec:
-{
-    "check": "min_word_count",
-    "args": {"min_words": 150}
-}
-
-然后 runtime 会调用:
-    min_word_count(text=resp, min_words=150)
-
-注意：
-- 这里的实现是启发式/启用简单规则，后续可以替换为更严格的实现。
-- 这些检查必须是“可重复、客观、可自动评分”的。
-
-本模块扩展了硬性约束的类型，参考 Crab 的 unified constraints，包括但不限于：
-格式要求、长度要求、关键词出现频次、角色人称限制、输出语言限制、禁止词、列表/小节数等。
+Hard verifier checks (deterministic / scriptable).
 """
 
 import re
-from typing import List, Optional, Dict
+from typing import List
 
 
+_CONTRACTION_RE = re.compile(
+    r"\b(?:"
+    r"don't|doesn't|didn't|can't|cannot|won't|wouldn't|shouldn't|couldn't|mustn't|"
+    r"i'm|i've|i'll|i'd|it's|it'd|it'll|that's|there's|we're|we've|we'll|we'd|"
+    r"they're|they've|they'll|they'd|you're|you've|you'll|you'd|isn't|aren't|wasn't|weren't|"
+    r"hasn't|haven't|hadn't"
+    r")\b",
+    re.I,
+)
+_EMOJI_RE = re.compile(r"[\U0001F300-\U0001FAFF\U00002700-\U000027BF]")
+_NUMERIC_CITE_RE = re.compile(r"\[\s*\d{1,4}(?:\s*[-,;]\s*\d{1,4})*\s*\]")
+_AUTHOR_YEAR_CITE_RE = re.compile(
+    r"\([A-Z][A-Za-z.\-]+(?:\s+et\s+al\.)?,\s*\d{4}[a-z]?\)"
+)
+_REF_ID_CITE_RE = re.compile(r"\[([A-Za-z][A-Za-z0-9_-]*\d+)\]")
 
-# ====== 基础统计辅助函数 ======
 
 def _count_words(text: str) -> int:
-    tokens = re.findall(r"\w+", text)
-    return len(tokens)
+    return len(re.findall(r"\w+", text))
+
 
 def _count_chars(text: str, strip_ws: bool = False) -> int:
     if strip_ws:
-        # 仅统计非空白字符
         return len(re.findall(r"\S", text))
     return len(text)
 
+
 def _count_keyword_occurrences(text: str, keyword: str) -> int:
-    # 非重叠出现次数，大小写忽略由调用方提前lower
     return len(re.findall(re.escape(keyword), text))
 
-def _contains_first_person(text: str) -> bool:
-    lowered = text.lower()
-    first_person_patterns = [r"\bI\b", r"\bme\b", r"\bmy\b", r"\bwe\b", r"\bour\b", r"\bus\b"]
-    for pat in first_person_patterns:
-        if re.search(pat.lower(), lowered):
-            return True
-    return False
+
+def _all_citation_markers(text: str) -> List[str]:
+    markers: List[str] = []
+    markers.extend(m.group(0) for m in _NUMERIC_CITE_RE.finditer(text))
+    markers.extend(m.group(0) for m in _AUTHOR_YEAR_CITE_RE.finditer(text))
+    markers.extend(m.group(0) for m in _REF_ID_CITE_RE.finditer(text))
+    return markers
 
 
+def _extract_ref_id_citations(text: str) -> List[str]:
+    return [m.group(1).strip().lower() for m in _REF_ID_CITE_RE.finditer(text)]
 
-# ====== 1. 语言 / 视角 / 语气类（可硬规则化的部分）======
+
 def is_english(text: str) -> bool:
-    """
-    判断文本是否主要为英文。
-    启发式：
-    - 统计 ASCII 字母字符数量 vs 非ASCII字符数量。
-    - 如果非ASCII字符很少（或没有），则视为英文。
-    - 如果有非ASCII字符，但ASCII字母数量至少是非ASCII的5倍，也视为英文。
-    """
     ascii_letters = re.findall(r"[A-Za-z]", text)
     non_ascii = re.findall(r"[^\x00-\x7F]", text)
     if not non_ascii:
         return True
     return len(ascii_letters) >= 5 * len(non_ascii)
 
+
 def forbid_first_person(text: str) -> bool:
-    """
-    要求避免第一人称主语（"I", "me", "my", "we", "our"）。
-    用于类似“保持第三人称客观叙述”的硬性限制。
-    返回 True 表示通过（即没有第一人称）。
-    """
-    first_person_patterns = [r"\bI\b", r"\bme\b", r"\bmy\b", r"\bwe\b", r"\bour\b", r"\bus\b"]
     lowered = text.lower()
+    first_person_patterns = [r"\bi\b", r"\bme\b", r"\bmy\b", r"\bwe\b", r"\bour\b", r"\bus\b"]
     for pat in first_person_patterns:
-        if re.search(pat.lower(), lowered):
+        if re.search(pat, lowered):
             return False
     return True
 
+
 def forbid_words(text: str, banned: List[str]) -> bool:
-    """
-    检查文本中是否出现禁用词/禁用表达（如攻击性词汇、侮辱性词汇、粗俗词汇等）。
-    返回 True 表示文本不包含这些词。
-    """
     lowered = text.lower()
     return all(bw.lower() not in lowered for bw in banned)
 
 
-# ====== 2. 长度 / 结构 / 列表格式 ======
-
 def min_word_count(text: str, min_words: int) -> bool:
     return _count_words(text) >= int(min_words)
 
+
 def max_word_count(text: str, max_words: int) -> bool:
     return _count_words(text) <= int(max_words)
+
+
+def word_count_between(text: str, min_words: int, max_words: int) -> bool:
+    wc = _count_words(text)
+    return int(min_words) <= wc <= int(max_words)
+
+
+def word_count_around(text: str, center: int, tolerance_pct: float = 0.15) -> bool:
+    wc = _count_words(text)
+    center_i = int(center)
+    tol = max(0.0, float(tolerance_pct))
+    lo = int(center_i * (1.0 - tol))
+    hi = int(center_i * (1.0 + tol))
+    return lo <= wc <= hi
+
 
 def min_char_count(text: str, min_chars: int, ignore_whitespace: bool = False) -> bool:
     if ignore_whitespace:
         return _count_chars(text, strip_ws=True) >= int(min_chars)
     return _count_chars(text, strip_ws=False) >= int(min_chars)
 
+
 def must_list_n_subpoints(text: str, n: int) -> bool:
-    """
-    至少出现 n 个要点/条目式列举（-, *, 1., 2) ...）。
-    适用于“列出不少于N条建议 / 风险 / 改进点”。
-    """
     bullet_pattern = re.compile(r"(^\s*(?:[-*]|\d+[\.)])\s+.+)", re.MULTILINE)
     bullets = bullet_pattern.findall(text)
     return len(bullets) >= int(n)
 
+
 def has_sections(text: str, sections: List[str]) -> bool:
-    """
-    要求输出显式包含特定小节/标题提示（Opening / Body / Conclusion 等）。
-    我们用子串匹配作为启发式。
-    """
     lowered = text.lower()
     return all(sec.lower() in lowered for sec in sections)
 
+
+def require_sections(text: str, sections: List[str]) -> bool:
+    return has_sections(text=text, sections=sections)
+
+
 def min_numbered_items(text: str, n: int) -> bool:
-    """
-    要求出现至少 n 个编号点（1.,2.,3. 或 1) 2) 3)）。
-    用法类似“给我三个行动建议并编号”。
-    """
     pattern = re.compile(r"(^\s*\d+[\.)]\s+.+)", re.MULTILINE)
     items = pattern.findall(text)
     return len(items) >= int(n)
 
+
 def min_paragraphs(text: str, min_paras: int) -> bool:
-    """
-    要求文本至少包含 min_paras 个自然段（空行分隔）。
-    """
     paragraphs = [p for p in re.split(r"\n\s*\n+", text.strip()) if p.strip()]
     return len(paragraphs) >= int(min_paras)
 
+
+def heading_levels_only(text: str, levels: List[int]) -> bool:
+    allowed = {int(x) for x in levels}
+    found = [
+        len(m.group(1))
+        for m in re.finditer(r"^(#{1,6})\s+\S", text, flags=re.MULTILINE)
+    ]
+    if not found:
+        return False
+    return all(level in allowed for level in found)
+
+
 def bullet_style_consistent(text: str, marker: str) -> bool:
-    """
-    要求所有项目符号行使用相同的 marker（'-' 或 '*'）。
-    """
     bullets = re.findall(r"^\s*([-*])\s+.+", text, flags=re.MULTILINE)
     if not bullets:
         return False
     return all(b == marker for b in bullets)
 
+
 def decimal_places(text: str, places: int) -> bool:
-    """
-    要求出现的所有小数位数一致且等于 places。
-    """
     matches = re.findall(r"\b\d+\.(\d+)\b", text)
     if not matches:
         return False
     return all(len(m) == int(places) for m in matches)
 
 
-# ====== 3. 关键词出现频率 / 主题覆盖 ======
+def date_format(text: str, style: str) -> bool:
+    iso_matches = re.findall(r"\b\d{4}-\d{2}-\d{2}\b", text)
+    long_matches = re.findall(
+        r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},\s+\d{4}\b",
+        text,
+    )
+    if style == "yyyy-mm-dd":
+        return bool(iso_matches) and not bool(long_matches)
+    if style == "mon dd, yyyy":
+        return bool(long_matches) and not bool(iso_matches)
+    return False
+
 
 def must_include_keywords(text: str, keywords: List[str]) -> bool:
     lowered = text.lower()
     return all(kw.lower() in lowered for kw in keywords)
 
+
 def keyword_min_frequency(text: str, keyword: str, min_count: int) -> bool:
-    """
-    检查某个关键术语是否至少出现 min_count 次。
-    用于类似 Crab 里那种“必须多次强调某核心术语（如 space race / space exploration）”的硬性约束。
-    """
     return _count_keyword_occurrences(text.lower(), keyword.lower()) >= int(min_count)
 
+
 def must_cover_topics(text: str, topics: List[str]) -> bool:
-    """
-    要求文本中必须分别提及 topics 列表里的所有主题。
-    例如 ["geopolitical impact", "economic competition", "technological leadership"].
-    这类似 Crab 里“覆盖关键维度/角度”的显式检查。
-    """
     lowered = text.lower()
     return all(topic.lower() in lowered for topic in topics)
 
 
-# ====== 4. 输出语言 / 输出形式 ======
-
 def require_language(text: str, lang: str) -> bool:
-    """
-    粗暴语言检测：
-    - lang == "en" 时，复用 is_english
-    - lang == "zh" 时，要求至少存在一定数量的中文字符
-    - 其他语言后续可以扩展
-    """
     if lang == "en":
         return is_english(text)
     if lang == "zh":
-        # 启发式：是否至少包含10个汉字（[一-鿿]）
         zh_chars = re.findall(r"[\u4e00-\u9fff]", text)
         return len(zh_chars) >= 10
-    # 默认：先视为通过
     return True
 
+
 def must_end_with_template(text: str, template_suffix: str) -> bool:
-    """
-    检查文本是否以特定模板式结尾。
-    用于诸如“最后一句必须是某种总结性声明/安全免责声明/建议性落句”。
-    返回 True 表示结尾满足要求。
-    """
     return text.strip().lower().endswith(template_suffix.strip().lower())
+
+
+def forbid_emojis(text: str) -> bool:
+    return not bool(_EMOJI_RE.search(text))
+
+
+def avoid_contractions(text: str) -> bool:
+    return not bool(_CONTRACTION_RE.search(text))
+
+
+def forbid_symbol(text: str, symbol: str) -> bool:
+    return symbol not in text
+
+
+def citation_style(text: str, style: str) -> bool:
+    numeric = bool(_NUMERIC_CITE_RE.search(text))
+    author_year = bool(_AUTHOR_YEAR_CITE_RE.search(text))
+    ref_id = bool(_REF_ID_CITE_RE.search(text))
+
+    if style == "numeric":
+        return numeric and not author_year and not ref_id
+    if style == "author_year":
+        return author_year and not numeric and not ref_id
+    if style == "ref_id":
+        return ref_id
+    return False
+
+
+def min_citation_markers(text: str, min_count: int) -> bool:
+    return len(_all_citation_markers(text)) >= int(min_count)
+
+
+def min_distinct_citations(text: str, min_unique: int) -> bool:
+    distinct = {m.lower() for m in _all_citation_markers(text)}
+    return len(distinct) >= int(min_unique)
+
+
+def citation_refs_from_allowed_set(
+    text: str,
+    allowed_ref_ids: List[str],
+    min_unique: int = 1,
+    max_out_of_set: int = 0,
+) -> bool:
+    allowed = {x.strip().lower() for x in allowed_ref_ids if x and str(x).strip()}
+    if not allowed:
+        return False
+
+    found = _extract_ref_id_citations(text)
+    if not found:
+        return False
+
+    found_set = set(found)
+    in_set = {x for x in found_set if x in allowed}
+    out_of_set = {x for x in found_set if x not in allowed}
+    return len(in_set) >= int(min_unique) and len(out_of_set) <= int(max_out_of_set)

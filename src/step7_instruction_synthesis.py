@@ -289,29 +289,122 @@ def _mk_machine_prompt(seed_task: str,
     """
 
     lines: List[str] = []
+    survey_profile = bool(graph.meta.get("prompt_profile") == "survey")
+    generation_granularity = str(graph.meta.get("generation_granularity") or "section").strip().lower()
+    knowledge_meta = graph.meta.get("knowledge_constraints", {}) if isinstance(graph.meta, dict) else {}
+    survey_title = ""
+    if isinstance(graph.meta, dict):
+        evidence_meta = graph.meta.get("evidence", {})
+        if isinstance(evidence_meta, dict):
+            survey_title = str(evidence_meta.get("title", "")).strip()
 
-    lines.append("SYSTEM INSTRUCTIONS:")
+    lines.append("SURVEY GENERATION INSTRUCTIONS:" if survey_profile else "SYSTEM INSTRUCTIONS:")
     lines.append("")
 
     mission = seed_task.strip()
-    lines.append("1. MISSION BRIEF & DELIVERABLE")
+    heading_1 = "1. SURVEY TASK BRIEF" if survey_profile else "1. MISSION BRIEF & DELIVERABLE"
+    heading_2 = "2. SURVEY-LEVEL CONSTRAINTS" if survey_profile else "2. NON-NEGOTIABLE GLOBAL RULES"
+    if survey_profile and generation_granularity == "whole":
+        heading_3 = "3. INTRODUCTION WRITING PLAN"
+    else:
+        heading_3 = "3. SECTION-BY-SECTION SYNTHESIS PLAN" if survey_profile else "3. STRUCTURED RESPONSE BLUEPRINT"
+    heading_4 = "4. DEFAULT BRANCH ASSUMPTIONS" if survey_profile else "4. CURRENT CONDITION ASSUMPTION"
+
+    def _priority_level(item: Dict[str, Any]) -> int:
+        level = item.get("priority_level")
+        return level if level in (1, 2) else 2
+
+    def _is_hidden_survey_citation_rule(item: Dict[str, Any]) -> bool:
+        if not survey_profile:
+            return False
+        verifier = item.get("verifier") or {}
+        check = str(verifier.get("check") or "").strip()
+        return check == "citation_refs_from_allowed_set"
+
+    def _visible_prompt_obligations(obligations: List[Dict[str, Any]], *, scope: str) -> Tuple[List[Dict[str, Any]], int]:
+        visible: List[Dict[str, Any]] = []
+        hidden_count = 0
+        for item in obligations:
+            if _is_hidden_survey_citation_rule(item):
+                hidden_count += 1
+                continue
+            visible.append(item)
+        if survey_profile and hidden_count > 0:
+            desc = (
+                "Use evidence-grounded citations across the report and ensure the required evidence coverage."
+                if scope == "global"
+                else "Use section-relevant evidence citations and maintain coverage of the required evidence set."
+            )
+            visible.append({
+                "cid": "",
+                "desc": desc,
+                "verifier": {},
+                "priority_level": 2,
+            })
+        return visible, hidden_count
+
+    lines.append(heading_1)
     if mission:
-        lines.append(f"   - Primary directive: {mission}")
+        if survey_profile:
+            lines.append(f"   - Core survey objective: {mission}")
+        else:
+            lines.append(f"   - Primary directive: {mission}")
     else:
         lines.append("   - Follow the staged plan and constraints below to construct the final answer.")
+    if survey_profile:
+        lines.append("   - Deliverable type: a complete survey report with section-level synthesis and citation grounding.")
+        if survey_title:
+            lines.append(f"   - Source survey topic: {survey_title}")
     if graph.meta.get("turn_notice"):
         lines.append("   - Only constraints in the current graph are active.")
     lines.append("")
 
-    lines.append("2. NON-NEGOTIABLE GLOBAL RULES")
+    lines.append(heading_2)
     if global_rules:
-        lines.append("   Respect every rule simultaneously across the full response:")
-        for idx, rule in enumerate(global_rules, start=1):
+        visible_global_rules, hidden_global_citation_rules = _visible_prompt_obligations(
+            global_rules,
+            scope="global",
+        )
+        if survey_profile:
+            lines.append("   Respect every survey-level rule simultaneously across the full report:")
+        else:
+            lines.append("   Respect every rule simultaneously across the full response:")
+        for idx, rule in enumerate(visible_global_rules, start=1):
             desc = (rule.get("desc") or "").strip()
             if desc:
                 lines.append(f"   {idx}. {desc}")
     else:
         lines.append("   - No additional global constraints were supplied.")
+    if survey_profile and isinstance(knowledge_meta, dict) and knowledge_meta.get("enabled"):
+        core_kws = knowledge_meta.get("core_keywords") or []
+        knowledge_style = str(knowledge_meta.get("instruction_knowledge_style") or "abstract").strip().lower()
+        if knowledge_style == "explicit":
+            explicit_refs = knowledge_meta.get("explicit_reference_list") or []
+            if explicit_refs:
+                lines.append("   - Required evidence references (cite by ref_id where applicable):")
+                for item in explicit_refs:
+                    rid = str(item.get("ref_id") or "").strip()
+                    title = str(item.get("title") or "").strip() or "(untitled)"
+                    url = str(item.get("url") or "").strip()
+                    if rid and url:
+                        lines.append(f"     • [{rid}] {title} | {url}")
+                    elif rid:
+                        lines.append(f"     • [{rid}] {title}")
+                    elif url:
+                        lines.append(f"     • {title} | {url}")
+                    else:
+                        lines.append(f"     • {title}")
+        else:
+            if core_kws:
+                lines.append(
+                    "   - Build the introduction around these themes and synthesize relevant literature: "
+                    + ", ".join(str(x) for x in core_kws)
+                    + "."
+                )
+            else:
+                lines.append(
+                    "   - Build the introduction around topic-relevant themes and synthesize related literature."
+                )
     lines.append("")
 
     selection_map: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
@@ -320,12 +413,15 @@ def _mk_machine_prompt(seed_task: str,
 
     block_label_lookup = {spec.block_id: spec.intent for spec in graph.block_specs}
 
-    lines.append("3. STRUCTURED RESPONSE BLUEPRINT")
-    lines.append("   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.")
-
-    def _priority_level(item: Dict[str, Any]) -> int:
-        level = item.get("priority_level")
-        return level if level in (1, 2) else 2
+    lines.append(heading_3)
+    if survey_profile and generation_granularity == "whole":
+        lines.append(
+            "   Write one coherent introduction with clear paragraph flow (background -> motivation -> key methods landscape -> transition)."
+        )
+    elif survey_profile:
+        lines.append("   Follow the original survey section flow; each section should synthesize evidence rather than isolated claims.")
+    else:
+        lines.append("   Work chronologically through each stage. Tasks must already be described with the condition that governs when they apply.")
 
     def _append_requirements(target_list: List[str],
                              indent: str,
@@ -383,9 +479,11 @@ def _mk_machine_prompt(seed_task: str,
         target_list = target if target is not None else lines
         for order, block_id in enumerate(block_ids, start=1):
             label = block_label_lookup.get(block_id, block_id)
-            obligations = grouped.get(block_id, [])
+            obligations_raw = grouped.get(block_id, [])
+            obligations, _ = _visible_prompt_obligations(obligations_raw, scope="local")
             if show_steps:
-                target_list.append(f"{indent}- Step {order}: {label}")
+                step_word = "Section" if survey_profile else "Step"
+                target_list.append(f"{indent}- {step_word} {order}: {label}")
                 _append_requirements(
                     target_list,
                     indent=indent + "    ",
@@ -407,28 +505,38 @@ def _mk_machine_prompt(seed_task: str,
         block_id = blk["block_id"]
         role = blk["role"] or block_id
         logic_type = (blk["logic_type"] or "AND").lower()
-        logic_hint = "Parallel coverage: hit every bullet for this stage." \
-            if not logic_type.startswith("sub") else \
-            "Sequential micro-steps: address bullets in a flowing order."
+        if survey_profile:
+            logic_hint = "Synthesize this section's key points with coherent literature context." \
+                if not logic_type.startswith("sub") else \
+                "Present this section as an ordered synthesis pipeline (problem -> evidence -> takeaway)."
+        else:
+            logic_hint = "Parallel coverage: hit every bullet for this stage." \
+                if not logic_type.startswith("sub") else \
+                "Sequential micro-steps: address bullets in a flowing order."
         reqs = blk["requirements"]
+        visible_reqs, _ = _visible_prompt_obligations(reqs, scope="local")
         stage_selections = selection_map.get(block_id, [])
 
         snippet: List[str] = []
-        snippet.append(f"{indent}- Step {step_no}: {role}")
+        step_word = "Section" if survey_profile else "Step"
+        snippet.append(f"{indent}- {step_word} {step_no}: {role}")
         snippet.append(f"{indent}    Logic cue: {logic_hint}")
         body_indent = indent + "    "
 
         if not stage_selections:
-            if reqs:
+            if visible_reqs:
                 snippet.append(f"{body_indent}Duties:")
                 _append_requirements(
                     snippet,
                     indent=body_indent + "  ",
-                    obligations=reqs,
+                    obligations=visible_reqs,
                     default_msg="Follow the intent of this stage even if no explicit bullet exists.",
                 )
             else:
-                snippet.append(f"{body_indent}Duties: Follow the intent of this stage even if no explicit bullet exists.")
+                if survey_profile:
+                    snippet.append(f"{body_indent}Duties: Maintain survey-style synthesis aligned with this section heading.")
+                else:
+                    snippet.append(f"{body_indent}Duties: Follow the intent of this stage even if no explicit bullet exists.")
             return snippet, block_id
 
         for sel in stage_selections:
@@ -488,26 +596,39 @@ def _mk_machine_prompt(seed_task: str,
             continue
         role = blk["role"] or f"Stage {idx}"
         logic_type = (blk["logic_type"] or "AND").lower()
-        logic_hint = "Parallel coverage: hit every bullet for this stage." \
-            if not logic_type.startswith("sub") else \
-            "Sequential micro-steps: address bullets in a flowing order."
+        if survey_profile:
+            logic_hint = "Synthesize this section's key points with coherent literature context." \
+                if not logic_type.startswith("sub") else \
+                "Present this section as an ordered synthesis pipeline (problem -> evidence -> takeaway)."
+        else:
+            logic_hint = "Parallel coverage: hit every bullet for this stage." \
+                if not logic_type.startswith("sub") else \
+                "Sequential micro-steps: address bullets in a flowing order."
         reqs = blk["requirements"]
+        visible_reqs, _ = _visible_prompt_obligations(reqs, scope="local")
 
         lines.append("")
-        lines.append(f"   Stage {idx} - {role}")
+        lines.append(f"   {'Section' if survey_profile else 'Stage'} {idx} - {role}")
         lines.append(f"      Logic cue: {logic_hint}")
         stage_selections = selection_map.get(stage_id, [])
         if not stage_selections:
-            if reqs:
+            if visible_reqs:
                 lines.append("      Timeline duties:")
                 _append_requirements(
                     lines,
                     indent="        ",
-                    obligations=reqs,
-                    default_msg="Follow the intent of this stage even if no explicit bullet exists.",
+                    obligations=visible_reqs,
+                    default_msg=(
+                        "Maintain survey-style synthesis aligned with this section heading."
+                        if survey_profile
+                        else "Follow the intent of this stage even if no explicit bullet exists."
+                    ),
                 )
             else:
-                lines.append("      Timeline duties: Follow the intent of this stage even if no explicit bullet exists.")
+                if survey_profile:
+                    lines.append("      Timeline duties: Maintain survey-style synthesis aligned with this section heading.")
+                else:
+                    lines.append("      Timeline duties: Follow the intent of this stage even if no explicit bullet exists.")
             consumed_blocks.add(stage_id)
             continue
 
@@ -550,8 +671,11 @@ def _mk_machine_prompt(seed_task: str,
     lines.append("")
 
     if selections_view:
-        lines.append("4. CURRENT CONDITION ASSUMPTION")
-        lines.append("   Unless the evaluator states otherwise, assume each trigger below is currently FALSE.")
+        lines.append(heading_4)
+        if survey_profile:
+            lines.append("   Unless the evaluator states otherwise, treat each branch trigger below as FALSE by default.")
+        else:
+            lines.append("   Unless the evaluator states otherwise, assume each trigger below is currently FALSE.")
         for sel in selections_view:
             cond = (sel.get("condition") or "").strip()
             stage_label = block_label_lookup.get(sel["trace_to"], sel["trace_to"])

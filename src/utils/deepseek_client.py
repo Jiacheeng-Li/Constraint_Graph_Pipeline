@@ -7,7 +7,7 @@ import requests
 
 DEFAULT_ENDPOINT = os.getenv("DEEPSEEK_ENDPOINT", "https://api.deepseek.com/v1/chat/completions")
 DEFAULT_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
-DEFAULT_API_KEY = os.getenv("DEEPSEEK_API_KEY", "sk-dd6086d7013f4793933893dcf72d17cb")
+DEFAULT_API_KEY = os.getenv("DEEPSEEK_API_KEY", "sk-dbb4d81266e34933896235c07d3ad543")
 
 LLM_CALL_EVENTS: List[Dict[str, Any]] = []
 
@@ -104,4 +104,3 @@ def call_chat_completions(
         error=str(last_err) if last_err else "Unknown error",
     )
     raise DeepSeekError(str(last_err) if last_err else "Unknown DeepSeek error")
-

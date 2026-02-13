@@ -47,6 +47,7 @@ def _register_builtin() -> None:
 
     _REGISTRY["must_list_n_subpoints"] = hard_checks.must_list_n_subpoints
     _REGISTRY["has_sections"] = hard_checks.has_sections
+    _REGISTRY["require_sections"] = hard_checks.require_sections
     _REGISTRY["min_numbered_items"] = hard_checks.min_numbered_items
 
     _REGISTRY["must_include_keywords"] = hard_checks.must_include_keywords
@@ -77,6 +78,9 @@ def _register_builtin() -> None:
 
     # Citations
     _REGISTRY["citation_style"] = hard_checks.citation_style
+    _REGISTRY["min_citation_markers"] = hard_checks.min_citation_markers
+    _REGISTRY["min_distinct_citations"] = hard_checks.min_distinct_citations
+    _REGISTRY["citation_refs_from_allowed_set"] = hard_checks.citation_refs_from_allowed_set
 
     # 软性规则（soft_checks）——语气、态度、立场等需要语义判断的部分。
     _REGISTRY["tone_neutral_llm_judge"] = soft_checks.tone_neutral_llm_judge

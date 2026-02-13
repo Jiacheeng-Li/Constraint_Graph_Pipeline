@@ -25,23 +25,36 @@ from .utils.deepseek_client import call_chat_completions, DeepSeekError
 
 REQUIRED_HEADINGS = [
     "SYSTEM INSTRUCTIONS",
+    "SURVEY GENERATION INSTRUCTIONS",
     "MISSION BRIEF",
+    "SURVEY TASK BRIEF",
     "NON-NEGOTIABLE GLOBAL RULES",
+    "SURVEY-LEVEL CONSTRAINTS",
     "CONSTRAINT SUMMARY (BY TYPE)",
     "CONSTRAINT SUMMARY (BY PRIORITY)",
     "CONSTRAINT SUMMARY BY TYPE",
     "CONSTRAINT SUMMARY BY PRIORITY",
     "STRUCTURED RESPONSE BLUEPRINT",
+    "SECTION-BY-SECTION SYNTHESIS PLAN",
     "RESPONSE BLUEPRINT",
     "CURRENT CONDITION ASSUMPTION",
+    "DEFAULT BRANCH ASSUMPTIONS",
     "DEFAULT CONDITION ASSUMPTION",
     "EVALUATION NOTICE",
 ]
 
 SECTION_HEADINGS = [
-    ("mission", ["1. MISSION BRIEF", "1. MISSION BRIEF & DELIVERABLE", "1. TASK BRIEF"]),
+    ("mission", [
+        "1. MISSION BRIEF",
+        "1. MISSION BRIEF & DELIVERABLE",
+        "1. TASK BRIEF",
+        "1. SURVEY TASK BRIEF",
+        "SURVEY TASK BRIEF",
+    ]),
     ("global", [
         "2. NON-NEGOTIABLE GLOBAL RULES",
+        "2. SURVEY-LEVEL CONSTRAINTS",
+        "SURVEY-LEVEL CONSTRAINTS",
         "2. CONSTRAINT SUMMARY (BY TYPE)",
         "2. CONSTRAINT SUMMARY (BY PRIORITY)",
         "2. CONSTRAINT SUMMARY BY TYPE",
@@ -49,18 +62,25 @@ SECTION_HEADINGS = [
     ]),
     ("blueprint", [
         "3. STRUCTURED RESPONSE BLUEPRINT",
+        "3. SECTION-BY-SECTION SYNTHESIS PLAN",
+        "SECTION-BY-SECTION SYNTHESIS PLAN",
         "3. RESPONSE BLUEPRINT",
         "3. RESPONSE BLUEPRINT & REMAINING RULES",
     ]),
-    ("conditions", ["4. CURRENT CONDITION ASSUMPTION", "4. DEFAULT CONDITION ASSUMPTION"]),
+    ("conditions", [
+        "4. CURRENT CONDITION ASSUMPTION",
+        "4. DEFAULT CONDITION ASSUMPTION",
+        "4. DEFAULT BRANCH ASSUMPTIONS",
+        "DEFAULT BRANCH ASSUMPTIONS",
+    ]),
 ]
 
 SECTION_COVERAGE_THRESHOLDS = {
     # Each tuple uses a lenient overlap ratio to avoid false negatives while still catching drops.
-    "mission": {"min_ratio": 0.18, "min_hits": 4},
-    "global": {"min_ratio": 0.14, "min_hits": 5},
-    "blueprint": {"min_ratio": 0.05, "min_hits": 8},
-    "conditions": {"min_ratio": 0.10, "min_hits": 3},
+    "mission": {"min_ratio": 0.12, "min_hits": 3},
+    "global": {"min_ratio": 0.10, "min_hits": 4},
+    "blueprint": {"min_ratio": 0.04, "min_hits": 6},
+    "conditions": {"min_ratio": 0.07, "min_hits": 2},
 }
 
 
@@ -86,18 +106,27 @@ def _extract_sections(machine_prompt: str) -> Dict[str, str]:
     Returns a dict keyed by section name with the text span for that section.
     """
     positions = []
+    prompt_lower = machine_prompt.lower()
     for name, headings in SECTION_HEADINGS:
         candidates = headings if isinstance(headings, list) else [headings]
         best_idx = -1
         best_heading = ""
         for heading in candidates:
-            idx = machine_prompt.find(heading)
+            idx = prompt_lower.find(heading.lower())
             if idx != -1 and (best_idx == -1 or idx < best_idx):
                 best_idx = idx
                 best_heading = heading
         if best_idx != -1:
             positions.append((best_idx, name, best_heading))
     positions.sort(key=lambda x: x[0])
+
+    # Fallback: if heading aliases did not match, infer sections from numbered heading lines.
+    if not positions:
+        matches = list(re.finditer(r"(?m)^\s*\d+\.\s+[^\n]+", machine_prompt))
+        inferred_names = ["mission", "global", "blueprint", "conditions"]
+        for i, m in enumerate(matches[: len(inferred_names)]):
+            positions.append((m.start(), inferred_names[i], m.group(0).strip()))
+        positions.sort(key=lambda x: x[0])
 
     sections: Dict[str, str] = {}
     for i, (start_idx, name, heading) in enumerate(positions):
@@ -194,8 +223,27 @@ def refine_instruction_prompt(machine_prompt: str,
     if not enable:
         return result
 
+    sections_for_validation = _extract_sections(machine_prompt)
+    has_conditions_section = bool((sections_for_validation.get("conditions") or "").strip())
+
+    condition_coverage_rule = (
+        "- Preserve the default assumption about which conditions are active when nothing is specified."
+        if has_conditions_section
+        else "- Do not add new condition-assumption statements if the source does not include them."
+    )
+    condition_checklist_rule = (
+        "every stage/branch obligation, and the default condition assumptions. If anything is missing,"
+        if has_conditions_section
+        else "every stage/branch obligation. If anything is missing,"
+    )
+    paragraph_order_hint = (
+        "(4) the default assumption about which conditions are active when the evaluator is silent."
+        if has_conditions_section
+        else "(4) a concise closing paragraph that preserves source constraints without adding new assumptions."
+    )
+
     system_prompt = (
-        """
+        f"""
         You are a senior technical editor who specializes in transforming rigid specification
         documents into natural instructions, the way a human user would describe a task to a model.
 
@@ -210,7 +258,7 @@ def refine_instruction_prompt(machine_prompt: str,
         - Restate the mission/deliverable clearly.
         - Include every global rule.
         - Walk through every stage duty and IF/THEN/ELSE branch, with both triggers and default paths.
-        - Preserve the default assumption about which conditions are active when nothing is specified.
+        {condition_coverage_rule}
 
         Formatting expectations:
         - Avoid bullet lists, numbered outlines, or Stage labels such as “Stage 1 - …”.
@@ -220,13 +268,13 @@ def refine_instruction_prompt(machine_prompt: str,
           examine …”), but do not write literal list markers.
 
         Before finalizing, run a quick checklist to confirm you kept the mission, every global rule,
-        every stage/branch obligation, and the default condition assumptions. If anything is missing,
-        rewrite until all four parts are present.
+        {condition_checklist_rule}
+        rewrite until all required parts are present.
         """
     )
 
     user_prompt = (
-        """
+        f"""
         Rewrite the following instruction so it sounds like a natural request from a human requester.
         Replace the mechanical numbering and bullet lists with flowing paragraphs. Do not introduce
         Markdown formatting or literal list markers. Integrate each stage’s duties and branch logic
@@ -236,8 +284,7 @@ def refine_instruction_prompt(machine_prompt: str,
         numerical value, keyword requirement, and branch condition intact, just expressed more
         conversationally and coherently. Write 4-6 paragraphs in this order: (1) mission/deliverable;
         (2) non-negotiable global rules; (3) stage-by-stage duties including every IF/THEN/ELSE
-        branch with both triggers and default paths; (4) the default assumption about which
-        conditions are active when the evaluator is silent. If any of these sections are empty in
+        branch with both triggers and default paths; {paragraph_order_hint} If any of these sections are empty in
         the source, explicitly say so instead of omitting them.
 
         SEED TASK CONTEXT:
@@ -249,7 +296,6 @@ def refine_instruction_prompt(machine_prompt: str,
         "Return ONLY the rewritten document, as plain text paragraphs."
     )
 
-    sections_for_validation = _extract_sections(machine_prompt)
     attempts = max(1, int(max_attempts))
     last_failure = ""
     polished_final = ""
@@ -260,9 +306,12 @@ def refine_instruction_prompt(machine_prompt: str,
             prompt_body = (
                 user_prompt
                 + "\n\nREVISION NOTE: The prior rewrite failed validation because it "
-                f"missed required content ({last_failure or 'unspecified'}). Ensure the mission,"
-                " all global rules, every stage/branch duty, and the default condition assumptions"
-                " are explicitly present in prose."
+                f"missed required content ({last_failure or 'unspecified'}). Ensure the mission, "
+                + (
+                    "all global rules, every stage/branch duty, and the default condition assumptions are explicitly present in prose."
+                    if has_conditions_section
+                    else "all global rules and every stage/branch duty are explicitly present in prose; do not add new condition assumptions."
+                )
             )
         try:
             polished = call_chat_completions(

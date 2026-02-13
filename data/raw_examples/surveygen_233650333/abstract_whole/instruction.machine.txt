@@ -1,0 +1,29 @@
+SURVEY GENERATION INSTRUCTIONS:
+
+1. SURVEY TASK BRIEF
+   - Core survey objective: Write a rigorous Introduction section for a survey on publicly available automatic brain segmentation methodologies.
+   - Deliverable type: a complete survey report with section-level synthesis and citation grounding.
+   - Source survey topic: A Review of Publicly Available Automatic Brain Segmentation Methodologies, Machine Learning Models, Recent Advancements, and Their Comparison
+
+2. SURVEY-LEVEL CONSTRAINTS
+   Respect every survey-level rule simultaneously across the full report:
+   1. Use bracketed numeric references, such as [3].
+   2. Use English as the primary language for the answer.
+   3. Write a minimum of 3 paragraphs.
+   4. Incorporate the keywords exactly as listed: "segmentation", "brain", "alzheimer's".
+   5. Prefer citing specific examples and applications to illustrate general points.
+   6. Prefer a formal and academic tone suitable for a scientific review.
+   7. Prefer providing comprehensive background and context before delving into specifics.
+   8. Support core claims with inline citations and include at least 14 citation markers across the full response.
+   9. Use at least 8 distinct cited sources in the response.
+   10. Keep a consistent citation style throughout the response (detected style: ref_id).
+   11. Anchor the survey to core domain concepts and explicitly cover: Identification, Medical Image Segmentation Techniques, Functional Brain Connectivity Studies.
+   12. Use evidence-grounded citations across the report and ensure the required evidence coverage.
+   - Build the introduction around these themes and synthesize relevant literature: Identification, Medical Image Segmentation Techniques, Functional Brain Connectivity Studies, Brain Tumor Detection and Classification.
+
+3. INTRODUCTION WRITING PLAN
+   Write one coherent introduction with clear paragraph flow (background -> motivation -> key methods landscape -> transition).
+
+   Section 1 - Introduction
+      Logic cue: Synthesize this section's key points with coherent literature context.
+      Timeline duties: Maintain survey-style synthesis aligned with this section heading.

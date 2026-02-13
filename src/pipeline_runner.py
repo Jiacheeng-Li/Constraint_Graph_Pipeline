@@ -16,6 +16,7 @@ Artifacts produced
 - data/instructions/<sample_id>.prompt.txt - final machine prompt (Step 8 output or Step 7 fallback).
 - data/reports/<sample_id>.eval.json     - eval protocol + meta for scoring.
 - data/reports/<sample_id>.bundle.json   - full Step 7 bundle for audits.
+- data/reports/<sample_id>.evidence.json - normalized evidence metadata (when provided).
 
 Contracts
 - Calls each step in order, passing the expected inputs/outputs documented in the step modules.
@@ -40,7 +41,7 @@ import re
 import json
 import random
 import argparse
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 
 from .utils.export_utils import write_json, write_text, save_graph_outputs
@@ -50,6 +51,7 @@ from .utils.deepseek_client import LLM_CALL_EVENTS
 from .step1_seed_task import extract_seed_task
 from .step2_segmentation import segment_response
 from .step3_global_constraints import extract_global_constraints
+from .step3_5_knowledge_constraints import extract_knowledge_constraints
 from .step4_back_translation import extract_block_constraints
 from .step5_selection_augment import generate_selection_branches
 from .step6_graph_assembly import assemble_constraint_graph
@@ -59,6 +61,7 @@ from .step7_5_prompt_renderer import render_prompt_variant
 from .step6_5_graph_augment import augment_graphs_only
 from .graph_augmenter import augment_graph, _graph_from_serialized
 from .step8_5_prompt_diversification import diversify_instruction_prompt
+from .graph_schema import ConstraintNode
 
 
 # ------------------------------------------------------------
@@ -72,6 +75,149 @@ def _read_file(path: str) -> str:
             return f.read()
     except FileNotFoundError:
         return ""
+
+
+def _read_json(path: str) -> Dict[str, Any]:
+    """Read a UTF-8 JSON file safely; return empty dict if missing/invalid."""
+    if not path:
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _extract_evidence_ref_map(evidence: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """
+    Normalize evidence.json into a {ref_id: payload} map.
+    Supported shapes:
+      1) {"references": {"b0": {...}, ...}, ...}
+      2) {"b0": {...}, "b1": {...}, ...}
+    """
+    if not isinstance(evidence, dict) or not evidence:
+        return {}
+
+    refs = evidence.get("references")
+    if isinstance(refs, dict):
+        return {str(k): v for k, v in refs.items() if isinstance(v, dict)}
+
+    if all(isinstance(v, dict) for v in evidence.values()):
+        if any(("title" in v or "doi" in v or "pdfUrl" in v) for v in evidence.values()):
+            return {str(k): v for k, v in evidence.items() if isinstance(v, dict)}
+    return {}
+
+
+def _build_evidence_citation_constraints(
+    evidence: Dict[str, Any],
+    answer_text: str,
+    start_index: int,
+) -> list[ConstraintNode]:
+    """
+    Build explicit citation-driven global constraints from evidence metadata.
+    """
+    ref_map = _extract_evidence_ref_map(evidence)
+    if not ref_map:
+        return []
+
+    ref_ids = sorted(str(rid) for rid in ref_map.keys())
+    ref_count = len(ref_ids)
+    if ref_count <= 0:
+        return []
+
+    min_unique = max(1, min(ref_count, max(3, min(12, int(round(ref_count * 0.12))))))
+    min_markers = max(min_unique, min(30, max(4, int(round(ref_count * 0.2)))))
+
+    has_ref_id = bool(re.search(r"\[[A-Za-z][A-Za-z0-9_-]*\d+\]", answer_text or ""))
+    has_numeric = bool(re.search(r"\[\s*\d{1,4}(?:\s*[-,;]\s*\d{1,4})*\s*\]", answer_text or ""))
+    has_author_year = bool(
+        re.search(r"\([A-Z][A-Za-z.\-]+(?:\s+et\s+al\.)?,\s*\d{4}[a-z]?\)", answer_text or "")
+    )
+
+    inferred_style = None
+    if has_ref_id:
+        inferred_style = "ref_id"
+    elif has_numeric and not has_author_year:
+        inferred_style = "numeric"
+    elif has_author_year and not has_numeric:
+        inferred_style = "author_year"
+
+    nodes: list[ConstraintNode] = []
+    next_idx = start_index
+
+    nodes.append(
+        ConstraintNode(
+            cid=f"G{next_idx}",
+            desc=(
+                f"Support core claims with inline citations and include at least {min_markers} "
+                "citation markers across the full response."
+            ),
+            scope="global",
+            verifier_spec={"check": "min_citation_markers", "args": {"min_count": min_markers}},
+            trace_to=None,
+            derived_from="evidence",
+        )
+    )
+    next_idx += 1
+
+    nodes.append(
+        ConstraintNode(
+            cid=f"G{next_idx}",
+            desc=f"Use at least {min_unique} distinct cited sources in the response.",
+            scope="global",
+            verifier_spec={"check": "min_distinct_citations", "args": {"min_unique": min_unique}},
+            trace_to=None,
+            derived_from="evidence",
+        )
+    )
+    next_idx += 1
+
+    if inferred_style:
+        nodes.append(
+            ConstraintNode(
+                cid=f"G{next_idx}",
+                desc=(
+                    "Keep a consistent citation style throughout the response "
+                    f"(detected style: {inferred_style})."
+                ),
+                scope="global",
+                verifier_spec={"check": "citation_style", "args": {"style": inferred_style}},
+                trace_to=None,
+                derived_from="evidence",
+            )
+        )
+        next_idx += 1
+
+    if has_ref_id:
+        nodes.append(
+            ConstraintNode(
+                cid=f"G{next_idx}",
+                desc=(
+                    "When using ref-id citations, only cite ref_ids present in the evidence set "
+                    "(for example [b12])."
+                ),
+                scope="global",
+                verifier_spec={
+                    "check": "citation_refs_from_allowed_set",
+                    "args": {
+                        "allowed_ref_ids": ref_ids,
+                        "min_unique": min_unique,
+                        "max_out_of_set": 0,
+                    },
+                },
+                trace_to=None,
+                derived_from="evidence",
+            )
+        )
+
+    return nodes
+
+
+def _renumber_global_constraint_ids(nodes: list[ConstraintNode]) -> None:
+    """Normalize global constraint ids to G1..Gn in current list order."""
+    for idx, node in enumerate(nodes, start=1):
+        node.cid = f"G{idx}"
 
 
 def _record_llm_status(status_list, step_name: str, start_index: int) -> None:
@@ -101,6 +247,121 @@ def _strip_think_prefix(text: str) -> tuple[str, bool]:
     return text, False
 
 
+def _guard_explicit_references(
+    *,
+    machine_prompt_raw: str,
+    polished_prompt: str,
+    explicit_refs: List[Dict[str, Any]],
+) -> tuple[str, Dict[str, Any]]:
+    """
+    Keep explicit reference title/url pairs intact after Step8 polish.
+    If any title/url is missing from polished output, fallback to machine_prompt_raw.
+    """
+    refs = explicit_refs or []
+    if not refs:
+        return polished_prompt, {"enabled": False, "passed": True, "fallback_used": False, "missing": []}
+
+    missing: List[str] = []
+    text = polished_prompt or ""
+    for ref in refs:
+        rid = str(ref.get("ref_id") or "").strip()
+        title = str(ref.get("title") or "").strip()
+        url = str(ref.get("url") or "").strip()
+        if title and title not in text:
+            missing.append(f"{rid}:title")
+        if url and url not in text:
+            missing.append(f"{rid}:url")
+
+    if missing:
+        return machine_prompt_raw, {
+            "enabled": True,
+            "passed": False,
+            "fallback_used": True,
+            "missing": missing,
+            "explicit_ref_count": len(refs),
+        }
+
+    return polished_prompt, {
+        "enabled": True,
+        "passed": True,
+        "fallback_used": False,
+        "missing": [],
+        "explicit_ref_count": len(refs),
+    }
+
+
+def _strip_explicit_reference_list_for_step8(
+    machine_prompt: str,
+) -> tuple[str, Dict[str, Any]]:
+    """
+    Remove the explicit reference list block before sending prompt to Step8 LLM.
+    """
+    if not machine_prompt:
+        return machine_prompt, {"enabled": True, "removed_lines": 0}
+
+    lines = machine_prompt.splitlines()
+    out: List[str] = []
+    in_list = False
+    removed = 0
+    replaced_header = False
+
+    for line in lines:
+        stripped = line.strip()
+        if not in_list and stripped.startswith("- Required evidence references"):
+            in_list = True
+            removed += 1
+            out.append("   - Use the fixed reference list provided at the end of this instruction.")
+            replaced_header = True
+            continue
+
+        if in_list:
+            if stripped.startswith("•"):
+                removed += 1
+                continue
+            if not stripped:
+                # skip blank lines immediately after list bullets
+                removed += 1
+                continue
+            in_list = False
+
+        out.append(line)
+
+    result = "\n".join(out).strip() + "\n"
+    return result, {
+        "enabled": True,
+        "removed_lines": removed,
+        "replaced_header": replaced_header,
+    }
+
+
+def _append_explicit_reference_list_postfix(
+    prompt_text: str,
+    explicit_refs: List[Dict[str, Any]],
+) -> str:
+    """
+    Append immutable explicit reference list block after Step8.
+    """
+    refs = explicit_refs or []
+    if not refs:
+        return prompt_text
+
+    lines: List[str] = []
+    lines.append("Reference List:")
+    for ref in refs:
+        rid = str(ref.get("ref_id") or "").strip()
+        title = str(ref.get("title") or "").strip() or "(untitled)"
+        url = str(ref.get("url") or "").strip()
+        if rid and url:
+            lines.append(f"- [{rid}] {title} | {url}")
+        elif rid:
+            lines.append(f"- [{rid}] {title}")
+        elif url:
+            lines.append(f"- {title} | {url}")
+        else:
+            lines.append(f"- {title}")
+    return (prompt_text or "").rstrip() + "\n\n" + "\n".join(lines) + "\n"
+
+
 def _slugify_style(name: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "_", (name or "").lower()).strip("_")
     return slug or "variant"
@@ -115,6 +376,12 @@ def run_pipeline_once(sample_id: str,
                        original_instruction: str,
                        model_answer: str,
                        base_data_dir: str = "data",
+                       evidence: Optional[Dict[str, Any]] = None,
+                       survey_mode: bool = False,
+                       knowledge_style: str = "abstract",
+                       generation_granularity: str = "section",
+                       survey_block_mode: str = "heading",
+                       explicit_reference_strategy: str = "in_prompt_guarded",
                        *,
                        enable_step8_polish: bool = True,
                        enable_step7_5: bool = False,
@@ -143,6 +410,7 @@ def run_pipeline_once(sample_id: str,
         data/instructions/<sample_id>.prompt.txt  # Step8 polished machine_prompt
         data/reports/<sample_id>.eval.json        # Step7 eval_protocol (+ meta)
         data/reports/<sample_id>.bundle.json      # Full bundle (debug/forensics)
+        data/reports/<sample_id>.evidence.json    # Evidence copy (optional)
     """
 
     # Derive output dirs from base_data_dir according to the project layout
@@ -160,9 +428,39 @@ def run_pipeline_once(sample_id: str,
     seed_task = extract_seed_task(instruction_text=original_instruction)
     _record_llm_status(llm_step_statuses, "Step1 seed_task", idx_llm)
 
+    knowledge_style_norm = (knowledge_style or "abstract").strip().lower()
+    if knowledge_style_norm not in {"abstract", "explicit"}:
+        knowledge_style_norm = "abstract"
+    granularity_norm = (generation_granularity or "section").strip().lower()
+    if granularity_norm not in {"section", "whole"}:
+        granularity_norm = "section"
+    survey_block_mode_norm = (survey_block_mode or "heading").strip().lower()
+    if survey_block_mode_norm not in {"heading", "paragraph", "llm"}:
+        survey_block_mode_norm = "heading"
+    explicit_reference_strategy_norm = (explicit_reference_strategy or "in_prompt_guarded").strip().lower()
+    if explicit_reference_strategy_norm not in {"in_prompt_guarded", "postfix_after_step8"}:
+        explicit_reference_strategy_norm = "in_prompt_guarded"
+
     # Step 2: segment the answer into ordered blocks
     idx_llm = len(LLM_CALL_EVENTS)
-    segmentation = segment_response(model_answer)
+    if granularity_norm == "whole":
+        segmentation = {
+            "blocks": [
+                {
+                    "block_id": "B1",
+                    "intent": "Introduction",
+                    "text_span": model_answer.strip(),
+                    "order_index": 0,
+                }
+            ],
+            "order": ["B1"],
+        }
+    else:
+        segmentation = segment_response(
+            model_answer,
+            survey_mode=survey_mode,
+            survey_block_mode=survey_block_mode_norm,
+        )
     _record_llm_status(llm_step_statuses, "Step2 segmentation", idx_llm)
 
     # Step 3: global constraints that should apply to entire answer
@@ -174,23 +472,65 @@ def run_pipeline_once(sample_id: str,
         response_text=model_answer,
         segmentation=segmentation,
     )
+    if evidence:
+        citation_nodes = _build_evidence_citation_constraints(
+            evidence=evidence,
+            answer_text=model_answer,
+            start_index=len(global_nodes) + 1,
+        )
+        if citation_nodes:
+            global_nodes.extend(citation_nodes)
     _record_llm_status(llm_step_statuses, "Step3 global_constraints", idx_llm)
 
     # Step 4: local constraints per block (back-translation)
     idx_llm = len(LLM_CALL_EVENTS)
-    step4_out = extract_block_constraints(
-        segmentation=segmentation,
-        seed_task=seed_task,
-    )
+    if granularity_norm == "whole":
+        step4_out = {
+            "block_constraints": {},
+            "block_logic": {},
+        }
+    else:
+        step4_out = extract_block_constraints(
+            segmentation=segmentation,
+            seed_task=seed_task,
+        )
     _record_llm_status(llm_step_statuses, "Step4 block_constraints", idx_llm)
+
+    knowledge_out: Dict[str, Any] = {"global_constraints": [], "block_constraints": {}, "meta": {"enabled": False}}
+    if survey_mode and evidence:
+        idx_llm = len(LLM_CALL_EVENTS)
+        knowledge_out = extract_knowledge_constraints(
+            segmentation=segmentation,
+            evidence=evidence,
+            survey_mode=True,
+            knowledge_style=knowledge_style_norm,
+            generation_granularity=granularity_norm,
+        )
+        global_nodes.extend(knowledge_out.get("global_constraints", []))
+        if granularity_norm != "whole":
+            for bid, nodes in (knowledge_out.get("block_constraints") or {}).items():
+                step4_out.setdefault("block_constraints", {}).setdefault(bid, [])
+                step4_out["block_constraints"][bid].extend(nodes)
+                step4_out.setdefault("block_logic", {}).setdefault(bid, "AND")
+        _record_llm_status(llm_step_statuses, "Step3.5 knowledge_constraints", idx_llm)
+
+    _renumber_global_constraint_ids(global_nodes)
 
     # Step 5: generate conditional branches / selections
     idx_llm = len(LLM_CALL_EVENTS)
-    step5_out = generate_selection_branches(
-        segmentation=segmentation,
-        seed_task=seed_task,
-        step4_output=step4_out,
-    )
+    if granularity_norm == "whole" or survey_mode:
+        step5_out = {
+            "block_constraints": step4_out.get("block_constraints", {}),
+            "block_logic": step4_out.get("block_logic", {}),
+            "selections": [],
+            "extra_blocks": [],
+        }
+    else:
+        step5_out = generate_selection_branches(
+            segmentation=segmentation,
+            seed_task=seed_task,
+            step4_output=step4_out,
+        )
     _record_llm_status(llm_step_statuses, "Step5 selection_augment", idx_llm)
 
     # Step 6: assemble final constraint graph and save .graph.json / .graph.mmd
@@ -200,6 +540,22 @@ def run_pipeline_once(sample_id: str,
         global_constraints=global_nodes,
         step5_output=step5_out,
     )
+    if evidence:
+        survey_meta = evidence.get("survey", {}) if isinstance(evidence, dict) else {}
+        graph.meta["evidence"] = {
+            "provided": True,
+            "reference_count": len(_extract_evidence_ref_map(evidence)),
+            "title": str(survey_meta.get("title", "")).strip(),
+            "corpusId": str(survey_meta.get("corpusId", "")).strip(),
+        }
+    if survey_mode:
+        graph.meta["survey_mode"] = True
+        graph.meta["prompt_profile"] = "survey"
+        graph.meta["knowledge_style"] = knowledge_style_norm
+        graph.meta["explicit_reference_strategy"] = explicit_reference_strategy_norm
+        graph.meta["generation_granularity"] = granularity_norm
+        graph.meta["survey_block_mode"] = survey_block_mode_norm
+        graph.meta["knowledge_constraints"] = knowledge_out.get("meta", {})
 
     saved_paths = save_graph_outputs(
         graph,
@@ -220,16 +576,58 @@ def run_pipeline_once(sample_id: str,
     raw_prompt_path = os.path.join(instructions_dir, f"{sample_id}.machine.txt")
     write_text(raw_prompt_path, machine_prompt_raw)
 
+    explicit_refs = ((knowledge_out.get("meta") or {}).get("explicit_reference_list") or [])
+    step8_input_prompt = machine_prompt_raw
+    explicit_postfix_meta: Dict[str, Any] = {"enabled": False}
+    if (
+        survey_mode
+        and knowledge_style_norm == "explicit"
+        and explicit_reference_strategy_norm == "postfix_after_step8"
+        and explicit_refs
+    ):
+        step8_input_prompt, strip_meta = _strip_explicit_reference_list_for_step8(machine_prompt_raw)
+        explicit_postfix_meta = {
+            "enabled": True,
+            "strip_meta": strip_meta,
+        }
+
     idx_llm = len(LLM_CALL_EVENTS)
     polish_result = refine_instruction_prompt(
-        machine_prompt=machine_prompt_raw,
+        machine_prompt=step8_input_prompt,
         seed_task=seed_task,
         enable=enable_step8_polish,
     )
     _record_llm_status(llm_step_statuses, "Step8 prompt_refinement", idx_llm)
-    machine_prompt = polish_result.get("text", machine_prompt_raw)
+    machine_prompt = polish_result.get("text", step8_input_prompt)
     machine_prompt, stripped_think = _strip_think_prefix(machine_prompt)
     polish_result["stripped_think"] = stripped_think
+
+    explicit_guard_meta: Dict[str, Any] = {"enabled": False, "passed": True, "fallback_used": False, "missing": []}
+    if (
+        survey_mode
+        and knowledge_style_norm == "explicit"
+        and explicit_reference_strategy_norm == "in_prompt_guarded"
+    ):
+        machine_prompt, explicit_guard_meta = _guard_explicit_references(
+            machine_prompt_raw=machine_prompt_raw,
+            polished_prompt=machine_prompt,
+            explicit_refs=explicit_refs,
+        )
+        polish_result["explicit_reference_guard"] = explicit_guard_meta
+        if explicit_guard_meta.get("fallback_used"):
+            polish_result["reason"] = "explicit_reference_guard_fallback"
+            polish_result["used_llm"] = False
+    elif (
+        survey_mode
+        and knowledge_style_norm == "explicit"
+        and explicit_reference_strategy_norm == "postfix_after_step8"
+    ):
+        machine_prompt = _append_explicit_reference_list_postfix(machine_prompt, explicit_refs)
+        polish_result["explicit_reference_postfix"] = {
+            **explicit_postfix_meta,
+            "reference_count": len(explicit_refs),
+        }
+
     bundle["machine_prompt_original"] = machine_prompt_raw
     bundle["machine_prompt"] = machine_prompt
     bundle["step8_polish"] = {k: v for k, v in polish_result.items() if k != "text"}
@@ -488,6 +886,11 @@ def run_pipeline_once(sample_id: str,
     bundle_path = os.path.join(reports_dir, f"{sample_id}.bundle.json")
     write_json(bundle_path, bundle_debug)
 
+    evidence_path = ""
+    if evidence:
+        evidence_path = os.path.join(reports_dir, f"{sample_id}.evidence.json")
+        write_json(evidence_path, evidence)
+
     # return summary
     return {
         "seed_task": seed_task,
@@ -498,6 +901,7 @@ def run_pipeline_once(sample_id: str,
         "prompt_path_machine": raw_prompt_path,    # instructions/<id>.machine.txt
         "eval_path": eval_path,                    # reports/<id>.eval.json
         "bundle_path": bundle_path,                # reports/<id>.bundle.json
+        "evidence_path": evidence_path,            # reports/<id>.evidence.json
         "prompt_length": prompt_length,            # char length of final prompt
         "constraint_total_count": total_constraints,
         "selection_count": selection_count,
@@ -510,6 +914,14 @@ def run_pipeline_once(sample_id: str,
         "step8_5_result": step8_5_result,
         "step8_5_variants": step8_5_variants_written,
         "llm_statuses": llm_step_statuses,
+        "evidence_loaded": bool(evidence),
+        "evidence_reference_count": len(_extract_evidence_ref_map(evidence)) if evidence else 0,
+        "survey_mode": survey_mode,
+        "knowledge_style": knowledge_style_norm,
+        "explicit_reference_strategy": explicit_reference_strategy_norm,
+        "generation_granularity": granularity_norm,
+        "survey_block_mode": survey_block_mode_norm,
+        "knowledge_constraints": knowledge_out.get("meta", {}),
     }
 
 
@@ -540,6 +952,48 @@ def main():
         "--data-dir",
         default="data",
         help="Base data directory (expects subdirs: graphs/, instructions/, reports/)",
+    )
+    parser.add_argument(
+        "--evidence-file",
+        default="",
+        help="Optional evidence.json path. If provided, injects citation-driven global constraints.",
+    )
+    parser.add_argument(
+        "--survey-mode",
+        action="store_true",
+        help="Enable survey-specific behavior (heading-based segmentation + knowledge constraints + survey prompt profile).",
+    )
+    parser.add_argument(
+        "--knowledge-style",
+        type=str,
+        choices=["abstract", "explicit"],
+        default="abstract",
+        help="How to render knowledge constraints in instruction: abstract guidance or explicit source list.",
+    )
+    parser.add_argument(
+        "--generation-granularity",
+        type=str,
+        choices=["section", "whole"],
+        default="section",
+        help="Constraint granularity: section uses block constraints; whole uses global-only constraints.",
+    )
+    parser.add_argument(
+        "--survey-block-mode",
+        type=str,
+        choices=["heading", "paragraph", "llm"],
+        default="heading",
+        help="Survey segmentation mode when generation-granularity=section.",
+    )
+    parser.add_argument(
+        "--explicit-reference-strategy",
+        type=str,
+        choices=["in_prompt_guarded", "postfix_after_step8"],
+        default="in_prompt_guarded",
+        help=(
+            "How to handle explicit reference list around Step8. "
+            "in_prompt_guarded keeps list in Step8 input and falls back on mismatch; "
+            "postfix_after_step8 strips list before Step8 and appends canonical list after polish."
+        ),
     )
     parser.add_argument(
         "--skip-step8-polish",
@@ -647,6 +1101,7 @@ def main():
 
     original_instruction = _read_file(args.instruction_file)
     model_answer = _read_file(args.answer_file)
+    evidence = _read_json(args.evidence_file) if args.evidence_file else {}
 
     if not original_instruction.strip():
         raise ValueError("instruction-file is empty or missing")
@@ -692,6 +1147,12 @@ def main():
         original_instruction=original_instruction,
         model_answer=model_answer,
         base_data_dir=args.data_dir,
+        evidence=evidence if evidence else None,
+        survey_mode=args.survey_mode,
+        knowledge_style=args.knowledge_style,
+        explicit_reference_strategy=args.explicit_reference_strategy,
+        generation_granularity=args.generation_granularity,
+        survey_block_mode=args.survey_block_mode,
         enable_step8_polish=enable_step8,
         enable_step7_5=enable_step7_5,
         step7_5_templates=step7_5_templates or None,
@@ -719,6 +1180,13 @@ def main():
     print(f"global_constraints         : {result['global_constraints_count']}")
     print(f"total_constraints          : {result['constraint_total_count']}")
     print(f"conditional_branches       : {result['selection_count']}")
+    print(f"evidence_loaded            : {result['evidence_loaded']}")
+    print(f"evidence_reference_count   : {result['evidence_reference_count']}")
+    print(f"survey_mode                : {result['survey_mode']}")
+    print(f"knowledge_style            : {result['knowledge_style']}")
+    print(f"explicit_reference_strategy: {result['explicit_reference_strategy']}")
+    print(f"generation_granularity     : {result['generation_granularity']}")
+    print(f"survey_block_mode          : {result['survey_block_mode']}")
     print(f"prompt_length_chars        : {result['prompt_length']}")
     print("--- artifacts ---")
     print(f"graph_json_path            : {result['graph_paths']['graph_json']}")
@@ -727,6 +1195,8 @@ def main():
     print(f"prompt_path (to eval LLM)  : {result['prompt_path']}")
     print(f"eval_protocol_path         : {result['eval_path']}")
     print(f"bundle_debug_path          : {result['bundle_path']}")
+    if result.get("evidence_path"):
+        print(f"evidence_path              : {result['evidence_path']}")
     polish_info = result.get("polish_result") or {}
     print(f"step8_polish_used          : {polish_info.get('used_llm', False)} ({polish_info.get('reason', 'n/a')})")
     print(f"step8_stripped_think       : {polish_info.get('stripped_think', False)}")

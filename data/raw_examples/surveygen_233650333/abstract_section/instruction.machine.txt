@@ -1,0 +1,89 @@
+SURVEY GENERATION INSTRUCTIONS:
+
+1. SURVEY TASK BRIEF
+   - Core survey objective: Write a rigorous Introduction section for a survey on publicly available automatic brain segmentation methodologies.
+   - Deliverable type: a complete survey report with section-level synthesis and citation grounding.
+   - Source survey topic: A Review of Publicly Available Automatic Brain Segmentation Methodologies, Machine Learning Models, Recent Advancements, and Their Comparison
+
+2. SURVEY-LEVEL CONSTRAINTS
+   Respect every survey-level rule simultaneously across the full report:
+   1. Avoid contractions (use 'do not' instead of 'don't').
+   2. Target a response of 460–650 words.
+   3. Do not use emojis or decorative unicode symbols.
+   4. Restrict headings to the following levels: [2].
+   5. Ensure the response is predominantly in English.
+   6. Structure the discussion to logically progress from problem statement to solution approaches.
+   7. Include citations and references to support claims and establish credibility.
+   8. Prefer a formal and academic tone suitable for a scientific review.
+   9. Avoid overly simplistic explanations; assume the reader has some domain knowledge.
+   10. Use technical terminology precisely to maintain scientific rigor.
+   11. Support core claims with inline citations and include at least 14 citation markers across the full response.
+   12. Use at least 8 distinct cited sources in the response.
+   13. Keep a consistent citation style throughout the response (detected style: ref_id).
+   14. Anchor the survey to core domain concepts and explicitly cover: Identification, Medical Image Segmentation Techniques, Functional Brain Connectivity Studies.
+   15. Use evidence-grounded citations across the report and ensure the required evidence coverage.
+   - Build the introduction around these themes and synthesize relevant literature: Identification, Medical Image Segmentation Techniques, Functional Brain Connectivity Studies, Brain Tumor Detection and Classification.
+
+3. SECTION-BY-SECTION SYNTHESIS PLAN
+   Follow the original survey section flow; each section should synthesize evidence rather than isolated claims.
+
+   Section 1 - Opening
+      Logic cue: Synthesize this section's key points with coherent literature context.
+      Timeline duties:
+        • Provide a sufficiently detailed explanation in this block with at least 40 words.
+        • Keep this section focused on its heading theme: Opening.
+
+   Section 2 - Context setup
+      Logic cue: Synthesize this section's key points with coherent literature context.
+      Timeline duties:
+        • Introduce a key methodological tool used within the established field.
+        • Establish the broad scientific field and its relevance to research and clinical practice.
+        • List specific anatomical or structural targets of interest within the field.
+        • Keep this section focused on its heading theme: Context setup.
+
+   Section 3 - Background
+      Logic cue: Synthesize this section's key points with coherent literature context.
+      Timeline duties:
+        • State the practical necessity or prerequisite role of the core technical task.
+        • Provide at least two concrete examples of conditions or fields where the application is relevant.
+        • List at least three distinct application domains or downstream tasks enabled by the core technical task.
+
+   Section 4 - Main Analysis
+      Logic cue: Synthesize this section's key points with coherent literature context.
+      Timeline duties:
+        • List at least two neurological conditions where segmentation of this structure is clinically relevant
+        • Connect structural changes to their potential use as biomarkers
+        • Keep this section focused on its heading theme: Main Analysis.
+
+   Section 5 - Counterargument
+      Logic cue: Synthesize this section's key points with coherent literature context.
+      Timeline duties:
+        • Cite multiple supporting references for the clinical associations.
+        • Introduce at least one additional brain structure beyond the primary subject of discussion.
+        • Link the additional structures to their clinical or pathological significance.
+        • Keep this section focused on its heading theme: Counterargument.
+
+   Section 6 - Recommendation
+      Logic cue: Synthesize this section's key points with coherent literature context.
+      Timeline duties:
+        • Provide a sufficiently detailed explanation in this block with at least 50 words.
+        • Mention the tools or software used in the execution of the method.
+        • Keep this section focused on its heading theme: Recommendation.
+
+   Section 7 - Conclusion
+      Logic cue: Synthesize this section's key points with coherent literature context.
+      Timeline duties:
+        • Provide a sufficiently detailed explanation in this block with at least 70 words.
+        • Acknowledge the role of technological advancements in enabling the development of the field.
+        • List at least three specific, publicly available software tools relevant to the field.
+        • Note a current trend or emerging approach within the field's methodology.
+        • Use section-relevant evidence citations and maintain coverage of the required evidence set.
+
+   Section 8 - Outlook
+      Logic cue: Synthesize this section's key points with coherent literature context.
+      Timeline duties:
+        • Indicate that a comparative analysis will be provided for at least one topic.
+        • List at least three distinct major topics to be covered.
+        • Preview the structure of the remaining document sections.
+        • Provide a sufficiently detailed explanation in this block with at least 30 words.
+        • Keep this section focused on its heading theme: Outlook.

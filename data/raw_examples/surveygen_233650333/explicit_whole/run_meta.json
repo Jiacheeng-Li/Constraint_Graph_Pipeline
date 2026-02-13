@@ -1,0 +1,388 @@
+{
+  "sample_id": "surveygen_233650333",
+  "variant": "explicit_whole",
+  "knowledge_style": "explicit",
+  "explicit_reference_strategy": "postfix_after_step8",
+  "generation_granularity": "whole",
+  "pipeline_run_id": "surveygen_233650333__intro_explicit_whole",
+  "pipeline_data_dir": "experiments/SurveyGen/intro_variants_v4/_pipeline_artifacts/surveygen_233650333__intro_explicit_whole",
+  "artifacts": {
+    "machine_prompt": "experiments/SurveyGen/intro_variants_v4/_pipeline_artifacts/surveygen_233650333__intro_explicit_whole/instructions/surveygen_233650333__intro_explicit_whole.machine.txt",
+    "prompt": "experiments/SurveyGen/intro_variants_v4/_pipeline_artifacts/surveygen_233650333__intro_explicit_whole/instructions/surveygen_233650333__intro_explicit_whole.prompt.txt",
+    "graph_json": "experiments/SurveyGen/intro_variants_v4/_pipeline_artifacts/surveygen_233650333__intro_explicit_whole/graphs/surveygen_233650333__intro_explicit_whole.graph.json",
+    "eval": "experiments/SurveyGen/intro_variants_v4/_pipeline_artifacts/surveygen_233650333__intro_explicit_whole/reports/surveygen_233650333__intro_explicit_whole.eval.json",
+    "bundle": "experiments/SurveyGen/intro_variants_v4/_pipeline_artifacts/surveygen_233650333__intro_explicit_whole/reports/surveygen_233650333__intro_explicit_whole.bundle.json",
+    "evidence_copy": "experiments/SurveyGen/intro_variants_v4/_pipeline_artifacts/surveygen_233650333__intro_explicit_whole/reports/surveygen_233650333__intro_explicit_whole.evidence.json"
+  },
+  "llm_statuses": [
+    {
+      "step": "Step1 seed_task",
+      "status": "success",
+      "calls": 1
+    },
+    {
+      "step": "Step2 segmentation",
+      "status": "no-llm",
+      "calls": 0
+    },
+    {
+      "step": "Step3 global_constraints",
+      "status": "success",
+      "calls": 1
+    },
+    {
+      "step": "Step4 block_constraints",
+      "status": "no-llm",
+      "calls": 0
+    },
+    {
+      "step": "Step3.5 knowledge_constraints",
+      "status": "no-llm",
+      "calls": 0
+    },
+    {
+      "step": "Step5 selection_augment",
+      "status": "no-llm",
+      "calls": 0
+    },
+    {
+      "step": "Step8 prompt_refinement",
+      "status": "success",
+      "calls": 1
+    }
+  ],
+  "knowledge_constraints_meta": {
+    "enabled": true,
+    "instruction_knowledge_style": "explicit",
+    "generation_granularity": "whole",
+    "core_keywords": [
+      "Identification",
+      "Medical Image Segmentation Techniques",
+      "Functional Brain Connectivity Studies",
+      "Brain Tumor Detection and Classification"
+    ],
+    "high_impact_ref_count": 12,
+    "blocks_with_knowledge_constraints": 0,
+    "cited_ref_count_from_answer": 16,
+    "cited_ref_ids_from_answer": [
+      "b0",
+      "b1",
+      "b2",
+      "b3",
+      "b4",
+      "b5",
+      "b6",
+      "b7",
+      "b8",
+      "b9",
+      "b10",
+      "b11",
+      "b12",
+      "b13",
+      "b14",
+      "b15"
+    ],
+    "explicit_reference_list": [
+      {
+        "ref_id": "b0",
+        "title": "Longitudinal pattern of regional brain volume change differentiates normal aging from MCI",
+        "url": "https://www.semanticscholar.org/paper/df68603a78f12684ce3347849d92f08759574971"
+      },
+      {
+        "ref_id": "b1",
+        "title": "Longitudinal changes in individual BrainAGE in healthy aging, mild cognitive impairment, and Alzheimer's disease",
+        "url": "https://www.semanticscholar.org/paper/6d324af5e51aea4755b3de3b0e1f7e65ca156ae2"
+      },
+      {
+        "ref_id": "b2",
+        "title": "Volumetric and morphometric analysis of pineal and pituitary glands of an Indian inedial subject",
+        "url": "https://www.semanticscholar.org/paper/c7e61dec4b961c24234c5f05dd01df847a809343"
+      },
+      {
+        "ref_id": "b3",
+        "title": "Clinical use of brain volumetry",
+        "url": "https://www.semanticscholar.org/paper/b7d610fcd4c8fa7b149e3f025ff961171ec02923"
+      },
+      {
+        "ref_id": "b4",
+        "title": "Hippocampal alterations in children with temporal lobe epilepsy with or without a history of febrile convulsions: Evaluations with MR volumetry and proton MR spectroscopy",
+        "url": "https://www.semanticscholar.org/paper/99e448c090022a5a09a4c913ab13f465aed548f8"
+      },
+      {
+        "ref_id": "b5",
+        "title": "3D comparison of hippocampal atrophy in amnestic mild cognitive impairment and Alzheimer's disease",
+        "url": "https://www.semanticscholar.org/paper/511c3394a1c96c74b5e03f42d3a96d7550700968"
+      },
+      {
+        "ref_id": "b6",
+        "title": "Hippocampus and amygdala volumes in schizophrenia and other psychoses in the Northern Finland 1966 birth cohort",
+        "url": "https://www.semanticscholar.org/paper/03872ef15a1c24c699dace1f3a8f25190ab68f50"
+      },
+      {
+        "ref_id": "b7",
+        "title": "Hippocampal volume reduction in major depression",
+        "url": "https://www.semanticscholar.org/paper/eccabfb80763edfa48c5f6ed0ec412e17f3a4781"
+      },
+      {
+        "ref_id": "b8",
+        "title": "The amygdala and reward",
+        "url": "https://www.semanticscholar.org/paper/254d8c5427ea2a2e92648653683a7e9f81e135dd"
+      },
+      {
+        "ref_id": "b9",
+        "title": "Subcortical volumes differentiate major depressive disorder, bipolar disorder, and remitted major depressive disorder",
+        "url": "https://www.semanticscholar.org/paper/cb5c17cdb08c6332d349a9ddf84fb0b3139c54c6"
+      },
+      {
+        "ref_id": "b10",
+        "title": "Huntington's disease",
+        "url": "https://www.semanticscholar.org/paper/3e7170560e3d31596036eb72e51037c88bc1b173"
+      },
+      {
+        "ref_id": "b11",
+        "title": "Caudate, putamen, and globus pallidus volume in schizophrenia: A quantitative MRI study",
+        "url": "https://www.semanticscholar.org/paper/3da04f73e0d514fb2c1e6a24878fc4cf9538a44e"
+      },
+      {
+        "ref_id": "b12",
+        "title": "Striatal shape in Parkinson's disease",
+        "url": "https://www.semanticscholar.org/paper/5dfb034cc0bbc63993bd9aba3b8e26873cc45472"
+      },
+      {
+        "ref_id": "b13",
+        "title": "Parametric surface modeling and registration for comparison of manual and automated segmentation of the hippocampus",
+        "url": "https://www.semanticscholar.org/paper/090bc69ede50d874b9f634065687be96b6f12e1a"
+      },
+      {
+        "ref_id": "b14",
+        "title": "In vivo hippocampal measurement and memory: A comparison of manual tracing and automated segmentation in a large communitybased sample",
+        "url": "https://www.semanticscholar.org/paper/e4082bedbe9e37cd48c25a128d7a6a1cdade91ad"
+      },
+      {
+        "ref_id": "b15",
+        "title": "Comparing manual and automatic segmentation of hippocampal volumes: Reliability and validity issues in younger and older brains",
+        "url": "https://www.semanticscholar.org/paper/fea6445ea234f08dc2c4858a21f9b66664e83911"
+      }
+    ],
+    "cited_reference_catalog": {
+      "b0": {
+        "title": "Longitudinal pattern of regional brain volume change differentiates normal aging from MCI",
+        "doi": "10.1212/WNL.0b013e3181a82634",
+        "url": "https://www.semanticscholar.org/paper/df68603a78f12684ce3347849d92f08759574971",
+        "pdfUrl": "https://doi.org/10.1212/WNL.0b013e3181a82634",
+        "paperId": "df68603a78f12684ce3347849d92f08759574971",
+        "corpusId": "8451977",
+        "citationCount": 475,
+        "referenceCount": 39,
+        "fieldsOfStudy": [
+          "Psychology",
+          "Medicine"
+        ]
+      },
+      "b1": {
+        "title": "Longitudinal changes in individual BrainAGE in healthy aging, mild cognitive impairment, and Alzheimer's disease",
+        "doi": "10.1024/1662-9647/A000074",
+        "url": "https://www.semanticscholar.org/paper/6d324af5e51aea4755b3de3b0e1f7e65ca156ae2",
+        "pdfUrl": "https://doi.org/10.1024/1662-9647/A000074",
+        "paperId": "6d324af5e51aea4755b3de3b0e1f7e65ca156ae2",
+        "corpusId": "17157572",
+        "citationCount": 227,
+        "referenceCount": 55,
+        "fieldsOfStudy": [
+          "Psychology"
+        ]
+      },
+      "b2": {
+        "title": "Volumetric and morphometric analysis of pineal and pituitary glands of an Indian inedial subject",
+        "doi": "10.1159/000487067",
+        "url": "https://www.semanticscholar.org/paper/c7e61dec4b961c24234c5f05dd01df847a809343",
+        "pdfUrl": "https://doi.org/10.1159/000487067",
+        "paperId": "c7e61dec4b961c24234c5f05dd01df847a809343",
+        "corpusId": "81056501",
+        "citationCount": 7,
+        "referenceCount": 16,
+        "fieldsOfStudy": [
+          "Biology",
+          "Medicine"
+        ]
+      },
+      "b3": {
+        "title": "Clinical use of brain volumetry",
+        "doi": "10.1002/jmri.23671",
+        "url": "https://www.semanticscholar.org/paper/b7d610fcd4c8fa7b149e3f025ff961171ec02923",
+        "pdfUrl": "https://doi.org/10.1002/jmri.23671",
+        "paperId": "b7d610fcd4c8fa7b149e3f025ff961171ec02923",
+        "corpusId": "6928822",
+        "citationCount": 125,
+        "referenceCount": 140,
+        "fieldsOfStudy": [
+          "Medicine"
+        ]
+      },
+      "b4": {
+        "title": "Hippocampal alterations in children with temporal lobe epilepsy with or without a history of febrile convulsions: Evaluations with MR volumetry and proton MR spectroscopy",
+        "doi": "",
+        "url": "https://www.semanticscholar.org/paper/99e448c090022a5a09a4c913ab13f465aed548f8",
+        "pdfUrl": "https://www.semanticscholar.org/paper/99e448c090022a5a09a4c913ab13f465aed548f8",
+        "paperId": "99e448c090022a5a09a4c913ab13f465aed548f8",
+        "corpusId": "18548176",
+        "citationCount": 67,
+        "referenceCount": 40,
+        "fieldsOfStudy": [
+          "Medicine"
+        ]
+      },
+      "b5": {
+        "title": "3D comparison of hippocampal atrophy in amnestic mild cognitive impairment and Alzheimer's disease",
+        "doi": "10.1093/BRAIN/AWL274",
+        "url": "https://www.semanticscholar.org/paper/511c3394a1c96c74b5e03f42d3a96d7550700968",
+        "pdfUrl": "https://doi.org/10.1093/BRAIN/AWL274",
+        "paperId": "511c3394a1c96c74b5e03f42d3a96d7550700968",
+        "corpusId": "600965",
+        "citationCount": 257,
+        "referenceCount": 51,
+        "fieldsOfStudy": [
+          "Medicine"
+        ]
+      },
+      "b6": {
+        "title": "Hippocampus and amygdala volumes in schizophrenia and other psychoses in the Northern Finland 1966 birth cohort",
+        "doi": "10.1016/j.schres.2004.09.022",
+        "url": "https://www.semanticscholar.org/paper/03872ef15a1c24c699dace1f3a8f25190ab68f50",
+        "pdfUrl": "https://doi.org/10.1016/j.schres.2004.09.022",
+        "paperId": "03872ef15a1c24c699dace1f3a8f25190ab68f50",
+        "corpusId": "24866673",
+        "citationCount": 80,
+        "referenceCount": 33,
+        "fieldsOfStudy": [
+          "Medicine",
+          "Psychology"
+        ]
+      },
+      "b7": {
+        "title": "Hippocampal volume reduction in major depression",
+        "doi": "10.1176/AJP.157.1.115",
+        "url": "https://www.semanticscholar.org/paper/eccabfb80763edfa48c5f6ed0ec412e17f3a4781",
+        "pdfUrl": "https://doi.org/10.1176/AJP.157.1.115",
+        "paperId": "eccabfb80763edfa48c5f6ed0ec412e17f3a4781",
+        "corpusId": "39071403",
+        "citationCount": 1694,
+        "referenceCount": 15,
+        "fieldsOfStudy": [
+          "Psychology",
+          "Medicine"
+        ]
+      },
+      "b8": {
+        "title": "The amygdala and reward",
+        "doi": "10.1038/nrn875",
+        "url": "https://www.semanticscholar.org/paper/254d8c5427ea2a2e92648653683a7e9f81e135dd",
+        "pdfUrl": "https://doi.org/10.1038/nrn875",
+        "paperId": "254d8c5427ea2a2e92648653683a7e9f81e135dd",
+        "corpusId": "3344804",
+        "citationCount": 1220,
+        "referenceCount": 87,
+        "fieldsOfStudy": [
+          "Psychology",
+          "Medicine"
+        ]
+      },
+      "b9": {
+        "title": "Subcortical volumes differentiate major depressive disorder, bipolar disorder, and remitted major depressive disorder",
+        "doi": "10.1016/j.jpsychires.2015.06.002",
+        "url": "https://www.semanticscholar.org/paper/cb5c17cdb08c6332d349a9ddf84fb0b3139c54c6",
+        "pdfUrl": "https://doi.org/10.1016/j.jpsychires.2015.06.002",
+        "paperId": "cb5c17cdb08c6332d349a9ddf84fb0b3139c54c6",
+        "corpusId": "6987448",
+        "citationCount": 72,
+        "referenceCount": 65,
+        "fieldsOfStudy": [
+          "Psychology",
+          "Medicine"
+        ]
+      },
+      "b10": {
+        "title": "Huntington's disease",
+        "doi": "10.1212/WNL.34.8.1059",
+        "url": "https://www.semanticscholar.org/paper/3e7170560e3d31596036eb72e51037c88bc1b173",
+        "pdfUrl": "https://doi.org/10.1212/WNL.34.8.1059",
+        "paperId": "3e7170560e3d31596036eb72e51037c88bc1b173",
+        "corpusId": "1536080",
+        "citationCount": 2784,
+        "referenceCount": 92,
+        "fieldsOfStudy": [
+          "Medicine"
+        ]
+      },
+      "b11": {
+        "title": "Caudate, putamen, and globus pallidus volume in schizophrenia: A quantitative MRI study",
+        "doi": "10.1016/0925-4927(95)02729-H",
+        "url": "https://www.semanticscholar.org/paper/3da04f73e0d514fb2c1e6a24878fc4cf9538a44e",
+        "pdfUrl": "https://doi.org/10.1016/0925-4927(95)02729-H",
+        "paperId": "3da04f73e0d514fb2c1e6a24878fc4cf9538a44e",
+        "corpusId": "14142228",
+        "citationCount": 197,
+        "referenceCount": 54,
+        "fieldsOfStudy": [
+          "Medicine"
+        ]
+      },
+      "b12": {
+        "title": "Striatal shape in Parkinson's disease",
+        "doi": "10.1016/j.neurobiolaging.2013.05.017",
+        "url": "https://www.semanticscholar.org/paper/5dfb034cc0bbc63993bd9aba3b8e26873cc45472",
+        "pdfUrl": "https://doi.org/10.1016/j.neurobiolaging.2013.05.017",
+        "paperId": "5dfb034cc0bbc63993bd9aba3b8e26873cc45472",
+        "corpusId": "25532657",
+        "citationCount": 62,
+        "referenceCount": 58,
+        "fieldsOfStudy": [
+          "Psychology",
+          "Medicine"
+        ]
+      },
+      "b13": {
+        "title": "Parametric surface modeling and registration for comparison of manual and automated segmentation of the hippocampus",
+        "doi": "10.1002/hipo.20613",
+        "url": "https://www.semanticscholar.org/paper/090bc69ede50d874b9f634065687be96b6f12e1a",
+        "pdfUrl": "https://doi.org/10.1002/hipo.20613",
+        "paperId": "090bc69ede50d874b9f634065687be96b6f12e1a",
+        "corpusId": "6306738",
+        "citationCount": 41,
+        "referenceCount": 29,
+        "fieldsOfStudy": [
+          "Computer Science",
+          "Medicine"
+        ]
+      },
+      "b14": {
+        "title": "In vivo hippocampal measurement and memory: A comparison of manual tracing and automated segmentation in a large communitybased sample",
+        "doi": "10.1371/journal.pone.0005265",
+        "url": "https://www.semanticscholar.org/paper/e4082bedbe9e37cd48c25a128d7a6a1cdade91ad",
+        "pdfUrl": "https://doi.org/10.1371/journal.pone.0005265",
+        "paperId": "e4082bedbe9e37cd48c25a128d7a6a1cdade91ad",
+        "corpusId": "8910511",
+        "citationCount": 120,
+        "referenceCount": 40,
+        "fieldsOfStudy": [
+          "Biology",
+          "Medicine"
+        ]
+      },
+      "b15": {
+        "title": "Comparing manual and automatic segmentation of hippocampal volumes: Reliability and validity issues in younger and older brains",
+        "doi": "10.1002/hbm.22473",
+        "url": "https://www.semanticscholar.org/paper/fea6445ea234f08dc2c4858a21f9b66664e83911",
+        "pdfUrl": "https://doi.org/10.1002/hbm.22473",
+        "paperId": "fea6445ea234f08dc2c4858a21f9b66664e83911",
+        "corpusId": "15885672",
+        "citationCount": 169,
+        "referenceCount": 73,
+        "fieldsOfStudy": [
+          "Psychology",
+          "Medicine"
+        ]
+      }
+    }
+  }
+}
