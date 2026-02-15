@@ -51,6 +51,7 @@ def _node_from_dict(data: Dict[str, Any]) -> ConstraintNode:
         priority_level=data.get("priority_level", 2),
         trace_to=data.get("trace_to"),
         derived_from=data.get("derived_from"),
+        change_type=data.get("change_type"),
     )
 
 
@@ -121,6 +122,64 @@ def _ensure_priority_levels(graph: ConstraintGraph) -> None:
         for node in bcs.constraints:
             if node.priority_level not in (1, 2):
                 node.priority_level = 2
+
+
+def _iter_constraint_nodes(graph: ConstraintGraph) -> List[ConstraintNode]:
+    nodes: List[ConstraintNode] = []
+    nodes.extend(graph.global_constraints)
+    for bcs in graph.block_constraint_sets:
+        nodes.extend(bcs.constraints)
+    return nodes
+
+
+def _constraint_fingerprint(node: ConstraintNode) -> Tuple[str, str, str, int, str]:
+    return (
+        (node.desc or "").strip(),
+        (node.scope or "").strip(),
+        json.dumps(node.verifier_spec or {}, sort_keys=True, ensure_ascii=True),
+        int(node.priority_level or 2),
+        (node.trace_to or "").strip(),
+    )
+
+
+def _constraint_map_by_cid(graph: ConstraintGraph) -> Dict[str, ConstraintNode]:
+    mapped: Dict[str, ConstraintNode] = {}
+    for node in _iter_constraint_nodes(graph):
+        mapped[node.cid] = node
+    return mapped
+
+
+def _annotate_turn_change_types(turns: List[ConstraintGraph],
+                                explicit_modify_cids_by_turn: Optional[List[set[str]]] = None) -> None:
+    if not turns:
+        return
+    explicit_modify_cids_by_turn = explicit_modify_cids_by_turn or []
+    prev_nodes: Dict[str, ConstraintNode] = {}
+    for turn_idx, turn_graph in enumerate(turns):
+        curr_nodes = _constraint_map_by_cid(turn_graph)
+        explicit_modify = (
+            explicit_modify_cids_by_turn[turn_idx]
+            if turn_idx < len(explicit_modify_cids_by_turn)
+            else set()
+        )
+        if turn_idx == 0:
+            for node in curr_nodes.values():
+                node.change_type = "add"
+            prev_nodes = curr_nodes
+            continue
+
+        for cid, node in curr_nodes.items():
+            if cid in explicit_modify:
+                node.change_type = "modify"
+                continue
+            prev_node = prev_nodes.get(cid)
+            if prev_node is None:
+                node.change_type = "add"
+            elif _constraint_fingerprint(prev_node) != _constraint_fingerprint(node):
+                node.change_type = "modify"
+            else:
+                node.change_type = "unchanged"
+        prev_nodes = curr_nodes
 
 
 def _total_constraint_count(graph: ConstraintGraph) -> int:
@@ -387,50 +446,88 @@ def _build_curriculum_chain(graph: ConstraintGraph, rng: random.Random) -> Optio
 
 def _build_m1_turns(graph: ConstraintGraph, rng: random.Random, min_blocks: int = 3, max_blocks: int = 6) -> Optional[List[ConstraintGraph]]:
     _ensure_priority_levels(graph)
-    block_ids = _pick_block_candidates(graph)
-    eligible_blocks: List[Tuple[str, int]] = []
-    for bcs in graph.block_constraint_sets:
-        if bcs.block_id in block_ids and len(bcs.constraints) >= 2:
-            eligible_blocks.append((bcs.block_id, len(bcs.constraints)))
 
-    if not eligible_blocks:
+    if not graph.global_constraints and not any(bcs.constraints for bcs in graph.block_constraint_sets):
         return None
 
-    eligible_blocks.sort(key=lambda item: (-item[1], item[0]))
-    pool_size = min(len(eligible_blocks), max_blocks * 2)
-    pool = [bid for bid, _ in eligible_blocks[:pool_size]]
-    pick_blocks = min(max_blocks, len(pool))
-    num_blocks = rng.randint(min_blocks, pick_blocks) if pick_blocks >= min_blocks else pick_blocks
-    chosen_blocks = rng.sample(pool, num_blocks) if num_blocks > 0 else []
+    global_activation: Dict[str, int] = {}
+    global_nodes = copy.deepcopy(graph.global_constraints)
+    if global_nodes:
+        rng.shuffle(global_nodes)
+        n = len(global_nodes)
+        if n == 1:
+            global_activation[global_nodes[0].cid] = 1
+        elif n == 2:
+            global_activation[global_nodes[0].cid] = 1
+            global_activation[global_nodes[1].cid] = 2
+        else:
+            c1 = max(1, int(round(n * 0.40)))
+            c2 = max(1, int(round(n * 0.30)))
+            if c1 + c2 >= n:
+                c2 = max(1, n - c1 - 1)
+            c3 = n - c1 - c2
+            if c3 <= 0:
+                c3 = 1
+                if c2 > 1:
+                    c2 -= 1
+                elif c1 > 1:
+                    c1 -= 1
 
-    split_map: Dict[str, List[List[ConstraintNode]]] = {}
+            for node in global_nodes[:c1]:
+                global_activation[node.cid] = 1
+            for node in global_nodes[c1:c1 + c2]:
+                global_activation[node.cid] = 2
+            for node in global_nodes[c1 + c2:]:
+                global_activation[node.cid] = 3
+
+    block_activation: Dict[str, Dict[str, int]] = {}
+    toggle_two = False
     for bcs in graph.block_constraint_sets:
-        if bcs.block_id not in chosen_blocks:
+        nodes = copy.deepcopy(bcs.constraints)
+        if not nodes:
             continue
-        segments = 3 if len(bcs.constraints) >= 4 else 2
-        split_map[bcs.block_id] = _split_constraints(rng, bcs.constraints, segments)
-
-    if not split_map:
-        return None
+        rng.shuffle(nodes)
+        per_block: Dict[str, int] = {}
+        if len(nodes) == 1:
+            per_block[nodes[0].cid] = 1
+        elif len(nodes) == 2:
+            per_block[nodes[0].cid] = 1
+            per_block[nodes[1].cid] = 2 if not toggle_two else 3
+            toggle_two = not toggle_two
+        else:
+            per_block[nodes[0].cid] = 1
+            per_block[nodes[1].cid] = 2
+            per_block[nodes[2].cid] = 3
+            next_turn = 2
+            for node in nodes[3:]:
+                per_block[node.cid] = next_turn
+                next_turn = 3 if next_turn == 2 else 2
+        block_activation[bcs.block_id] = per_block
 
     turns: List[ConstraintGraph] = []
     for turn_idx in range(1, 4):
         g = copy.deepcopy(graph)
+        g.global_constraints = [
+            node for node in g.global_constraints
+            if global_activation.get(node.cid, 1) <= turn_idx
+        ]
         for bcs in g.block_constraint_sets:
-            chunks = split_map.get(bcs.block_id)
-            if not chunks:
-                continue
-            merged: List[ConstraintNode] = []
-            for idx, chunk in enumerate(chunks, start=1):
-                if idx <= turn_idx:
-                    merged.extend(chunk)
-            bcs.constraints = merged
+            activation = block_activation.get(bcs.block_id, {})
+            bcs.constraints = [
+                node for node in bcs.constraints
+                if activation.get(node.cid, 1) <= turn_idx
+            ]
         allowed = {n.cid for n in g.global_constraints}
         for bcs in g.block_constraint_sets:
             allowed.update(n.cid for n in bcs.constraints)
         _filter_selections_by_allowed(g, allowed)
         turns.append(g)
 
+    totals = [_total_constraint_count(t) for t in turns]
+    if not (totals[0] < totals[1] < totals[2]):
+        return None
+
+    _annotate_turn_change_types(turns)
     return turns
 
 
@@ -496,8 +593,10 @@ def _build_m2_turns(graph: ConstraintGraph, rng: random.Random) -> Optional[List
 
     turn2 = copy.deepcopy(graph)
     _replace_selection_cid(turn2, mutated.cid, node.cid)
-
-    return [turn1, turn2]
+    turns = [turn1, turn2]
+    # Turn-2 restores the prior constraint text/value and should be treated as a modify event.
+    _annotate_turn_change_types(turns, explicit_modify_cids_by_turn=[set(), {node.cid}])
+    return turns
 
 
 def _count_blocks(graph: ConstraintGraph) -> tuple[int, int]:
@@ -696,6 +795,8 @@ def augment_graph(graph: ConstraintGraph,
                     "turn_index": idx,
                     "turn_total": len(turns),
                     "turn_notice": True,
+                    "delta_only_instruction": idx > 1,
+                    "delta_reference": "previous_turn",
                 })
                 g.meta = meta
                 saved = _save_sample(g, f"{sample_id}__m1_t{idx}", base_dir, enable_step8=enable_step8)
@@ -714,6 +815,8 @@ def augment_graph(graph: ConstraintGraph,
                     "turn_index": idx,
                     "turn_total": len(turns),
                     "turn_notice": True,
+                    "delta_only_instruction": idx > 1,
+                    "delta_reference": "previous_turn",
                 })
                 g.meta = meta
                 saved = _save_sample(g, f"{sample_id}__m2_t{idx}", base_dir, enable_step8=enable_step8)

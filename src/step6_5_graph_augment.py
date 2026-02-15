@@ -87,6 +87,8 @@ def augment_graphs_only(graph: ConstraintGraph,
                     "turn_index": idx,
                     "turn_total": len(turns),
                     "turn_notice": True,
+                    "delta_only_instruction": idx > 1,
+                    "delta_reference": "previous_turn",
                 })
                 g.meta = meta
                 _ensure_priority_levels(g)
@@ -109,6 +111,8 @@ def augment_graphs_only(graph: ConstraintGraph,
                     "turn_index": idx,
                     "turn_total": len(turns),
                     "turn_notice": True,
+                    "delta_only_instruction": idx > 1,
+                    "delta_reference": "previous_turn",
                 })
                 g.meta = meta
                 _ensure_priority_levels(g)

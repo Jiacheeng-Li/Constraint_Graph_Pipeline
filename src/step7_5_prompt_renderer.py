@@ -12,6 +12,7 @@ Notes
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import random
 import argparse
@@ -47,6 +48,71 @@ TEMPLATE_PROFILES: Dict[str, Dict[str, Any]] = {
 TEMPLATE_ORDER = list(TEMPLATE_PROFILES.keys())
 
 
+def _is_delta_only_instruction(graph: ConstraintGraph) -> bool:
+    return bool((graph.meta or {}).get("delta_only_instruction"))
+
+
+def _build_instruction_view_graph(graph: ConstraintGraph) -> ConstraintGraph:
+    """
+    Build a render-only graph view.
+    For delta-only turns, keep only add/modify constraints and relevant blocks/selections.
+    """
+    if not _is_delta_only_instruction(graph):
+        return graph
+
+    g = copy.deepcopy(graph)
+    changed_cids: set[str] = set()
+
+    g.global_constraints = [
+        node for node in g.global_constraints
+        if (node.change_type or "").strip().lower() in {"add", "modify"}
+    ]
+    changed_cids.update(node.cid for node in g.global_constraints)
+
+    filtered_sets: List[BlockConstraintSet] = []
+    for bcs in g.block_constraint_sets:
+        kept = [
+            node for node in bcs.constraints
+            if (node.change_type or "").strip().lower() in {"add", "modify"}
+        ]
+        if not kept:
+            continue
+        bcs.constraints = kept
+        filtered_sets.append(bcs)
+        changed_cids.update(node.cid for node in kept)
+    g.block_constraint_sets = filtered_sets
+
+    kept_selections: List[SelectionNode] = []
+    for sel in g.selections:
+        sel.branch_real.constraints = [cid for cid in sel.branch_real.constraints if cid in changed_cids]
+        sel.branch_alt.constraints = [cid for cid in sel.branch_alt.constraints if cid in changed_cids]
+        if not sel.branch_real.constraints and not sel.branch_alt.constraints:
+            continue
+        kept_selections.append(sel)
+    g.selections = kept_selections
+
+    referenced_blocks: set[str] = set()
+    for bcs in g.block_constraint_sets:
+        referenced_blocks.add(bcs.block_id)
+    for sel in g.selections:
+        if sel.trace_to:
+            referenced_blocks.add(sel.trace_to)
+        if sel.branch_real.block_id:
+            referenced_blocks.add(sel.branch_real.block_id)
+        if sel.branch_alt.block_id:
+            referenced_blocks.add(sel.branch_alt.block_id)
+        for block_id in sel.alt_path_blocks:
+            if block_id:
+                referenced_blocks.add(block_id)
+        if sel.merge_point:
+            referenced_blocks.add(sel.merge_point)
+
+    if referenced_blocks:
+        g.block_specs = [b for b in g.block_specs if b.block_id in referenced_blocks]
+
+    return g
+
+
 def _render_block_plan(block_specs: List[BlockSpec],
                        block_sets: List[BlockConstraintSet]) -> List[Dict[str, Any]]:
     set_map = {bcs.block_id: bcs for bcs in block_sets}
@@ -64,6 +130,7 @@ def _render_block_plan(block_specs: List[BlockSpec],
                     "desc": cnode.desc,
                     "verifier": cnode.verifier_spec,
                     "priority_level": cnode.priority_level,
+                    "change_type": cnode.change_type,
                 })
             logic_type = bset.logic_type
         else:
@@ -84,6 +151,7 @@ def _render_global_constraints(global_nodes: List[ConstraintNode]) -> List[Dict[
             "desc": node.desc,
             "verifier": node.verifier_spec,
             "priority_level": node.priority_level,
+            "change_type": node.change_type,
         }
         for node in global_nodes
     ]
@@ -150,6 +218,7 @@ def _render_selections(selections: List[SelectionNode],
                     "verifier": node.verifier_spec if node else None,
                     "priority_level": node.priority_level if node else 2,
                     "trace_to": node.trace_to if node else fallback_block,
+                    "change_type": node.change_type if node else None,
                 })
             return items
 
@@ -286,9 +355,12 @@ def _stable_seed(base_seed: Optional[int], selection_key: str) -> int:
 def _append_constraints(lines: List[str],
                         indent: str,
                         obligations: List[Dict[str, Any]],
-                        default_msg: str) -> None:
+                        default_msg: str,
+                        *,
+                        emit_default: bool = True) -> None:
     if not obligations:
-        lines.append(f"{indent}- {default_msg}")
+        if emit_default:
+            lines.append(f"{indent}- {default_msg}")
         return
     for item in obligations:
         desc = (item.get("desc") or "").strip()
@@ -299,9 +371,12 @@ def _append_constraints(lines: List[str],
 def _append_constraints_grouped(lines: List[str],
                                 indent: str,
                                 obligations: List[Dict[str, Any]],
-                                default_msg: str) -> None:
+                                default_msg: str,
+                                *,
+                                emit_default: bool = True) -> None:
     if not obligations:
-        lines.append(f"{indent}- {default_msg}")
+        if emit_default:
+            lines.append(f"{indent}- {default_msg}")
         return
     grouped = _group_by_check(obligations)
     for check_name in sorted(grouped.keys()):
@@ -315,9 +390,12 @@ def _append_constraints_grouped(lines: List[str],
 def _append_constraints_by_priority(lines: List[str],
                                     indent: str,
                                     obligations: List[Dict[str, Any]],
-                                    default_msg: str) -> None:
+                                    default_msg: str,
+                                    *,
+                                    emit_default: bool = True) -> None:
     if not obligations:
-        lines.append(f"{indent}- {default_msg}")
+        if emit_default:
+            lines.append(f"{indent}- {default_msg}")
         return
     primary = [item for item in obligations if item.get("priority_level") != 1]
     secondary = [item for item in obligations if item.get("priority_level") == 1]
@@ -333,7 +411,7 @@ def _append_constraints_by_priority(lines: List[str],
             desc = (item.get("desc") or "").strip()
             if desc:
                 lines.append(f"{indent}  * {desc}")
-    if not primary and not secondary:
+    if not primary and not secondary and emit_default:
         lines.append(f"{indent}- {default_msg}")
 
 
@@ -341,6 +419,7 @@ def _render_stage_blueprint(graph: ConstraintGraph,
                             global_rules: List[Dict[str, Any]],
                             block_plan: List[Dict[str, Any]],
                             selections_view: List[Dict[str, Any]]) -> str:
+    delta_only = _is_delta_only_instruction(graph)
     lines: List[str] = []
     lines.append("SYSTEM INSTRUCTIONS:")
     lines.append("")
@@ -351,15 +430,18 @@ def _render_stage_blueprint(graph: ConstraintGraph,
         lines.append("- Follow the staged plan and constraints below to construct the final answer.")
     if graph.meta.get("turn_notice"):
         lines.append("- Only constraints in the current graph are active.")
+    if delta_only:
+        lines.append("- This turn only introduces new or modified constraints; keep prior constraints unless explicitly changed.")
     lines.append("")
 
-    lines.append("2. NON-NEGOTIABLE GLOBAL RULES")
-    if global_rules:
-        lines.append("All global rules must be satisfied throughout the response:")
-        _append_constraints(lines, indent="  ", obligations=global_rules, default_msg="No global rules provided.")
-    else:
-        lines.append("- No additional global constraints were supplied.")
-    lines.append("")
+    if global_rules or not delta_only:
+        lines.append("2. NON-NEGOTIABLE GLOBAL RULES")
+        if global_rules:
+            lines.append("All global rules must be satisfied throughout the response:")
+            _append_constraints(lines, indent="  ", obligations=global_rules, default_msg="No global rules provided.")
+        else:
+            lines.append("- No additional global constraints were supplied.")
+        lines.append("")
 
     selection_map: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for sel in selections_view:
@@ -376,39 +458,66 @@ def _render_stage_blueprint(graph: ConstraintGraph,
         logic_hint = "Cover all listed duties for this stage." \
             if not logic_type.startswith("sub") else \
             "Address listed duties as a short sequence."
+        stage_selections = selection_map.get(block_id, [])
+        stage_requirements = blk["requirements"]
+        selection_entries: List[Dict[str, Any]] = []
+        for sel in stage_selections:
+            alt_blocks = sel.get("alt_path_blocks") or [sel.get("trace_to")]
+            alt_by_block = sel.get("alt_by_block") or {}
+            real_blocks = sel.get("real_path_blocks") or [sel.get("trace_to")]
+            real_by_block = sel.get("real_by_block") or {}
+            alt_has = any(alt_by_block.get(bid) for bid in alt_blocks)
+            real_has = any(real_by_block.get(bid) for bid in real_blocks)
+            if delta_only and not alt_has and not real_has:
+                continue
+            selection_entries.append({
+                "sel": sel,
+                "alt_blocks": alt_blocks,
+                "alt_by_block": alt_by_block,
+                "real_blocks": real_blocks,
+                "real_by_block": real_by_block,
+                "alt_has": alt_has,
+                "real_has": real_has,
+            })
+
+        if delta_only and not stage_requirements and not selection_entries:
+            continue
         lines.append(f"- Stage {idx}: {role}")
         lines.append(f"  Logic cue: {logic_hint}")
-        stage_selections = selection_map.get(block_id, [])
-        if not stage_selections:
+        if not selection_entries:
             _append_constraints(
                 lines,
                 indent="  ",
-                obligations=blk["requirements"],
+                obligations=stage_requirements,
                 default_msg="Follow the intent of this stage even if no explicit duty exists.",
+                emit_default=not delta_only,
             )
             continue
-        for sel in stage_selections:
+        for entry in selection_entries:
+            sel = entry["sel"]
             condition = _condition_statement(sel.get("condition", "")) or "the condition applies."
-            lines.append(f"  IF {condition.rstrip('.')}:")
-            alt_blocks = sel.get("alt_path_blocks") or [sel.get("trace_to")]
-            alt_by_block = sel.get("alt_by_block") or {}
-            for block_id in alt_blocks:
-                _append_constraints(
-                    lines,
-                    indent="    ",
-                    obligations=alt_by_block.get(block_id, []),
-                    default_msg="Carry out the alternate storyline requirements for this stage.",
-                )
-            lines.append("  OTHERWISE:")
-            real_blocks = sel.get("real_path_blocks") or [sel.get("trace_to")]
-            real_by_block = sel.get("real_by_block") or {}
-            for block_id in real_blocks:
-                _append_constraints(
-                    lines,
-                    indent="    ",
-                    obligations=real_by_block.get(block_id, []),
-                    default_msg="Return to the duties defined for this stage.",
-                )
+            alt_has = bool(entry["alt_has"])
+            real_has = bool(entry["real_has"])
+            if alt_has or not delta_only:
+                lines.append(f"  IF {condition.rstrip('.')}:")
+                for bid in entry["alt_blocks"]:
+                    _append_constraints(
+                        lines,
+                        indent="    ",
+                        obligations=entry["alt_by_block"].get(bid, []),
+                        default_msg="Carry out the alternate storyline requirements for this stage.",
+                        emit_default=not delta_only,
+                    )
+            if real_has or not delta_only:
+                lines.append("  OTHERWISE:" if (alt_has or not delta_only) else "  Default path:")
+                for bid in entry["real_blocks"]:
+                    _append_constraints(
+                        lines,
+                        indent="    ",
+                        obligations=entry["real_by_block"].get(bid, []),
+                        default_msg="Return to the duties defined for this stage.",
+                        emit_default=not delta_only,
+                    )
     lines.append("")
 
     if selections_view:
@@ -429,6 +538,7 @@ def _render_branch_first(graph: ConstraintGraph,
                          global_rules: List[Dict[str, Any]],
                          block_plan: List[Dict[str, Any]],
                          selections_view: List[Dict[str, Any]]) -> str:
+    delta_only = _is_delta_only_instruction(graph)
     lines: List[str] = []
     lines.append("SYSTEM INSTRUCTIONS:")
     lines.append("")
@@ -439,14 +549,17 @@ def _render_branch_first(graph: ConstraintGraph,
         lines.append("- Follow the staged plan and constraints below to construct the final answer.")
     if graph.meta.get("turn_notice"):
         lines.append("- Only constraints in the current graph are active.")
+    if delta_only:
+        lines.append("- This turn only introduces new or modified constraints; keep prior constraints unless explicitly changed.")
     lines.append("")
 
-    lines.append("2. NON-NEGOTIABLE GLOBAL RULES")
-    if global_rules:
-        _append_constraints(lines, indent="", obligations=global_rules, default_msg="No global rules provided.")
-    else:
-        lines.append("- No additional global constraints were supplied.")
-    lines.append("")
+    if global_rules or not delta_only:
+        lines.append("2. NON-NEGOTIABLE GLOBAL RULES")
+        if global_rules:
+            _append_constraints(lines, indent="", obligations=global_rules, default_msg="No global rules provided.")
+        else:
+            lines.append("- No additional global constraints were supplied.")
+        lines.append("")
 
     block_label_lookup = _build_block_label_lookup(graph.block_specs)
 
@@ -456,33 +569,43 @@ def _render_branch_first(graph: ConstraintGraph,
         for sel in selections_view:
             condition = _condition_statement(sel.get("condition", "")) or "the condition applies."
             where = sel.get("where") or _label_for_block(sel.get("trace_to", ""), block_label_lookup, fallback="Stage")
-            lines.append(f"- Decision at {where}:")
-            lines.append(f"  IF {condition.rstrip('.')}:")
             alt_blocks = sel.get("alt_path_blocks") or [sel.get("trace_to")]
             alt_by_block = sel.get("alt_by_block") or {}
-            for block_id in alt_blocks:
-                _append_constraints(
-                    lines,
-                    indent="    ",
-                    obligations=alt_by_block.get(block_id, []),
-                    default_msg="Carry out the alternate storyline requirements for this stage.",
-                )
-            lines.append("  OTHERWISE:")
+            alt_has = any(alt_by_block.get(bid) for bid in alt_blocks)
             real_blocks = sel.get("real_path_blocks") or [sel.get("trace_to")]
             real_by_block = sel.get("real_by_block") or {}
-            for block_id in real_blocks:
-                _append_constraints(
-                    lines,
-                    indent="    ",
-                    obligations=real_by_block.get(block_id, []),
-                    default_msg="Return to the duties defined for this stage.",
-                )
-    else:
+            real_has = any(real_by_block.get(bid) for bid in real_blocks)
+            if delta_only and not alt_has and not real_has:
+                continue
+            lines.append(f"- Decision at {where}:")
+            if alt_has or not delta_only:
+                lines.append(f"  IF {condition.rstrip('.')}:")
+                for block_id in alt_blocks:
+                    _append_constraints(
+                        lines,
+                        indent="    ",
+                        obligations=alt_by_block.get(block_id, []),
+                        default_msg="Carry out the alternate storyline requirements for this stage.",
+                        emit_default=not delta_only,
+                    )
+            if real_has or not delta_only:
+                lines.append("  OTHERWISE:" if (alt_has or not delta_only) else "  Default path:")
+                for block_id in real_blocks:
+                    _append_constraints(
+                        lines,
+                        indent="    ",
+                        obligations=real_by_block.get(block_id, []),
+                        default_msg="Return to the duties defined for this stage.",
+                        emit_default=not delta_only,
+                    )
+    elif not delta_only:
         lines.append("No conditional branches were supplied.")
 
     lines.append("")
     lines.append("Stage flow (follow in order):")
     for idx, blk in enumerate(block_plan, start=1):
+        if delta_only and not blk["requirements"]:
+            continue
         role = blk["role"] or f"Stage {idx}"
         lines.append(f"- Stage {idx}: {role}")
         _append_constraints(
@@ -490,6 +613,7 @@ def _render_branch_first(graph: ConstraintGraph,
             indent="  ",
             obligations=blk["requirements"],
             default_msg="Follow the intent of this stage even if no explicit duty exists.",
+            emit_default=not delta_only,
         )
     lines.append("")
 
@@ -511,6 +635,7 @@ def _render_grouped_by_check(graph: ConstraintGraph,
                              global_rules: List[Dict[str, Any]],
                              block_plan: List[Dict[str, Any]],
                              selections_view: List[Dict[str, Any]]) -> str:
+    delta_only = _is_delta_only_instruction(graph)
     lines: List[str] = []
     lines.append("SYSTEM INSTRUCTIONS:")
     lines.append("")
@@ -521,6 +646,8 @@ def _render_grouped_by_check(graph: ConstraintGraph,
         lines.append("- Follow the staged plan and constraints below to construct the final answer.")
     if graph.meta.get("turn_notice"):
         lines.append("- Only constraints in the current graph are active.")
+    if delta_only:
+        lines.append("- This turn only introduces new or modified constraints; keep prior constraints unless explicitly changed.")
     lines.append("")
 
     block_label_lookup = _build_block_label_lookup(graph.block_specs)
@@ -606,7 +733,12 @@ def _render_grouped_by_check(graph: ConstraintGraph,
             lines,
             indent="  ",
             obligations=remaining_globals,
-            default_msg="No remaining global rules.",
+            default_msg=(
+                "No new or modified global constraints."
+                if delta_only else
+                "No remaining global rules."
+            ),
+            emit_default=True,
         )
     lines.append("Follow stages in order. Selection stages list their local constraints below.")
     for idx, blk in enumerate(block_plan, start=1):
@@ -624,7 +756,12 @@ def _render_grouped_by_check(graph: ConstraintGraph,
                     lines,
                     indent="  ",
                     obligations=remaining_local,
-                    default_msg="No additional stage-specific rules.",
+                    default_msg=(
+                        "No new or modified constraints in this stage."
+                        if delta_only else
+                        "No additional stage-specific rules."
+                    ),
+                    emit_default=True,
                 )
             continue
         for sel in stage_selections:
@@ -637,7 +774,12 @@ def _render_grouped_by_check(graph: ConstraintGraph,
                     lines,
                     indent="    ",
                     obligations=alt_by_block.get(block_id, []),
-                    default_msg="Carry out the alternate storyline requirements for this stage.",
+                    default_msg=(
+                        "No new or modified constraints in this branch."
+                        if delta_only else
+                        "Carry out the alternate storyline requirements for this stage."
+                    ),
+                    emit_default=True,
                 )
             lines.append("  OTHERWISE:")
             real_blocks = sel.get("real_path_blocks") or [sel.get("trace_to")]
@@ -647,7 +789,12 @@ def _render_grouped_by_check(graph: ConstraintGraph,
                     lines,
                     indent="    ",
                     obligations=real_by_block.get(block_id, []),
-                    default_msg="Return to the duties defined for this stage.",
+                    default_msg=(
+                        "No new or modified constraints in this branch."
+                        if delta_only else
+                        "Return to the duties defined for this stage."
+                    ),
+                    emit_default=True,
                 )
     lines.append("")
 
@@ -669,6 +816,7 @@ def _render_priority_layered(graph: ConstraintGraph,
                              global_rules: List[Dict[str, Any]],
                              block_plan: List[Dict[str, Any]],
                              selections_view: List[Dict[str, Any]]) -> str:
+    delta_only = _is_delta_only_instruction(graph)
     lines: List[str] = []
     lines.append("SYSTEM INSTRUCTIONS:")
     lines.append("")
@@ -679,6 +827,8 @@ def _render_priority_layered(graph: ConstraintGraph,
         lines.append("- Follow the staged plan and constraints below to construct the final answer.")
     if graph.meta.get("turn_notice"):
         lines.append("- Only constraints in the current graph are active.")
+    if delta_only:
+        lines.append("- This turn only introduces new or modified constraints; keep prior constraints unless explicitly changed.")
     lines.append("")
 
     block_label_lookup = _build_block_label_lookup(graph.block_specs)
@@ -750,7 +900,12 @@ def _render_priority_layered(graph: ConstraintGraph,
                     lines,
                     indent="    ",
                     obligations=alt_by_block.get(block_id, []),
-                    default_msg="Carry out the alternate storyline requirements for this stage.",
+                    default_msg=(
+                        "No new or modified constraints in this branch."
+                        if delta_only else
+                        "Carry out the alternate storyline requirements for this stage."
+                    ),
+                    emit_default=True,
                 )
             lines.append("  OTHERWISE:")
             real_blocks = sel.get("real_path_blocks") or [sel.get("trace_to")]
@@ -760,7 +915,12 @@ def _render_priority_layered(graph: ConstraintGraph,
                     lines,
                     indent="    ",
                     obligations=real_by_block.get(block_id, []),
-                    default_msg="Return to the duties defined for this stage.",
+                    default_msg=(
+                        "No new or modified constraints in this branch."
+                        if delta_only else
+                        "Return to the duties defined for this stage."
+                    ),
+                    emit_default=True,
                 )
     lines.append("")
 
@@ -857,8 +1017,9 @@ def render_prompt_variant(graph: ConstraintGraph,
                           heuristic_ratio: float = 0.5,
                           selection_key: str = "",
                           template_limit: Optional[int] = None) -> Dict[str, Any]:
+    graph_view = _build_instruction_view_graph(graph)
     selection = select_template_for_graph(
-        graph,
+        graph_view,
         template_pool=template_pool,
         template_seed=template_seed,
         heuristic_ratio=heuristic_ratio,
@@ -871,15 +1032,15 @@ def render_prompt_variant(graph: ConstraintGraph,
         template_key = "stage_blueprint"
         renderer = TEMPLATE_RENDERERS.get(template_key)
 
-    global_rules = _render_global_constraints(graph.global_constraints)
-    block_plan = _render_block_plan(graph.block_specs, graph.block_constraint_sets)
+    global_rules = _render_global_constraints(graph_view.global_constraints)
+    block_plan = _render_block_plan(graph_view.block_specs, graph_view.block_constraint_sets)
     selections_view = _render_selections(
-        graph.selections,
-        graph.block_specs,
-        graph.block_constraint_sets,
-        graph.global_constraints,
+        graph_view.selections,
+        graph_view.block_specs,
+        graph_view.block_constraint_sets,
+        graph_view.global_constraints,
     )
-    machine_prompt = renderer(graph, global_rules, block_plan, selections_view)
+    machine_prompt = renderer(graph_view, global_rules, block_plan, selections_view)
 
     return {
         "variant": {
@@ -915,13 +1076,14 @@ def render_prompt_variants(graph: ConstraintGraph,
     if template_limit is not None:
         resolved_pool = resolved_pool[: max(0, int(template_limit))]
 
-    global_rules = _render_global_constraints(graph.global_constraints)
-    block_plan = _render_block_plan(graph.block_specs, graph.block_constraint_sets)
+    graph_view = _build_instruction_view_graph(graph)
+    global_rules = _render_global_constraints(graph_view.global_constraints)
+    block_plan = _render_block_plan(graph_view.block_specs, graph_view.block_constraint_sets)
     selections_view = _render_selections(
-        graph.selections,
-        graph.block_specs,
-        graph.block_constraint_sets,
-        graph.global_constraints,
+        graph_view.selections,
+        graph_view.block_specs,
+        graph_view.block_constraint_sets,
+        graph_view.global_constraints,
     )
 
     variants = []
@@ -929,7 +1091,7 @@ def render_prompt_variants(graph: ConstraintGraph,
         renderer = TEMPLATE_RENDERERS.get(template_key)
         if not renderer:
             continue
-        machine_prompt = renderer(graph, global_rules, block_plan, selections_view)
+        machine_prompt = renderer(graph_view, global_rules, block_plan, selections_view)
         variants.append({
             "template": template_key,
             "label": TEMPLATE_PROFILES.get(template_key, {}).get("label", template_key),

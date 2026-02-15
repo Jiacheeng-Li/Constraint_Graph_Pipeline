@@ -195,6 +195,7 @@ def serialize_graph(graph: ConstraintGraph) -> Dict[str, Any]:
             "priority_level": n.priority_level,
             "trace_to": n.trace_to,
             "derived_from": n.derived_from,
+            "change_type": n.change_type,
         }
 
     def _ser_block_spec(b: BlockSpec) -> Dict[str, Any]:
